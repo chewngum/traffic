@@ -31,7 +31,7 @@ def modelrun(arrivalrate,servicetime,spaces):
     #Generate Arrivals
     
     for i in range (1,cyclecount * 3600 ):
-        if i  > 3600*1500 and i%36000 ==0:
+        if i  > 3600*100 and i%36000 ==0:
             if queuetest == round(carsqueued/count_arrivals,5) or i == 3000*3600:
                 hours = i / 3600
                 break

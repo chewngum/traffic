@@ -33,7 +33,7 @@ cyclecount = 10000
 start_time = time.time()
 for i in range (1,cyclecount * 3600 * precision):
     arrival = random.randint(1,3600 * precision)
-    if i % 36000 == 0 and i >= 3600000:
+    if i % 36000 == 0 and i >= 360000:
         a = round(max(count_carsparked) / sum([num for num in count_carsparked if num != 0]),5)
         if test == a:
             cyclecount = i/3600
