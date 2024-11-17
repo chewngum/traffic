@@ -16,7 +16,7 @@ def python_script2():
 
 @app.route('/')
 def index():
-    return open('carpark/Index.html').read()
+    return open('Index.html').read()
 
 @app.route('/run-script1', methods=['POST'])
 def run_script1():
@@ -28,7 +28,7 @@ def run_script1():
     try:
         # Pass these integers as needed to your script
         result = subprocess.run(
-            ['python3', 'carpark/carpark.py', str(input1), str(input2), str(input3)],
+            ['python3', 'carpark.py', str(input1), str(input2), str(input3)],
             capture_output=True,
             text=True,
             check=True
@@ -49,7 +49,7 @@ def run_script2():
     try:
         # Pass these integers as needed to your script
         result = subprocess.run(
-            ['python3', 'carpark/carpark_blocking_web.py', str(input1), str(input2), str(input3)],
+            ['python3', 'carpark_blocking_web.py', str(input1), str(input2), str(input3)],
             capture_output=True,
             text=True,
             check=True
@@ -70,7 +70,7 @@ def run_script3():
     try:
         # Pass these integers as needed to your script
         result = subprocess.run(
-            ['python3', 'carpark/carpark_queueing_web.py', str(input1), str(input2), str(input3)],
+            ['python3', 'carpark_queueing_web.py', str(input1), str(input2), str(input3)],
             capture_output=True,
             text=True,
             check=True
