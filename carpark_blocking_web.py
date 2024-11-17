@@ -1,12 +1,8 @@
 #Import Functions Required
 import random
-import math
 import itertools
 import time
-import sqlite3
 import sys
-import os
-import io
 # os.system('clear')
 
 arrivalrate = int(sys.argv[1])
@@ -91,50 +87,3 @@ print("Spaces Required if no queue option (Erlang-Blocking)")
 for value in percentiles:
     percentile(value,count_carsparked)
 print("Cars Blocked: ", round(count_blocked*100/(count_blocked+count_serviced),2),"%", sep='')
-
-# Calculate percentiles
-for i in range(0,100):
-    for index, number in enumerate(count_carsparked):
-            if number >= i:
-                utilisation.append(index)
-                break
-
-# Find the index of the item '100'
-if 100 in count_carsparked:
-    index = count_carsparked.index(100)
-# Slice the list up to and including the item '100'
-    count_carsparked = count_carsparked[:index + 1]
-
-# for value in count_carsparked:
-#     print(value)
-# Create a plot
-#plt.scatter(list(range(len(utilisation))),utilisation)
-#plt.title("Parking Space Utilisation")
-#plt.xlabel("Percentile Check")
-#plt.ylabel("Parking Spaces")
-#plt.grid(True, axis='both', color='red', linestyle='dotted', linewidth=1, which='both')
-#plt.show()
-
-# count_carsparked_db = [(i+1, item) for i , item in enumerate(count_carsparked)]
-# conn = sqlite3.connect('numbers.db')
-# cursor = conn.cursor()
-# cursor.execute('''
-#     CREATE TABLE IF NOT EXISTS blocking_count_carsparked (
-#         ID int PRIMARY KEY,
-#         NUMBER int
-#     )
-# ''')
-# cursor.executemany('INSERT INTO blocking_count_carsparked (ID, NUMBER) VALUES(?, ?)', count_carsparked_db)
-# conn.commit()
-# conn.close()
-
-# conn = sqlite3.connect('numbers.db')
-# cursor = conn.cursor()
-
-# cursor.execute('SELECT * FROM blocking_count_carsparked')
-# rows = cursor.fetchall()
-
-# for row in rows:
-#     print(row)
-
-# conn.close()

@@ -1,12 +1,8 @@
 #Import Functions Required
 import random
-import math
 import itertools
 import time
-import sqlite3
 import sys
-import os
-import io
 
 #Define Functions
 def percentile(percent,list):
@@ -14,19 +10,6 @@ def percentile(percent,list):
         if number >= percent:
             print(percent,"th Percentile = ", index, sep='')
             return
-
-#Take User Inputs
-#print("How many hours to run for?")
-while True:
-    try:
-        # Prompt the user to enter an integer
-        cyclecount = 100000 #int(input("Minimum 1000: "))
-        if cyclecount > 999:
-            break  # Exit the loop if input is valid
-    except ValueError:
-        # Handle the error if input is not a valid integer
-        print("That's not a valid number. Please try again.")
-
 
 arrivalrate = int(sys.argv[1])
 servicetime = int(sys.argv[2])
@@ -43,13 +26,14 @@ utilisation = []
 test = 0 
 hours = 0
 percentiles = [10,20,30,40,50,60,70,80,90,95,98,99]
+cyclecount = 10000
 
 #Generate Arrivals
 
 start_time = time.time()
 for i in range (1,cyclecount * 3600 * precision):
     arrival = random.randint(1,3600 * precision)
-    if i % 36000 == 0:
+    if i % 36000 == 0 and i >= 3600000:
         a = round(max(count_carsparked) / sum([num for num in count_carsparked if num != 0]),5)
         if test == a:
             cyclecount = i/3600
@@ -82,22 +66,8 @@ count_carsparked = [round(100 * item / (cyclecount * 3600 * precision),2) for it
 
 # Find model outputs
 print("Modelled Arrivals = ", round(count_arrivals / cyclecount / precision,1))
-print()
 
 # Find Percentage Thresholds
 print("Spaces Required if Unlimited Parking Avaialble")
 for value in percentiles:
     percentile(value,count_carsparked)
-
-# Calculate all percentiles
-for i in range(0,100):
-    for index, number in enumerate(count_carsparked):
-            if number >= i:
-                utilisation.append(index)
-                break
-
-# Find the index of the item '100'
-if 100 in count_carsparked:
-    index = count_carsparked.index(100)
-# Slice the list up to and including the item '100'
-    count_carsparked = count_carsparked[:index + 1]
