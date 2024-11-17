@@ -16,7 +16,7 @@ def python_script2():
 
 @app.route('/')
 def index():
-    return open('Index.html').read()
+    return open('index.html').read()
 
 @app.route('/run-script1', methods=['POST'])
 def run_script1():
