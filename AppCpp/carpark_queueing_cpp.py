@@ -11,7 +11,7 @@ spaces = 5
 precision = 1
 
 #Define Functions
-def percentage(percent,list):
+def percentageoftime(percent,list):
     for index, number in enumerate(list):
         if number >= percent:
             return index
@@ -108,6 +108,6 @@ def modelrun(arrivalrate,servicetime,spaces):
     print("Perfect Arrivals  Demand = ", round(count_arrivals / cyclecount / precision * servicetime / 3600,2),"spaces")
     print("Random Arrivals Demand percentiles")
     for value in percentiles:
-        print(value,"th - ",percentage(value,count_carsparked_q)," parked and ", percentage(value,count_carsqueued)," Queued", sep='')
+        print(value,"th - ",percentageoftime(value,count_carsparked_q)," parked and ", percentageoftime(value,count_carsqueued)," Queued", sep='')
 
 modelrun(arrivalrate,servicetime,spaces)
