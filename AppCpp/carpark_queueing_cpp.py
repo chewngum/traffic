@@ -1,12 +1,13 @@
+
 #Import Functions Required
 import random
 import itertools
 import time
 import sys
 
-arrivalrate = int(sys.argv[1])
-servicetime = int(sys.argv[2])
-spaces = int(sys.argv[3])
+arrivalrate = 100
+servicetime = 100
+spaces = 5
 precision = 1
 
 #Define Functions
