@@ -40,7 +40,7 @@ def modelrun(arrivalrate,servicetime,spaces):
     
     for i in range (1,cyclecount * 3600 ):
         if i  > 3600*1000 and i%36000 ==0:
-            if queuetest == round(carsqueued/count_arrivals,5) or i == 3000*3600:
+            if queuetest == round(carsqueued/count_arrivals,5) or i == 3000*3600 or time.time()-start_time > 10:
                 hours = i / 3600
                 break
             else:
