@@ -35,12 +35,12 @@ def modelrun(arrivalrate,servicetime,spaces):
     #Generate Arrivals
     
     for i in range (1,cyclecount * 3600 ):
-        if i  > 3600*100 and i%36000 ==0:
-            if queuetest == round(carsqueued/count_arrivals,6) or i == 3000*3600 or time.time()-start_time > 5:
+        if i  > 3600*1000 and i%36000 ==0:
+            if queuetest == round(carsqueued/count_arrivals,5) or i == 3000*3600 or time.time()-start_time > 5:
                 hours = i / 3600
                 break
             else:
-                queuetest = round(carsqueued/count_arrivals,6)
+                queuetest = round(carsqueued/count_arrivals,5)
                 
                 
         # Count current carpark utilisation
