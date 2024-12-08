@@ -1,12 +1,10 @@
 
 #Import Functions Required
 import random
-import itertools
 import time
-import sys
 
-arrivalrate = 1
-servicetime = 600
+arrivalrate = 100
+servicetime = 10
 spaces = 1
 precision = 1
 
@@ -36,6 +34,7 @@ def modelrun(arrivalrate,servicetime,spaces):
     queuetime = 0
     queuetest = 0
     hours = 0
+    minimumqueue = 0
 
     #Generate Arrivals
     
@@ -56,8 +55,8 @@ def modelrun(arrivalrate,servicetime,spaces):
             if len(carsparked) - 1 == spaces:
                 queue +=1
                 carsqueued +=1
-            if len(carsparked) - 1 > spaces:
-                print("more cars than spaces somehow")
+                minimumqueue += carsparked[0]
+
 
         # Count current carpark utilisation
         count_carsparked[max(len(carsparked)-1,0)] += 1

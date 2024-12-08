@@ -5,14 +5,17 @@ import (
 	"math/rand"
 	"time"
 	"math"
+	"os"
+	"strconv"
 )
 
-// Parameters
-const (
-	arrivalRate = 1
-	serviceTime = 600
-	spaces      = 1
+var (
+	arrivalRate, err1 = strconv.Atoi(os.Args[1])
+	serviceTime, err2 = strconv.Atoi(os.Args[2])
+	spaces, err3     = strconv.Atoi(os.Args[3])
 	precision   = 1
+
+
 )
 
 func percentageOfTime(percent float64, arr []float64) int {
@@ -22,7 +25,7 @@ func percentageOfTime(percent float64, arr []float64) int {
 		total += value
 	}
 
-	targetsum := percent * total / 100
+	targetsum := float64(percent * total / 100)
 	for i, value := range arr {
 		cumulativesum += value
 		if cumulativesum >= targetsum {
@@ -34,6 +37,20 @@ func percentageOfTime(percent float64, arr []float64) int {
 
 func modelRun(arrivalRate, serviceTime, spaces int) {
 	// Initialize variables
+	if err1 != nil || err2 != nil || err3 != nil {
+		fmt.Println("All three arguments must be valid integers.")
+		if err1 != nil {
+			fmt.Printf("Error in argument 1: %v\n", err1)
+		}
+		if err2 != nil {
+			fmt.Printf("Error in argument 2: %v\n", err2)
+		}
+		if err3 != nil {
+			fmt.Printf("Error in argument 3: %v\n", err3)
+		}
+		return
+	}
+
 	startTime := time.Now()
 	cycleHours := 10000 * 3600
 	countArrivals := 0
@@ -56,7 +73,7 @@ func modelRun(arrivalRate, serviceTime, spaces int) {
 		if i > 3600*1000 && i%36000 == 0 {
 			currentQueueRatio := float64(carsQueued) / float64(countArrivals)
 			 if math.Abs(queueTest-currentQueueRatio) <= 1e-5 || i == 3000*3600 {
-				hours = float64(i) / 3600
+				hours = float64(i / 3600)
 				break
 			}
 			queueTest = currentQueueRatio
@@ -73,9 +90,12 @@ func modelRun(arrivalRate, serviceTime, spaces int) {
 				carsQueued++
 			}
 		}
-		
+		if i%36000 == 0 && countArrivals > 0{
+			fmt.Printf("qr %.4f \n", float64(carsQueued) / float64(countArrivals))
+			fmt.Printf("ho %.0f \n", float64(i/3600))
+		}
 		// Update counts for parked and queued cars
-		if len(carsparked) -1 > 0 {
+		if len(carsparked) >= 2 {
 			countcarsparked[len(carsparked)-1]++
 		} else {
 			countcarsparked[0]++
