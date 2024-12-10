@@ -15,7 +15,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Define the Go file to execute (must be in the project folder or accessible)
-	goFile := "./carpark_queuing_web.go"
+	goFile := "./API/carpark.go"
 
 	// Run the Go file using `go run`
 	cmd := exec.CommandContext(context.Background(), "go", "run", goFile)

@@ -10,9 +10,9 @@ import (
 
 // Parameters
 const (
-	arrivalRate = 3800
-	serviceTime = 3600
-	spaces      = 30000
+	arrivalRate = 100
+	serviceTime = 100
+	spaces      = 10
 	precision   = 1
 )
 
