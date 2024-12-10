@@ -106,6 +106,7 @@
                 run1.disabled = false;
             }
         }
+        
         async function runGoFile() {
             try {
                 const response = await fetch('/api/run-go', {
@@ -175,7 +176,7 @@
                     .then(response => response.json())
                     .then(result => {
                         document.getElementById('output2').textContent = result.output;
-                    }),
+                    })]
                 // fetch('/run-script3', {
                 //     method: 'POST',
                 //     headers: {
@@ -187,7 +188,7 @@
                 //     .then(result => {
                 //         document.getElementById('output3').textContent = result.output;
                 //     })]
-                // )
+                )
 
                 clearInterval(interval);
                 progressBar.style.width = '100%';
