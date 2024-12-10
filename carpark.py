@@ -5,11 +5,14 @@ import time
 import sys
 
 #Define Functions
-def percentile(percent,list):
-    for index, number in enumerate(list):
-        if number >= percent:
-            print(percent,"th Percentile = ", index, sep='')
-            return
+def percentageoftime(percent,list):
+    cumulativesum = 0
+    totaltime = sum(list)
+    targetsum = totaltime * percent / 100
+    for index, value in enumerate(list):
+        cumulativesum += value
+        if cumulativesum >= targetsum:
+            return index
 
 arrivalrate = int(sys.argv[1])
 servicetime = int(sys.argv[2])
@@ -70,4 +73,4 @@ print("Modelled Arrivals = ", round(count_arrivals / cyclecount / precision,1))
 # Find Percentage Thresholds
 print("Spaces Required if Unlimited Parking Avaialble")
 for value in percentiles:
-    percentile(value,count_carsparked)
+    print(value,"th percentile - ",percentageoftime(value,count_carsparked), sep='')
