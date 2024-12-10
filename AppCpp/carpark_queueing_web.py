@@ -2,10 +2,11 @@
 #Import Functions Required
 import random
 import time
+import sys
 
-arrivalrate = 1000
-servicetime = 1000
-spaces = 300
+arrivalrate = int(sys.argv[1])
+servicetime = int(sys.argv[2])
+spaces = int(sys.argv[3])
 precision = 1
 
 #Define Functions
