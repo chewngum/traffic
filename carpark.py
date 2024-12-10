@@ -29,20 +29,15 @@ utilisation = []
 test = 0 
 hours = 0
 percentiles = [10,20,30,40,50,60,70,80,90,95,98,99]
-cyclecount = 3000
+cyclecount = 1000
 
 #Generate Arrivals
 
 start_time = time.time()
 for i in range (1,cyclecount * 3600 * precision):
     arrival = random.randint(1,3600 * precision)
-    if i % 36000 == 0 and i >= 3600*1000:
-        a = round(max(count_carsparked) / sum([num for num in count_carsparked if num != 0]),5)
-        if test == a:
-            cyclecount = i/3600
-            break
-        else:
-            test = a
+    if i >= 3600*cyclecount:
+        break
 
     # Count current carpark utilisation
     count_carsparked[max(len(carsparked),0)] += 1
