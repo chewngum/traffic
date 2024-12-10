@@ -6,12 +6,12 @@ app = Flask(__name__)
 CORS(app)
 
 def python_script1():
-    import carpark_queueing_web
+    import carpark
 
 def python_script2():
     import carpark_blocking_web
 
-def python_script2():
+def python_script3():
     import carpark_queueing_web
 
 @app.route('/')
