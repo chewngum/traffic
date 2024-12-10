@@ -106,6 +106,20 @@
                 run1.disabled = false;
             }
         }
+        async function runGoFile() {
+            try {
+                const response = await fetch('/api/run-go', {
+                    method: 'POST',
+                });
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+                const output = await response.text();
+                document.getElementById('output3').innerText = output;
+            } catch (error) {
+                document.getElementById('output3').innerText = "Error: " + error.message;
+            }
+        }
 
         async function runCode() {
             // Initialize progress bar
@@ -119,7 +133,7 @@
 
             document.getElementById('output').textContent = ""
             document.getElementById('output2').textContent = ""
-            document.getElementById('output3').textContent = ""
+            // document.getElementById('output3').textContent = ""
 
             // Create a payload with input values
             const payload = {
@@ -162,18 +176,18 @@
                     .then(result => {
                         document.getElementById('output2').textContent = result.output;
                     }),
-                fetch('/run-script3', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload)
-                })
-                    .then(response => response.json())
-                    .then(result => {
-                        document.getElementById('output3').textContent = result.output;
-                    })]
-                )
+                // fetch('/run-script3', {
+                //     method: 'POST',
+                //     headers: {
+                //         'Content-Type': 'application/json',
+                //     },
+                //     body: JSON.stringify(payload)
+                // })
+                //     .then(response => response.json())
+                //     .then(result => {
+                //         document.getElementById('output3').textContent = result.output;
+                //     })]
+                // )
 
                 clearInterval(interval);
                 progressBar.style.width = '100%';
