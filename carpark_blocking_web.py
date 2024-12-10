@@ -11,11 +11,14 @@ spaces = int(sys.argv[3])
 #import matplotlib.pyplot as plt
 
 #Define Functions
-def percentile(percent,list):
-    for index, number in enumerate(list):
-        if number >= percent:
-            print(percent,"th Percentile = ", index, sep='')
-            return
+def percentageoftime(percent,list):
+    cumulativesum = 0
+    totaltime = sum(list)
+    targetsum = totaltime * percent / 100
+    for index, value in enumerate(list):
+        cumulativesum += value
+        if cumulativesum >= targetsum:
+            return index
 
 
 precision = 1 #int(input("Enter number above 0: "))
@@ -74,16 +77,11 @@ elapsed_time = end_time - start_time
 print("Model completed in ", int(round(elapsed_time,0)), " seconds", sep='')
 print(hours, "Hours modelled until stable results")
 
-
-#Convert Counts to Percentages
-count_carsparked = list(itertools.accumulate(count_carsparked))
-count_carsparked = [round(100 * item / (cyclecount * 3600 * precision),2) for item in count_carsparked]
-
 # Find model outputs
 print("Modelled Arrivals = ", round(count_arrivals / cyclecount / precision,1))
 
 # Find Percentage Thresholds
 print("Spaces Required if no queue option (Erlang-Blocking)")
 for value in percentiles:
-    percentile(value,count_carsparked)
+    print(value,"th percentile - ",percentageoftime(value,count_carsparked), sep='')
 print("Cars Blocked: ", round(count_blocked*100/(count_blocked+count_serviced),2),"%", sep='')
