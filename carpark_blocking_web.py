@@ -49,25 +49,23 @@ for i in range (1,cyclecount * 3600 * precision):
         else:
             blocktest = round(count_blocked/count_arrivals,5)
 
+    # Check if new car arrived and add to carpark
     arrival = random.randint(1,3600 * precision)
-
+    if arrival <= arrivalrate * precision:
+        count_arrivals += 1
+        if len(carsparked) < spaces:
+            carsparked.append(servicetime)
+            count_serviced += 1
+        else:
+            count_blocked += 1
     # Count current carpark utilisation
-    count_carsparked[max(len(carsparked)-1,0)] += 1
+    count_carsparked[max(len(carsparked),0)] += 1
 
     # Reduce parked cars time remaining by passing time
     if len(carsparked) > 0:
         carsparked = [item - 1 for item in carsparked]
         if carsparked[0] == 0:
             del carsparked[0]
-
-    # Check if new car arrived and add to carpark
-    if arrival <= arrivalrate * precision:
-        count_arrivals += 1
-        if len(carsparked)-1 < spaces:
-            carsparked.append(servicetime)
-            count_serviced += 1
-        if len(carsparked)-1 == spaces:
-            count_blocked += 1
 
 
 # Calculate the elapsed time in reality and model
