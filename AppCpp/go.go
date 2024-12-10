@@ -2,15 +2,17 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
+
 )
 
 // Parameters
 const (
-	arrivalRate = 100
-	serviceTime = 10
-	spaces      = 1
+	arrivalRate = 3800
+	serviceTime = 3600
+	spaces      = 30000
 	precision   = 1
 )
 
@@ -29,14 +31,14 @@ func percentageOfTime(percent float64, list []int) int {
 			return index
 		}
 	}
-	return 0
+	return 900
 }
 
 func modelRun(arrivalRate, serviceTime, spaces int) {
 	// Initialize variables
 	startTime := time.Now()
 	countArrivals := 0
-	countCarsParked := make([]int, arrivalRate*serviceTime)
+	countCarsParked := make([]int, spaces+1)
 	countCarsQueued := make([]int, arrivalRate*serviceTime)
 	carsParked := []int{}
 	cycleCount := 10000
@@ -52,11 +54,12 @@ func modelRun(arrivalRate, serviceTime, spaces int) {
 	// Generate arrivals
 	for i := 1; i <= cycleCount*3600; i++ {
 		if i > 3600*1000 && i%36000 == 0 {
-			if queueTest == float64(carsQueued)/float64(countArrivals) || i == 3000*3600 {
+			currentQueueRatio := float64(carsQueued) / float64(countArrivals)
+			if math.Abs(queueTest-currentQueueRatio) <= 1e-6 || i == 3000*3600 {
 				hours = float64(i) / 3600
 				break
 			} else {
-				queueTest = float64(carsQueued) / float64(countArrivals)
+				queueTest = currentQueueRatio
 			}
 		}
 
@@ -64,7 +67,7 @@ func modelRun(arrivalRate, serviceTime, spaces int) {
 		arrival := rand.Intn(3600*precision) + 1
 		if arrival <= arrivalRate*precision {
 			countArrivals++
-			if len(carsParked) -1 < spaces {
+			if len(carsParked) < spaces {
 				carsParked = append(carsParked, serviceTime)
 			} else {
 				queue++
@@ -73,13 +76,13 @@ func modelRun(arrivalRate, serviceTime, spaces int) {
 		}
 
 		// Count current car park utilization
-		index := max(len(carsParked)-1, 0)
+		index := max(len(carsParked), 0)
 		countCarsParked[index]++
 		countCarsQueued[queue]++
 		queueTime += queue
 
 		// Reduce parked cars' time remaining
-		if len(carsParked) >=1 {
+		if len(carsParked) >= 1 {
 			for j := range carsParked {
 				carsParked[j]--
 			}
@@ -102,13 +105,13 @@ func modelRun(arrivalRate, serviceTime, spaces int) {
 	} else {
 		fmt.Printf("Stable solution found after %.0f hours of survey data.\n", hours)
 	}
-	fmt.Printf("Cars Queued = %.2f%%\n", float64(carsQueued*100)/float64(countArrivals))
+	fmt.Printf("Cars Queued = %.1f%%\n", float64(carsQueued*100)/float64(countArrivals))
 	if carsQueued > 0 {
-		fmt.Printf("Average Queue time per Arrival/Queued Vehicle = %.0f/%.0f seconds\n",
+		fmt.Printf("Average Queue time per Arrival/Queued Vehicle = %.1f / %.1f seconds\n",
 			float64(queueTime)/float64(countArrivals), float64(queueTime)/float64(carsQueued))
 	}
-	fmt.Printf("Perfect Arrivals Demand = %.2f spaces\n",
-		float64(countArrivals)/hours*float64(serviceTime)/3600)
+	fmt.Printf("Theoretical minimum spaces for requested/model demand = %.2f / %.2f spaces\n",
+		float64(countArrivals)/hours*float64(serviceTime)/3600, float64(int(arrivalRate)*int(serviceTime))/3600)
 
 	fmt.Println("Random Arrivals Demand percentiles:")
 	for _, value := range percentiles {
@@ -116,14 +119,7 @@ func modelRun(arrivalRate, serviceTime, spaces int) {
 		queuedIndex := percentageOfTime(value, countCarsQueued)
 		fmt.Printf("%.0fth - %d parked and %d queued\n", value, parkedIndex, queuedIndex)
 	}
-	
-}
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }
 
 func main() {

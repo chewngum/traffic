@@ -3,9 +3,9 @@
 import random
 import time
 
-arrivalrate = 100
-servicetime = 10
-spaces = 1
+arrivalrate = 1000
+servicetime = 1000
+spaces = 300
 precision = 1
 
 #Define Functions
@@ -23,8 +23,8 @@ def modelrun(arrivalrate,servicetime,spaces):
     #Intialise All Variables
     start_time = time.time()
     count_arrivals = 0
-    count_carsparked = [0] * int(arrivalrate * int(servicetime))
-    count_carsqueued = [0] * int(arrivalrate * int(servicetime))
+    count_carsparked = [0] * int(spaces+1)
+    count_carsqueued = [0] * int(arrivalrate * servicetime)
     carsparked = []
     cyclecount = int(10000)
     arrival = 0
@@ -50,16 +50,16 @@ def modelrun(arrivalrate,servicetime,spaces):
         arrival = random.randint(1,3600 * precision)
         if arrival <= arrivalrate * precision:
             count_arrivals += 1
-            if len(carsparked) - 1 < spaces:
+            if len(carsparked) < spaces:
                 carsparked.append(servicetime)
-            if len(carsparked) - 1 == spaces:
+            else: 
                 queue +=1
                 carsqueued +=1
                 minimumqueue += carsparked[0]
 
 
         # Count current carpark utilisation
-        count_carsparked[max(len(carsparked)-1,0)] += 1
+        count_carsparked[max(len(carsparked),0)] += 1
         count_carsqueued[queue] += 1
         queuetime += queue
 
@@ -69,15 +69,17 @@ def modelrun(arrivalrate,servicetime,spaces):
 
             # move finished cars out and queued cars in    
             if carsparked[0] == 0:
+
                 del carsparked[0]
                 if queue > 0:
                     carsparked.append(servicetime)
                     queue -= 1
 
-        
-
     cyclecount = hours
-    
+
+    for index, value in enumerate(count_carsparked):
+        count_carsparked[index] = count_carsparked[index] / (hours * 3600)
+
     end_time = time.time()
     elapsed_time = end_time - start_time
     print("Model completed in ", int(round(elapsed_time,0)), " seconds", sep='')

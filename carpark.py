@@ -21,12 +21,12 @@ precision = 1 #int(input("Enter number above 0: "))
 carsparked = []
 arrival = 0
 count_arrivals = 0
-count_carsparked = [0] * int((arrivalrate * max(int(servicetime/600)+200,2) ))
+count_carsparked = [0] * int(arrivalrate * servicetime) 
 utilisation = []
 test = 0 
 hours = 0
 percentiles = [10,20,30,40,50,60,70,80,90,95,98,99]
-cyclecount = 100
+cyclecount = 3000
 
 #Generate Arrivals
 
@@ -42,7 +42,7 @@ for i in range (1,cyclecount * 3600 * precision):
             test = a
 
     # Count current carpark utilisation
-    count_carsparked[max(len(carsparked)-1,0)] += 1
+    count_carsparked[max(len(carsparked),0)] += 1
 
     # Reduce parked cars time remaining by passing time
     if len(carsparked) > 0:
