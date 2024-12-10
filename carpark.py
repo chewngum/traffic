@@ -63,10 +63,6 @@ end_time = time.time()
 elapsed_time = end_time - start_time
 print("Model completed in ", int(round(elapsed_time,0)), " seconds", sep='')
 
-#Convert Counts to Percentages
-count_carsparked = list(itertools.accumulate(count_carsparked))
-count_carsparked = [round(100 * item / (cyclecount * 3600 * precision),2) for item in count_carsparked]
-
 # Find model outputs
 print("Modelled Arrivals = ", round(count_arrivals / cyclecount / precision,1))
 
