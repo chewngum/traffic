@@ -1,6 +1,5 @@
 #Import Functions Required
 import random
-import itertools
 import time
 import sys
 
@@ -24,7 +23,7 @@ precision = 1 #int(input("Enter number above 0: "))
 carsparked = []
 arrival = 0
 count_arrivals = 0
-count_carsparked = [0] * int(arrivalrate * servicetime) 
+count_carsparked = [0] * int(arrivalrate * servicetime+1) 
 utilisation = []
 test = 0 
 hours = 0
