@@ -5,15 +5,17 @@ import (
 	"math"
 	"math/rand"
 	"time"
-
+	"os"
+	"strconv"
 )
 
-// Parameters
-const (
-	arrivalRate = 100
-	serviceTime = 100
-	spaces      = 10
+var (
+	arrivalRate, err1 = strconv.Atoi(os.Args[1])
+	serviceTime, err2 = strconv.Atoi(os.Args[2])
+	spaces, err3     = strconv.Atoi(os.Args[3])
 	precision   = 1
+
+
 )
 
 // percentageOfTime calculates the index at which a cumulative sum of values in the list reaches or exceeds the specified percentage.
@@ -35,7 +37,21 @@ func percentageOfTime(percent float64, list []int) int {
 }
 
 func modelRun(arrivalRate, serviceTime, spaces int) {
-	// Initialize variables
+// Initialize variables
+if err1 != nil || err2 != nil || err3 != nil {
+	fmt.Println("All three arguments must be valid integers.")
+	if err1 != nil {
+		fmt.Printf("Error in argument 1: %v\n", err1)
+	}
+	if err2 != nil {
+		fmt.Printf("Error in argument 2: %v\n", err2)
+	}
+	if err3 != nil {
+		fmt.Printf("Error in argument 3: %v\n", err3)
+	}
+	return
+}
+
 	startTime := time.Now()
 	countArrivals := 0
 	countCarsParked := make([]int, spaces+1)
