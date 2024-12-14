@@ -1,22 +1,21 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"log/slog"
 	"math"
 	"math/rand"
-	"time"
 	"os"
-	"strconv"
+	"time"
 )
 
-var (
-	arrivalRate, err1 = strconv.Atoi(os.Args[1])
-	serviceTime, err2 = strconv.Atoi(os.Args[2])
-	spaces, err3     = strconv.Atoi(os.Args[3])
-	precision   = 1
-
-
-)
+type CarparkInputs struct {
+	arrivalRate int
+	precision   int
+	serviceTime int
+	spaces      int
+}
 
 // percentageOfTime calculates the index at which a cumulative sum of values in the list reaches or exceeds the specified percentage.
 func percentageOfTime(percent float64, list []int) int {
@@ -36,26 +35,11 @@ func percentageOfTime(percent float64, list []int) int {
 	return 900
 }
 
-func modelRun(arrivalRate, serviceTime, spaces int) {
-// Initialize variables
-if err1 != nil || err2 != nil || err3 != nil {
-	fmt.Println("All three arguments must be valid integers.")
-	if err1 != nil {
-		fmt.Printf("Error in argument 1: %v\n", err1)
-	}
-	if err2 != nil {
-		fmt.Printf("Error in argument 2: %v\n", err2)
-	}
-	if err3 != nil {
-		fmt.Printf("Error in argument 3: %v\n", err3)
-	}
-	return
-}
-
+func modelRun(inp CarparkInputs) {
 	startTime := time.Now()
 	countArrivals := 0
-	countCarsParked := make([]int, spaces+1)
-	countCarsQueued := make([]int, arrivalRate*serviceTime)
+	countCarsParked := make([]int, inp.spaces+1)
+	countCarsQueued := make([]int, inp.arrivalRate*inp.serviceTime)
 	carsParked := []int{}
 	cycleCount := 10000
 	carsQueued := 0
@@ -80,11 +64,11 @@ if err1 != nil || err2 != nil || err3 != nil {
 		}
 
 		// Check if a new car arrived and add to the car park
-		arrival := rand.Intn(3600*precision) + 1
-		if arrival <= arrivalRate*precision {
+		arrival := rand.Intn(3600*inp.precision) + 1
+		if arrival <= inp.arrivalRate*inp.precision {
 			countArrivals++
-			if len(carsParked) < spaces {
-				carsParked = append(carsParked, serviceTime)
+			if len(carsParked) < inp.spaces {
+				carsParked = append(carsParked, inp.serviceTime)
 			} else {
 				queue++
 				carsQueued++
@@ -107,7 +91,7 @@ if err1 != nil || err2 != nil || err3 != nil {
 			if carsParked[0] == 0 {
 				carsParked = carsParked[1:]
 				if queue > 0 {
-					carsParked = append(carsParked, serviceTime)
+					carsParked = append(carsParked, inp.serviceTime)
 					queue--
 				}
 			}
@@ -127,7 +111,7 @@ if err1 != nil || err2 != nil || err3 != nil {
 			float64(queueTime)/float64(countArrivals), float64(queueTime)/float64(carsQueued))
 	}
 	fmt.Printf("Theoretical minimum spaces for requested/model demand = %.2f / %.2f spaces\n",
-		float64(countArrivals)/hours*float64(serviceTime)/3600, float64(int(arrivalRate)*int(serviceTime))/3600)
+		float64(countArrivals)/hours*float64(inp.serviceTime)/3600, float64(int(inp.arrivalRate)*int(inp.serviceTime))/3600)
 
 	fmt.Println("Random Arrivals Demand percentiles:")
 	for _, value := range percentiles {
@@ -139,5 +123,18 @@ if err1 != nil || err2 != nil || err3 != nil {
 }
 
 func main() {
-	modelRun(arrivalRate, serviceTime, spaces)
+	var inputs CarparkInputs
+
+	// Parse command line arguments
+	// e.g., go run api/carpark.go -arrivalRate=50 -precision=3 -serviceTime=90 -spaces=5
+	flag.IntVar(&inputs.arrivalRate, "arrivalRate", 100, "Number of cars arriving per hour")
+	flag.IntVar(&inputs.precision, "precision", 1, "Precision required for arrival rate")
+	flag.IntVar(&inputs.serviceTime, "serviceTime", 100, "How long a car stays in the carpark")
+	flag.IntVar(&inputs.spaces, "spaces", 10, "Number of spaces in the carpark")
+	flag.Parse()
+
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	logger.Info("running model", "arrivalRate", inputs.arrivalRate, "precision", inputs.precision, "serviceTime", inputs.serviceTime, "spaces", inputs.spaces)
+
+	modelRun(inputs)
 }
