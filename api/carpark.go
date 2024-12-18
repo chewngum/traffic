@@ -55,7 +55,7 @@ func modelRun(inp CarparkInputs) {
 	for i := 1; i <= cycleCount*3600; i++ {
 		if i > 3600*1000 && i%36000 == 0 {
 			currentQueueRatio := float64(carsQueued) / float64(countArrivals)
-			if math.Abs(queueTest-currentQueueRatio) <= 1e-6 || i == 3000*3600 {
+			if math.Abs(queueTest-currentQueueRatio) <= 1e-6 {
 				hours = float64(i) / 3600
 				break
 			} else {
