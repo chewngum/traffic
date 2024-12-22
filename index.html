@@ -204,13 +204,13 @@
 
         
             fetch('/api/hello')
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('output3').textContent = data;
-            })
-            .catch(error => {
-                console.error('Error fetching backend output:', error);
-            });
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('output3').textContent = data;
+                })
+                .catch(error => {
+                    console.error('Error fetching backend output:', error);
+                })
 
         }
     </script>
