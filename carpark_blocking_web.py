@@ -8,7 +8,6 @@ import sys
 arrivalrate = int(sys.argv[1])
 servicetime = int(sys.argv[2])
 spaces = int(sys.argv[3])
-#import matplotlib.pyplot as plt
 
 #Define Functions
 def percentageoftime(percent,list):

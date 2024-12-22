@@ -8,14 +8,18 @@ import (
 	"math/rand"
 	"os"
 	"time"
+	"os"
+	"strconv"
 )
 
-type CarparkInputs struct {
-	arrivalRate int
-	precision   int
-	serviceTime int
-	spaces      int
-}
+var (
+	arrivalRate, err1 = strconv.Atoi(os.Args[1])
+	serviceTime, err2 = strconv.Atoi(os.Args[2])
+	spaces, err3     = strconv.Atoi(os.Args[3])
+	precision   = 1
+
+
+)
 
 // percentageOfTime calculates the index at which a cumulative sum of values in the list reaches or exceeds the specified percentage.
 func percentageOfTime(percent float64, list []int) int {
@@ -25,14 +29,13 @@ func percentageOfTime(percent float64, list []int) int {
 		totalTime += value
 	}
 	targetSum := int(float64(totalTime) * percent / 100)
-
 	for index, value := range list {
 		cumulativeSum += value
 		if cumulativeSum >= targetSum {
 			return index
 		}
 	}
-	return 900
+	return 101010101010
 }
 
 func modelRun(inp CarparkInputs) {
@@ -41,22 +44,21 @@ func modelRun(inp CarparkInputs) {
 	countCarsParked := make([]int, inp.spaces+1)
 	countCarsQueued := make([]int, inp.arrivalRate*inp.serviceTime)
 	carsParked := []int{}
-	cycleCount := 10000
+	cycleCount := 1000000
 	carsQueued := 0
 	queue := 0
 	percentiles := []float64{10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99}
 	queueTime := 0
 	queueTest := 0.0
 	hours := 0.0
-
 	rand.Seed(time.Now().UnixNano()) // Seed the random number generator
 
 	// Generate arrivals
 	for i := 1; i <= cycleCount*3600; i++ {
 		if i > 3600*1000 && i%36000 == 0 {
 			currentQueueRatio := float64(carsQueued) / float64(countArrivals)
+			hours = float64(i) / 3600
 			if math.Abs(queueTest-currentQueueRatio) <= 1e-6  {
-				hours = float64(i) / 3600
 				break
 			} else {
 				queueTest = currentQueueRatio
@@ -98,8 +100,8 @@ func modelRun(inp CarparkInputs) {
 		}
 	}
 
-	elapsedTime := time.Since(startTime).Seconds()
-	fmt.Printf("Model completed in %.0f seconds\n", elapsedTime)
+	elapsedTime := time.Since(startTime).Milliseconds()
+	fmt.Printf("Model completed in %.dms\n", elapsedTime)
 	if hours == 3000 {
 		fmt.Printf("0.00001 stability not found. %.0f hours of survey data generated.\n", hours)
 	} else {

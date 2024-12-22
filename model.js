@@ -1,4 +1,5 @@
 const HOURS_IN_SECONDS = 3600;
+const [arg1, arg2, arg3] = process.argv.slice(2);
 
 function percentageOfTime(percent, list) {
     let cumulativeSum = 0;
@@ -11,7 +12,7 @@ function percentageOfTime(percent, list) {
             return index;
         }
     }
-    return 900;
+    return 0;
 }
 
 function calculatePercentiles(countCarsParked, countCarsQueued) {
@@ -45,16 +46,18 @@ function runSimulation(inp) {
 
     let hours = 0;
     for (let i = 1; i <= inp.cycles * HOURS_IN_SECONDS; i++) {
+        
         if (i > 3600000 && i % 36000 === 0) {
+            hours = i / HOURS_IN_SECONDS;
             const currentQueueRatio = state.carsQueued / state.countArrivals;
-            if (Math.abs(state.queueTest - currentQueueRatio) <= 1e-6 || i === 10800000) {
-                hours = i / HOURS_IN_SECONDS;
+            if (Math.abs(state.queueTest - currentQueueRatio) <= 1e-6) {
                 break;
             } else {
                 state.queueTest = currentQueueRatio;
             }
-        }
 
+        }
+        
         // Check if a new car arrived and add to the car park
         const arrival = Math.floor(Math.random() * (HOURS_IN_SECONDS * inp.precision)) + 1;
         if (arrival <= inp.arrivalRate * inp.precision) {
@@ -89,16 +92,15 @@ function runSimulation(inp) {
             }
         }
     }
-
     const elapsedMs = performance.now() - startTime;
     const results = {
         elapsedTime: `${Math.round(elapsedMs)}ms`,
         hours,
-        carsQueued: (state.carsQueued * 100) / state.countArrivals,
-        averageQueueTime: state.queueTime / state.countArrivals,
-        stabilityFound: hours !== 3000,
-        theoreticalMinSpace: (state.countArrivals / hours * inp.serviceTime) / HOURS_IN_SECONDS,
-        modelDemandSpace: (inp.arrivalRate * inp.serviceTime) / HOURS_IN_SECONDS,
+        PercentCarsQueued: ((state.carsQueued * 100) / state.countArrivals).toFixed(1),
+        QueueTimePerQueuedVehicle: (state.queueTime / state.carsQueued).toFixed(1),
+        QueueTimePerArrival: (state.queueTime / state.countArrivals).toFixed(1),
+        theoreticalMinSpace: ((state.countArrivals / hours * inp.serviceTime) / HOURS_IN_SECONDS).toFixed(2),
+        modelDemandSpace: ((inp.arrivalRate * inp.serviceTime) / HOURS_IN_SECONDS).toFixed(2),
         percentiles: calculatePercentiles(state.countCarsParked, state.countCarsQueued)
     };
 
@@ -108,11 +110,11 @@ function runSimulation(inp) {
 
 export default function main() {
     const inputs = {
-        arrivalRate: 1000,
+        arrivalRate: Number(arg1),
         cycles: 10000,
         precision: 1,
-        serviceTime: 1000,
-        spaces: 280
+        serviceTime: Number(arg2),
+        spaces: Number(arg3)
     };
 
     runSimulation(inputs);
