@@ -203,7 +203,13 @@
             }
 
         
-            fetch('/api/hello')
+            fetch('/run-script3', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                })
                 .then(response => response.text())
                 .then(data => {
                     document.getElementById('output3').textContent = data;
