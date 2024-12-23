@@ -9,17 +9,6 @@
       { "src": "/.*", "dest": "/app.py" },
       { "src": "/", "dest": "/index.html" }
     ],
-    "rewrites": [
-    { "source": "/hello", "destination": "/api/hello" }
-    ],
-    "headers": [
-      {
-        "source": "/api/(.*)",
-        "headers": [
-          { "key": "Cache-Control", "value": "s-maxage=86400" }
-        ]
-      }
-    ],
     "functions": {
       "api/*.js": {
       "memory": 128,
