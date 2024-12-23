@@ -3,12 +3,28 @@
     "version": 2,
     "builds": [
       { "src": "app.py", "use": "@vercel/python" },
-      { "src": "index.html", "use": "@vercel/static" },
-      { "src": "model.js", "use":"@vercel/javascript"}
+      { "src": "index.html", "use": "@vercel/static" }
     ],
     "routes": [
       { "src": "/.*", "dest": "/app.py" },
-      { "src": "/", "dest": "/index.html" },
-      { "src": "/api/*", "dest": "/api" }
+      { "src": "/", "dest": "/index.html" }
+    ],
+    "rewrites": [
+    { "source": "/hello", "destination": "/api/hello" }
+    ],
+    "headers": [
+      {
+        "source": "/api/(.*)",
+        "headers": [
+          { "key": "Cache-Control", "value": "s-maxage=86400" }
+        ]
+      }
+    ],
+    "functions": [
+    {"api/**/*.js": {
+      "memory": 128,
+      "maxDuration": 10
+    }
+    }
     ]
   }
