@@ -107,22 +107,6 @@
             }
         }
         
-        // async function runGoFile() {
-        //     try {
-        //         const response = await fetch('/api/date.go', {
-        //             method: 'GET',
-        //         });
-        //         if (!response.ok) {
-        //             throw new Error(await response.text());
-        //         }
-        //         const output = await response.text();
-        //         document.getElementById('output3').innerText = output;
-        //     } catch (error) {
-        //         document.getElementById('output3').innerText = "Error: " + error.message;
-        //     }
-        // }
-        
-
         async function runCode() {
 
             // Initialize progress bar
@@ -195,14 +179,11 @@
                 clearInterval(interval);
                 progressBar.style.width = '100%';
 
-
             } catch (error) {
                 console.error('There was a problem with the fetch operation:', error);
                 clearInterval(interval);
                 progressBar.style.width = '100%';
             }
-
-
         }
     </script>
 </body>

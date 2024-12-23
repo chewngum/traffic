@@ -41,11 +41,11 @@ def modelrun(arrivalrate,servicetime,spaces):
     
     for i in range (1,cyclecount * 3600 ):
         if i  > 3600*1000 and i%36000 ==0:
-            if queuetest == round(carsqueued/count_arrivals,5) or i == 3000*3600:
+            if queuetest == round(carsqueued/count_arrivals,6):
                 hours = i / 3600
                 break
             else:
-                queuetest = round(carsqueued/count_arrivals,5)
+                queuetest = round(carsqueued/count_arrivals,6)
                 
         # Check if new car arrived and at to carpark
         arrival = random.randint(1,3600 * precision)
@@ -84,10 +84,7 @@ def modelrun(arrivalrate,servicetime,spaces):
     end_time = time.time()
     elapsed_time = end_time - start_time
     print("Model completed in ", int(round(elapsed_time,0)), " seconds", sep='')
-    if hours == 3000:
-        print("0.00001 stability not found. ",hours,"hours of survey data generated.")
-    else:
-        print("Stable solution found after",hours,"hours of survey data")
+    print("Surveyed Hours:",hours)
     print("Cars Queued = ", round(carsqueued * 100 / count_arrivals,2),"%", sep='')
     if carsqueued > 0:
         print("Average Queue time per Arrival/Queued Vehicle = ", round(queuetime / count_arrivals),"/",round(queuetime / carsqueued),"seconds")
