@@ -83,7 +83,7 @@
     <textarea id="output3" readonly></textarea>
 
 
-    <script language="javascript">
+    <!-- <script language="javascript">
         function checkInput() {
             const input1 = document.getElementById('input1');
             const input2 = document.getElementById('input2');
@@ -185,6 +185,13 @@
                 progressBar.style.width = '100%';
             }
         }
+    </script> -->
+    <script>
+        document.getElementById('Run1').addEventListener('click', async () => {
+            const response = await fetch('/api/run-script');
+            const result = await response.text();
+            document.getElementById('output3').value = result;
+        });
     </script>
 </body>
 

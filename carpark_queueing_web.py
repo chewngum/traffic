@@ -40,12 +40,12 @@ def modelrun(arrivalrate,servicetime,spaces):
     #Generate Arrivals
     
     for i in range (1,cyclecount * 3600 ):
-        if i  > 3600*1000 and i%36000 ==0:
-            if queuetest == round(carsqueued/count_arrivals,6):
+        if i  > 3600*500 and i%36000 ==0:
+            if queuetest == round(carsqueued/count_arrivals,5):
                 hours = i / 3600
                 break
             else:
-                queuetest = round(carsqueued/count_arrivals,6)
+                queuetest = round(carsqueued/count_arrivals,5)
                 
         # Check if new car arrived and at to carpark
         arrival = random.randint(1,3600 * precision)
