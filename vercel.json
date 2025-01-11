@@ -2,7 +2,7 @@
   {
     "version": 2,
     "builds": [
-      { "src": "app.py", "use": "@vercel/python" },
+      { "src": "app2.py", "use": "@vercel/python" },
       { "src": "index.html", "use": "@vercel/static" }
     ],
     "routes": [
