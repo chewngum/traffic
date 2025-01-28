@@ -201,32 +201,6 @@
             // Display the result in the textarea
             document.getElementById('output1').value = result
         })
-    </script>
-    <!-- <script>
-        function checkInput() {
-                    const input1 = document.getElementById('input1');
-                    const input2 = document.getElementById('input2');
-                    const input3 = document.getElementById('input3');
-                    const input1Value = parseInt(document.getElementById('input1').value, 10);
-                    const input2Value = parseInt(document.getElementById('input2').value, 10);
-                    const input3Value = parseInt(document.getElementById('input3').value, 10);
-                    const errorMessage = document.getElementById('error-message');
-                    const errorValue = document.getElementById('error-value');
-                    const run1 = document.getElementById('Run1');
-                    const minRequiredValue = Math.floor(input1Value * input2Value / 3600);
-                    errorValue.textContent = minRequiredValue;
-                    run1.disabled = true;
-
-                    if (input3Value <= minRequiredValue) {
-                        errorMessage.style.display = 'block';
-                        run1.disabled = true;
-                    } else {
-                        errorMessage.style.display = 'none';
-                        run1.disabled = false;
-                    }
-                }
-
-
         document.getElementById('Run1').addEventListener('click', async () => {
             const arg1 = document.getElementById('arg1').value;
             const arg2 = document.getElementById('arg2').value;
@@ -240,9 +214,9 @@
             const result = await response.text();
 
             // Display the result in the textarea
-            document.getElementById('output3').value = result
+            document.getElementById('output2').value = result
         })
-    </script> -->
+    </script>
 </body>
 
 </html>
