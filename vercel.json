@@ -2,10 +2,10 @@
   "version": 2,
   "builds": [
     { "src": "app.py", "use": "@vercel/python" },
-    { "src": "index.html", "use": "@vercel/static" }
+    { "src": "js.html", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/.*", "dest": "/app.py" },
-    { "src": "/", "dest": "/index.html" }
+    { "src": "/", "dest": "/js.html" }
   ]
 }
