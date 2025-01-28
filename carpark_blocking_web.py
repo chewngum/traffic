@@ -42,11 +42,11 @@ hours = 0
 start_time = time.time()
 for i in range (1,cyclecount * 3600 * precision):
     if i % 360000  == 0 and i  > 3600*1000:
-        if blocktest == round(count_blocked/count_arrivals,6):
+        if blocktest == round(count_blocked/count_arrivals,5):
             hours = i / 3600
             break
         else:
-            blocktest = round(count_blocked/count_arrivals,6)
+            blocktest = round(count_blocked/count_arrivals,5)
 
     # Check if new car arrived and add to carpark
     arrival = random.randint(1,3600 * precision)
