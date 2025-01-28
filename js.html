@@ -109,113 +109,60 @@
         }
         
         async function runCode() {
+    let progressBar = document.getElementById('progress-bar');
+    progressBar.style.width = '0%';
 
-            // Initialize progress bar
-            let progressBar = document.getElementById('progress-bar');
-            progressBar.style.width = '0%';
+    // Get values from input fields
+    const payload = {
+        input1: parseInt(document.getElementById('input1').value, 10) || 0,
+        input2: parseInt(document.getElementById('input2').value, 10) || 0,
+        input3: parseInt(document.getElementById('input3').value, 10) || 0
+    };
 
-            // Get values from input fields
-            const input1 = document.getElementById('input1').value;
-            const input2 = document.getElementById('input2').value;
-            const input3 = document.getElementById('input3').value;
+    document.getElementById('output').textContent = "";
+    document.getElementById('output2').textContent = "";
+    document.getElementById('output3').textContent = "";
 
-            document.getElementById('output').textContent = ""
-            document.getElementById('output2').textContent = ""
-            document.getElementById('output3').textContent = ""
-
-            // Create a payload with input values
-            const payload = {
-                input1: parseInt(input1, 10),
-                input2: parseInt(input2, 10),
-                input3: parseInt(input3, 10)
-            };
-
-            // Start the progress bar
-            let progress = 0;
-            let interval = setInterval(() => {
-                progress += 1;
-                progressBar.style.width = progress + '%';
-                if (progress >= 100) {
-                    clearInterval(interval);
-                }
-            }, 100); // Update every 60ms to complete in 6 seconds
-
-            try {
-                // Make a POST request to the Flask server
-                const response = await Promise.all([fetch('/run-script1', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload)
-                })
-                    .then(response => response.json())
-                    .then(result => {
-                        document.getElementById('output').textContent = result.output;
-                    }),
-                fetch('/run-script2', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload)
-                })
-                    .then(response => response.json())
-                    .then(result => {
-                        document.getElementById('output2').textContent = result.output;
-                    }),
-                fetch('/run-script3', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload)
-                })
-                    .then(response => response.json())
-                    .then(result => {
-                        document.getElementById('output3').textContent = result.output;
-                    })]
-                )
-
-                clearInterval(interval);
-                progressBar.style.width = '100%';
-
-            } catch (error) {
-                console.error('There was a problem with the fetch operation:', error);
-                clearInterval(interval);
-                progressBar.style.width = '100%';
-            }
+    let progress = 0;
+    let interval = setInterval(() => {
+        progress += 5;
+        progressBar.style.width = progress + '%';
+        if (progress >= 100) {
+            clearInterval(interval);
         }
-        document.getElementById('Run1').addEventListener('click', async () => {
-            const arg1 = document.getElementById('arg1').value;
-            const arg2 = document.getElementById('arg2').value;
-            const arg3 = document.getElementById('arg3').value;
+    }, 100);
 
-            // Construct the API URL with query parameters
-            const apiUrl = `/api/run-script?arg1=${encodeURIComponent(arg1)}&arg2=${encodeURIComponent(arg2)}&arg3=${encodeURIComponent(arg3)}`;
+    try {
+        const responses = await Promise.all([
+            fetch('/run-script1', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(res => res.json()),
 
-            // Send the request to the API
-            const response = await fetch(apiUrl);
-            const result = await response.text();
+            fetch('/run-script3', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(res => res.json()),
 
-            // Display the result in the textarea
-            document.getElementById('output1').value = result
-        })
-        document.getElementById('Run1').addEventListener('click', async () => {
-            const arg1 = document.getElementById('arg1').value;
-            const arg2 = document.getElementById('arg2').value;
-            const arg3 = document.getElementById('arg3').value;
+            // Fetch from your JavaScript API at /api/run-script.js
+            fetch(`/api/run-script.js?input1=${payload.input1}&input2=${payload.input2}&input3=${payload.input3}`)
+                .then(res => res.json())
+        ]);
 
-            // Construct the API URL with query parameters
-            const apiUrl = `/api/run-script?arg1=${encodeURIComponent(arg1)}&arg2=${encodeURIComponent(arg2)}&arg3=${encodeURIComponent(arg3)}`;
+        document.getElementById('output').textContent = responses[0].output || "No response from /run-script1";
+        document.getElementById('output3').textContent = responses[1].output || "No response from /run-script3";
+        document.getElementById('output2').textContent = responses[2].output || "No response from /api/run-script.js";
 
-            // Send the request to the API
-            const response = await fetch(apiUrl);
-            const result = await response.text();
-
-            // Display the result in the textarea
-            document.getElementById('output2').value = result
-        })
+        progressBar.style.width = '100%';
+        clearInterval(interval);
+    } catch (error) {
+        console.error('Fetch error:', error);
+        progressBar.style.width = '100%';
+        clearInterval(interval);
+    }
+}
     </script>
 </body>
 
