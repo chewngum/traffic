@@ -9,7 +9,7 @@
     { "source": "/index-js", "destination": "/index-js.html" }
   ],
   "redirects": [
-    { "source": "/.*", "dest": "/app.py" },
+    { "source": "/.*", "destination": "/app.py" },
     { "source": "/", "destination": "/index", "permanent": true }
   ]
 }
