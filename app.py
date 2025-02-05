@@ -18,7 +18,7 @@ def python_script3():
 def index():
     return open('index.html').read()
 
-@app.route('/index-js')
+@app.route('/index-js.html')
 def js():
     return open('index-js.html').read()
 
