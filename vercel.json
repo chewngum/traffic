@@ -10,6 +10,6 @@
   ],
   "redirects": [
     { "source": "/.*", "destination": "/app.py" },
-    { "source": "/", "destination": "/index-py", "permanent": true }
+    { "source": "/", "destination": "/index-py", "permanent": true  }
   ]
 }
