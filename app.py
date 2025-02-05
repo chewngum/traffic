@@ -18,6 +18,10 @@ def python_script3():
 def index():
     return open('index.html').read()
 
+@app.route('/index-js')
+def js():
+    return open('index-js.html').read()
+
 @app.route('/run-script1', methods=['POST'])
 def run_script1():
     data = request.json
