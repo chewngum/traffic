@@ -6,8 +6,10 @@
   ],
   "routes": [
     { "src": "/.*", "dest": "/app.py" },
-    { "src": "/", "dest": "/index-py.html" },
-    { "src": "/index-js", "dest": "/index-js.html" }
+    { "src": "/", "dest": "/index-py.html" }
+  ],
+  "rewrites": [
+        {"source": "/(.*)", "destination": "/"}
   ]
 }
 
