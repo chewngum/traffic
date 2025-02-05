@@ -43,6 +43,9 @@
             line-height: 20px;
             color: black;
         }
+        .error-message{
+            color: red;
+        }
     </style>
 </head>
 <body>
@@ -57,19 +60,18 @@
     <h1>Simulation Parameters</h1>
     <form id="simulationForm">
         <label for="input1">Arrival Rate (Cars per hour)</label>
-        <input type="number" id="input1" min="0" step="1" required oninput="checkInput()">
+        <input type="number" id="input1" min="0" step="0.1" required oninput="checkInput()">
         </br>
         <label for="input2">Average Service Time (Seconds):</label>
-        <input type="number" id="input2" min="0" step="1" required oninput="checkInput()">
+        <input type="number" id="input2" min="0" step="0.1" required oninput="checkInput()">
     </br>
         <label for="input3">Number of Parking Spaces:</label>
         <input type="number" id="input3" min="0" step="1" required oninput="checkInput()">
     </br>
+
+        <button type="submit" id="button1" required disabled>Run Code</button>
         <div id="error-message" class="error-message">Spaces must exceed linear demand of <span id="error-value">0</span>
         </div>
-        <button type="submit" id="button1" required disabled>Run Code</button>
-
-        </br>
     </form>
 
     <h2>Simulation Results:</h2>
@@ -80,21 +82,36 @@
     <!-- The script that handles the form and invokes modeljs.js -->
     <script type="module">
         import * as script1 from "./carpark_queueing_web.js";
-        import * as script2 from "./carpark_queueing_web.js";
+        import * as script2 from "./carpark_blocking_web.js";
         import * as script3 from "./carpark_queueing_web.js";
-
-        document.getElementById("simulationForm").addEventListener("submit", function(event) {
+    
+        document.getElementById("simulationForm").addEventListener("submit", async function(event) {
             event.preventDefault();
 
+            // Get input values
             const AR = document.getElementById("input1").value;
             const ST = document.getElementById("input2").value;
-            const SP = document.getElementById("input3").value
-           
-             document.getElementById('results1').value = script1.main(AR,ST,SP);
-             document.getElementById("results2").value = script2.main(AR,ST,SP);
-             document.getElementById("results3").value = script3.main(AR,ST,SP);
+            const SP = document.getElementById("input3").value;
+    
+            try {
+                // Wait for each script to return a response asynchronously
+                // const result1 = await script1.main(AR, ST, SP);
+                const result2 = await script2.main(AR, ST, SP);
+                const result3 = await script3.main(AR, ST, SP);
+    
+                // Update text areas with results
+                // document.getElementById('results1').value = result1;
+                document.getElementById('results2').value = result2;
+                document.getElementById('results3').value = result3;
+            } catch (error) {
+                console.error("Error running simulations:", error);
+                document.getElementById('results1').value = "Error running simulation.";
+                document.getElementById('results2').value = "Error running simulation.";
+                document.getElementById('results3').value = "Error running simulation.";
+            }
         });
     </script>
+    
     <script language="javascript">
         function checkInput() {
             const input1 = document.getElementById('input1');
