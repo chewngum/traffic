@@ -104,7 +104,6 @@ function runSimulation(inp) {
         percentiles: calculatePercentiles(state.countCarsParked, state.countCarsQueued)
     };
 
-    console.dir(results, { depth: 4 });
     return results;
 }
 
