@@ -137,7 +137,7 @@ export function main(a,b,c) {
     const inputs = {
         arrivalRate: Number(a),
         cycles: 10000,
-        precision: 1,
+        precision: 10,
         serviceTime: Number(b),
         spaces: Number(c)
     };
