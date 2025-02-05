@@ -22,6 +22,14 @@ def index():
 def js():
     return open('index-js.html').read()
 
+@app.route('/carpark_blocking_web.js')
+def js():
+    return open('carpark_blocking_web.js').read()
+
+@app.route('/carpark_queueing_web.js')
+def js():
+    return open('carpark_queueing_web.js').read()
+
 @app.route('/run-script1', methods=['POST'])
 def run_script1():
     data = request.json
