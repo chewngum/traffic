@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carpark Utilisation Modeller</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input {
+            margin-bottom: 20px;
+        }
+
+        button {
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 30%;
+            height: 50vh;
+        }
+
+        .progress-container {
+            width: 50%;
+            background-color: #f3f3f3;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 20px;
+            background-color: #4caf50;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <a href="index-js.html">Go to python version</a>
+    <h1>Carpark Utilisation Modeller</h1>
+    <p>There are three carparking utilisation models for finding percentile based servicing or occupancy rates.</p>
+    <li>1. There are infinitely many spaces. M/M/1</li>
+    <li>2. There are finite spaces available, and when the carpark is full, vehicles do not wait and seek parking
+        elsewhere. Erlang-B Blocking</li>
+    <li>3. There are finite spaces available, and when the carpark is full, a queue can form of infinite length with the
+        first into the queue is the first to enter the carpark. Erlang-C Queueing</li>
+    <h1>Simulation Parameters</h1>
+    <form id="simulationForm">
+        <label for="input1">Arrival Rate (Cars per hour)</label>
+        <input type="number" id="input1" min="0" step="1" required oninput="checkInput()">
+        </br>
+        <label for="input2">Average Service Time (Seconds):</label>
+        <input type="number" id="input2" min="0" step="1" required oninput="checkInput()">
+    </br>
+        <label for="input3">Number of Parking Spaces:</label>
+        <input type="number" id="input3" min="0" step="1" required oninput="checkInput()">
+    </br>
+        <div id="error-message" class="error-message">Spaces must exceed linear demand of <span id="error-value">0</span>
+        </div>
+        <button type="submit" id="button1" required disabled>Run Code</button>
+
+        </br>
+    </form>
+
+    <h2>Simulation Results:</h2>
+    <textarea id="results1" readonly></textarea>
+    <textarea id="results2" readonly></textarea>
+    <textarea id="results3" readonly></textarea>
+
+    <!-- The script that handles the form and invokes modeljs.js -->
+    <script type="module">
+        import * as script1 from "./carpark_queueing_web.js";
+        import * as script2 from "./carpark_queueing_web.js";
+        import * as script3 from "./carpark_queueing_web.js";
+
+        document.getElementById("simulationForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const AR = document.getElementById("input1").value;
+            const ST = document.getElementById("input2").value;
+            const SP = document.getElementById("input3").value
+           
+             document.getElementById('results1').value = script1.main(AR,ST,SP);
+             document.getElementById("results2").value = script2.main(AR,ST,SP);
+             document.getElementById("results3").value = script3.main(AR,ST,SP);
+        });
+    </script>
+    <script language="javascript">
+        function checkInput() {
+            const input1 = document.getElementById('input1');
+            const input2 = document.getElementById('input2');
+            const input3 = document.getElementById('input3');
+            const input1Value = parseInt(document.getElementById('input1').value, 10);
+            const input2Value = parseInt(document.getElementById('input2').value, 10);
+            const input3Value = parseInt(document.getElementById('input3').value, 10);
+            const errorMessage = document.getElementById('error-message');
+            const errorValue = document.getElementById('error-value');
+            const run1 = document.getElementById('button1');
+            const minRequiredValue = Math.floor(input1Value * input2Value / 3600);
+            errorValue.textContent = minRequiredValue;
+            run1.disabled = true;
+
+            if (input3Value <= minRequiredValue) {
+                errorMessage.style.display = 'block';
+                run1.disabled = true;
+            } else {
+                errorMessage.style.display = 'none';
+                run1.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
