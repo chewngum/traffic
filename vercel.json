@@ -3,13 +3,6 @@
   "version": 2,
   "builds": [
     { "src": "app.py", "use": "@vercel/python" },
-    { "src": "index-py.html", "use": "@vercel/static" }
-  ],
-  "rewrites": [
-    { "source": "/index-js", "destination": "/index-js.html" }
-  ],
-  "redirects": [
-    { "source": "/.*", "destination": "/app.py" },
-    { "source": "/", "destination": "/index-py", "permanent": true  }
+    { "src": "index.html", "use": "@vercel/static" }
   ]
 }
