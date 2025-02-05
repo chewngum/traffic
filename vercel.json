@@ -8,5 +8,9 @@
   "routes": [
     { "src": "/.*", "dest": "/app.py" },
     { "src": "/", "dest": "/index-py.html" }
+  ],
+  "rewrites": [
+    { "source": "/index-js", "destination": "/index-js.html" }
   ]
 }
+
