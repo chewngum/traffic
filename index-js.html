@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carpark Utilisation Modeller</title>
     <style>
+        /* Spinner styles */
+        .spinner {
+            display: none; /* Initially hidden */
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
@@ -23,7 +41,7 @@
             margin-bottom: 20px;
         }
 
-        textarea {
+        .resultsarea {
             width: 30%;
             height: 50vh;
         }
@@ -69,21 +87,24 @@
         <input type="number" id="input3" min="0" step="1" required oninput="checkInput()">
     </br>
 
-        <button type="submit" id="button1" required disabled>Run Code</button>
+        <button type="submit" id="button1" run="displaywheel" disabled>Run Code</button>
         <div id="error-message" class="error-message">Spaces must exceed linear demand of <span id="error-value">0</span>
         </div>
     </form>
 
     <h2>Simulation Results:</h2>
-    <textarea id="results1" readonly></textarea>
-    <textarea id="results2" readonly></textarea>
-    <textarea id="results3" readonly></textarea>
+    <div id="spinner-container">
+        <div id="spinner" class="spinner"></div>
+    </div>
+    <textarea class="resultsarea" id="results1" readonly></textarea>
+    <textarea class="resultsarea" id="results2" readonly></textarea>
+    <textarea class="resultsarea" id="results3" readonly></textarea>
 
     <!-- The script that handles the form and invokes modeljs.js -->
     <script type="module">
-        import * as script1 from "./carpark_queueing_web.js";
-        import * as script2 from "./carpark_blocking_web.js";
-        import * as script3 from "./carpark_queueing_web.js";
+        import * as script1 from "/static/carpark_infinite.js";
+        import * as script2 from "/static/carpark_blocking_web.js";
+        import * as script3 from "/static/carpark_queueing_web.js";
     
         document.getElementById("simulationForm").addEventListener("submit", async function(event) {
             event.preventDefault();
@@ -95,24 +116,29 @@
     
             try {
                 // Wait for each script to return a response asynchronously
-                // const result1 = await script1.main(AR, ST, SP);
-                const result2 = await script2.main(AR, ST, SP);
-                const result3 = await script3.main(AR, ST, SP);
+                const result1 = await script1.test(AR, ST, SP);
+                const result2 = await script2.test(AR, ST, SP);
+                const result3 = await script3.test(AR, ST, SP);
     
                 // Update text areas with results
-                // document.getElementById('results1').value = result1;
+                document.getElementById('results1').value = result1;
                 document.getElementById('results2').value = result2;
                 document.getElementById('results3').value = result3;
+                document.getElementById('spinner').style.display = "none";
             } catch (error) {
                 console.error("Error running simulations:", error);
                 document.getElementById('results1').value = "Error running simulation.";
                 document.getElementById('results2').value = "Error running simulation.";
                 document.getElementById('results3').value = "Error running simulation.";
+                document.getElementById('spinner').style.display = "none";
             }
         });
     </script>
     
     <script language="javascript">
+        function displaywheel() {
+            document.getElementById('spinner').style.display = "flex";
+        }
         function checkInput() {
             const input1 = document.getElementById('input1');
             const input2 = document.getElementById('input2');

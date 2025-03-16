@@ -138,7 +138,7 @@ function getDecimalPlaces(num) {
 }
 
 // Main function to simulate the process
-export function main(a, b, c) {
+export default function main(a, b, c) {
 
     // // Convert inputs to numbers
     // const numA = Number(a);
