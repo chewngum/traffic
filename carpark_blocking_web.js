@@ -99,7 +99,7 @@ export function runSimulation(a,b,c){
 // Theoretical Min Spaces Needed: 0.28
 // Model Demand Spaces: 0.28
 
-export function main(a, b, c) {
+export default function main(a, b, c) {
     try {
         const results = runSimulation(a, b, c);
         return results;

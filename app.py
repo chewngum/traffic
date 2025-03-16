@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 import subprocess
 
@@ -19,16 +20,12 @@ def index():
     return open('index.html').read()
 
 @app.route('/index-js.html')
-def js():
+def js1():
     return open('index-js.html').read()
 
-@app.route('/carpark_blocking_web.js')
-def js():
-    return open('carpark_blocking_web.js').read()
-
-@app.route('/carpark_queueing_web.js')
-def js():
-    return open('carpark_queueing_web.js').read()
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    return send_from_directory('static', filename)
 
 @app.route('/run-script1', methods=['POST'])
 def run_script1():
