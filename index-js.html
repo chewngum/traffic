@@ -5,197 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carpark Utilisation Modeller</title>
     <style>
-        /* Spinner styles */
-        .spinner {
-            display: none; /* Initially hidden */
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            position: absolute;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        @keyframes spin {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        input {
-            margin-bottom: 20px;
-        }
-
-        button {
-            margin-bottom: 20px;
-        }
-
-        .resultsarea {
-            width: 90%;
-            height: 50vh;
-        }
-        .results-container {
-            display: flex;
-            gap: 20px; /* Adds space between the boxes */
-            margin-top: 10px;
-        }
-
-        .results-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 33%; /* Each box takes up one-third of the row */
-        }
-
-        .progress-container {
-            width: 50%;
-            background-color: #f3f3f3;
-            border: 1px solid #ccc;
-            margin-bottom: 20px;
-        }
-
-        .progress-bar {
-            width: 0%;
-            height: 20px;
-            background-color: #4caf50;
-            text-align: center;
-            line-height: 20px;
-            color: black;
-        }
-        .error-message{
-            color: red;
-            display: none;
-        }
-
-        h3 {
-            display:block;
-
-        }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        label, input, button { display: block; margin-bottom: 10px; }
+        .resultsarea { width: 90%; height: 50vh; }
+        .results-container { display: flex; gap: 20px; margin-top: 10px; }
+        .results-box { display: flex; flex-direction: column; align-items: center; width: 33%; }
+        .error-message { color: red; display: none; }
+        #progress-text { font-weight: bold; color: blue; display: none; }
     </style>
 </head>
 <body>
     <a href="/">Go to python version</a>
     <h1>Carpark Utilisation Modeller</h1>
-    <p>There are three carparking utilisation models for finding percentile based servicing or occupancy rates.</p>
-    <li>1. There are infinitely many spaces. M/M/1</li>
-    <li>2. There are finite spaces available, and when the carpark is full, vehicles do not wait and seek parking
-        elsewhere. Erlang-B Blocking</li>
-    <li>3. There are finite spaces available, and when the carpark is full, a queue can form of infinite length with the
-        first into the queue is the first to enter the carpark. Erlang-C Queueing</li>
+    <p>There are three carparking utilisation models:</p>
+    <ul>
+        <li>1. Infinite spaces (M/M/1)</li>
+        <li>2. Finite spaces without queueing (Erlang-B Blocking)</li>
+        <li>3. Finite spaces with unlimited queueing (Erlang-C Queueing)</li>
+    </ul>
     <h1>Simulation Parameters</h1>
     <form id="simulationForm">
-        <label for="input1">Arrival Rate (Cars per hour)</label>
+        <label>Arrival Rate (Cars per hour)</label>
         <input type="number" id="input1" min="0" step="0.1" required oninput="checkInput()">
-        </br>
-        <label for="input2">Average Service Time (Seconds):</label>
+        <label>Average Service Time (Seconds)</label>
         <input type="number" id="input2" min="0" step="0.1" required oninput="checkInput()">
-    </br>
-        <label for="input3">Number of Parking Spaces:</label>
+        <label>Number of Parking Spaces</label>
         <input type="number" id="input3" min="0" step="1" required oninput="checkInput()">
-    </br>
-    <label for="input4">Minimum Gap Between Cars:</label>
+        <label>Minimum Gap Between Cars</label>
         <input type="number" id="input4" min="0" step="0.1" required oninput="checkInput()">
-    </br>
-
-        <button type="submit" id="button1" run="displaywheel" disabled>Run Code</button>
-        <div id="error-message" class="error-message">For queues to clear the space number must exceed: <span id="error-value">0</span>
-        </div>
+        <button type="submit" id="button1" disabled>Run Code</button>
+        <div id="error-message" class="error-message">For queues to clear, spaces must exceed: <span id="error-value">0</span></div>
     </form>
-
     <h2>Simulation Results:</h2>
-    <div id="spinner-container">
-        <div id="spinner" class="spinner"></div>
-    </div>
-    
+    <p id="progress-text">Simulation in progress. Please wait...</p>
     <div class="results-container">
-        <div class="results-box">
-            <h3>Infinite Spaces (M/M/1)</h3>
-            <textarea class="resultsarea" id="results1" readonly></textarea>
-        </div>
-    
-        <div class="results-box">
-            <h3>Finite Spaces without queueing (Erlang-B Blocking)</h3>
-            <textarea class="resultsarea" id="results2" readonly></textarea>
-        </div>
-    
-        <div class="results-box">
-            <h3>Finite Spaces with unlimited queueing (Erlang-C Queueing)</h3>
-            <textarea class="resultsarea" id="results3" readonly></textarea>
-        </div>
+        <div class="results-box"><h3>Infinite Spaces (M/M/1)</h3><textarea class="resultsarea" id="results1" readonly></textarea></div>
+        <div class="results-box"><h3>Finite Spaces (Erlang-B Blocking)</h3><textarea class="resultsarea" id="results2" readonly></textarea></div>
+        <div class="results-box"><h3>Finite Spaces (Erlang-C Queueing)</h3><textarea class="resultsarea" id="results3" readonly></textarea></div>
     </div>
-
-    <!-- The script that handles the form and invokes modeljs.js -->
     <script type="module">
         import * as script1 from "/static/carpark_infinite.js";
         import * as script2 from "/static/carpark_blocking_web.js";
         import * as script3 from "/static/carpark_queueing_web.js";
-    
+
         document.getElementById("simulationForm").addEventListener("submit", async function(event) {
             event.preventDefault();
+            const progressText = document.getElementById("progress-text");
+            progressText.style.display = "none";
+            void progressText.offsetWidth; // Force repaint
+            progressText.style.display = "block";
 
-            // Get input values
             const AR = document.getElementById("input1").value;
             const ST = document.getElementById("input2").value;
             const SP = document.getElementById("input3").value;
             const HR = document.getElementById("input4").value;
-    
+
             try {
-                // Wait for each script to return a response asynchronously
-                const result1 = await script1.test(AR, ST, SP, HR);
-                const result2 = await script2.test(AR, ST, SP, HR);
-                const result3 = await script3.test(AR, ST, SP, HR);
-    
-                // Update text areas with results
+                const [result1, result2, result3] = await Promise.all([
+                    script1.test(AR, ST, SP, HR),
+                    script2.test(AR, ST, SP, HR),
+                    script3.test(AR, ST, SP, HR)
+                ]);
                 document.getElementById('results1').value = result1;
                 document.getElementById('results2').value = result2;
                 document.getElementById('results3').value = result3;
-                document.getElementById('spinner').style.display = "none";
             } catch (error) {
                 console.error("Error running simulations:", error);
                 document.getElementById('results1').value = "Error running simulation.";
                 document.getElementById('results2').value = "Error running simulation.";
                 document.getElementById('results3').value = "Error running simulation.";
-                document.getElementById('spinner').style.display = "none";
             }
+            progressText.style.display = "none";
         });
     </script>
-    
-    <script language="javascript">
-        function displaywheel() {
-            document.getElementById('spinner').style.display = "flex";
-        }
+    <script>
         function checkInput() {
-            const input1 = document.getElementById('input1');
-            const input2 = document.getElementById('input2');
-            const input3 = document.getElementById('input3');
-            const input1Value = parseInt(document.getElementById('input1').value, 10);
-            const input2Value = parseInt(document.getElementById('input2').value, 10);
-            const input3Value = parseInt(document.getElementById('input3').value, 10);
-            const errorMessage = document.getElementById('error-message');
-            const errorValue = document.getElementById('error-value');
-            const run1 = document.getElementById('button1');
-            const minRequiredValue = Math.floor(input1Value * input2Value / 3600);
-            errorValue.textContent = minRequiredValue;
-            run1.disabled = true;
-
-            if (input3Value <= minRequiredValue) {
-                errorMessage.style.display = 'block';
-                run1.disabled = false;
-            } else {
-                errorMessage.style.display = 'none';
-                run1.disabled = false;
-            }
+            const AR = parseFloat(document.getElementById('input1').value) || 0;
+            const ST = parseFloat(document.getElementById('input2').value) || 0;
+            const SP = parseInt(document.getElementById('input3').value, 10) || 0;
+            const minRequired = Math.floor((AR * ST) / 3600);
+            document.getElementById('error-value').textContent = minRequired;
+            document.getElementById('button1').disabled = SP <= minRequired;
+            document.getElementById('error-message').style.display = SP <= minRequired ? 'block' : 'none';
         }
     </script>
 </body>
