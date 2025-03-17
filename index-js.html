@@ -104,6 +104,9 @@
         <label for="input3">Number of Parking Spaces:</label>
         <input type="number" id="input3" min="0" step="1" required oninput="checkInput()">
     </br>
+    <label for="input4">Minimum Gap Between Cars:</label>
+        <input type="number" id="input4" min="0" step="0.1" required oninput="checkInput()">
+    </br>
 
         <button type="submit" id="button1" run="displaywheel" disabled>Run Code</button>
         <div id="error-message" class="error-message">For queues to clear the space number must exceed: <span id="error-value">0</span>
@@ -145,12 +148,13 @@
             const AR = document.getElementById("input1").value;
             const ST = document.getElementById("input2").value;
             const SP = document.getElementById("input3").value;
+            const HR = document.getElementById("input4").value;
     
             try {
                 // Wait for each script to return a response asynchronously
-                const result1 = await script1.test(AR, ST, SP);
-                const result2 = await script2.test(AR, ST, SP);
-                const result3 = await script3.test(AR, ST, SP);
+                const result1 = await script1.test(AR, ST, SP, HR);
+                const result2 = await script2.test(AR, ST, SP, HR);
+                const result3 = await script3.test(AR, ST, SP, HR);
     
                 // Update text areas with results
                 document.getElementById('results1').value = result1;

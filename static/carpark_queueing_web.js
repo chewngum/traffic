@@ -1,4 +1,4 @@
-
+var headroom = 0;
 function percentageOfTime(percent, list) {
     let cumulativeSum = 0;
     const totalTime = list.reduce((sum, value) => sum + value, 0);
@@ -30,7 +30,6 @@ function calculatePercentiles(countCarsParked, countCarsQueued) {
 function runSimulation(inp) {
     const startTime = performance.now();
     var lastarrival = 0;
-    const headroom = 0;
     const arrivalThreshold = inp.arrivalRate / (3600 * inp.precision - inp.arrivalRate * headroom * inp.precision);
     const state = {
         carsParked: [],
@@ -58,7 +57,7 @@ function runSimulation(inp) {
         }
 
         // Check if a new car arrived and add to the car park
-        if (lastarrival + headroom * inp.precision <= i){
+        if (lastarrival + headroom * inp.precision < i){
             if (Math.random() <= arrivalThreshold) {
                 state.countArrivals++;
                 lastarrival = i
@@ -140,11 +139,12 @@ export function formatResults(results) {
 }
 
 // Main function to simulate the process
-export function test(a, b, c) {
+export function test(a, b, c, h) {
     let d =1;
-    if ((a % 1 !== 0) || (b % 1 !== 0) ) {
+    if ((a % 1 !== 0) || (b % 1 !== 0) || (h % 1 !== 0)  ) {
         d = 10;
     }
+    headroom = h
     const inputs = {
         arrivalRate: Number(a),
         cycles: 3000,
