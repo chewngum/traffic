@@ -1,6 +1,3 @@
-const headroom = 3;
-var lastarrival = 0;
-
 // Define Functions
 function percentageOfTime(percent, list, totalTime) {
     const targetSum = totalTime * percent / 100;
@@ -22,7 +19,8 @@ function runSimulation(a, b, c, d) {
     let spaces = c;
     let precision = d;
     let cycleCount = 3000;
-
+    const headroom = 0;
+    var lastarrival = 0;
     let hours = 0;
     let arrival = 0;
     let countArrivals = 0;
@@ -34,7 +32,7 @@ function runSimulation(a, b, c, d) {
     let totalTime = 0; // total time for percentiles
 
     // Precompute reusable values
-    const arrivalThreshold = arrivalRate / (3600 * precision);
+    const arrivalThreshold = arrivalRate / (3600 * precision - arrivalRate * headroom * precision);
     const serviceTimeSteps = Math.ceil(serviceTime * precision);
     const hourSteps = 3600 * precision;
     const checkInterval = 36000 * precision;
@@ -86,8 +84,9 @@ function runSimulation(a, b, c, d) {
     textout += `-----------------------------\n`;
     textout += `Elapsed: ${Math.round(elapsedTime)}ms\n`;
     textout += `Simulated Hours: ${hours} \n`;
-    textout += `Theoretical Min Spaces: ${(((arrivalRate * serviceTime) / (3600)).toFixed(2))}\n`;
+    textout += `Theoretical Min Spaces: ${(((arrivalRate * (serviceTime)) / (3600)).toFixed(2))}\n`;
     textout += `Model Demand Spaces: ${(((countArrivals * serviceTime) / (3600 * hours)).toFixed(2))}\n`;
+    textout += `Model Demand Spaces: ${(countArrivals / arrivalRate / hours).toFixed(3)}\n`;
 
     // Precompute percentage
     const blockedPercentage = ((countBlocked * 100) / countArrivals).toFixed(1);
@@ -107,7 +106,10 @@ function runSimulation(a, b, c, d) {
 }
 
 export function test(a, b, c) {
-    const d = 10;
+    let d =1;
+    if ((a % 1 !== 0) || (b % 1 !== 0) ) {
+        d = 10;
+    }
     try {
         const results = runSimulation(a, b, c, d);
         return results;
