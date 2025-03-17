@@ -1,7 +1,7 @@
 
 var precision = 0;
 var HOURS_IN_SECONDS = 0;
-const headroom = 0;
+var headroom = 0;
 
 function percentageOfTime(percent, list) {
     let cumulativeSum = 0;
@@ -51,7 +51,7 @@ function runSimulation(inp) {
     const state = initializeSimulation(inp);
     let lastarrival = 0
     for (let i = 1; i <= inp.cycles * HOURS_IN_SECONDS; i++) {
-        if (lastarrival + headroom * precision <= i) {
+        if (lastarrival + headroom * precision < i) {
             if (Math.random() <= state.arrivalRateProbability) {
                 state.countArrivals++;
                 state.carsParked[(state.carIndex + state.carCount) % state.carsParked.length] = state.serviceTime;
@@ -104,12 +104,13 @@ export function formatResults(results) {
     return output;
 }
 
-export function test(a, b, c) {
+export function test(a, b, c, h) {
     let d =1;
-    if ((a % 1 !== 0) || (b % 1 !== 0) ) {
+    if ((a % 1 !== 0) || (b % 1 !== 0) || (h % 1 !== 0)  ) {
         d = 10;
     }
     precision = d;
+    headroom = h
     HOURS_IN_SECONDS = 3600 * precision;
     const inputs = {
         arrivalRate: Number(a),
@@ -119,7 +120,6 @@ export function test(a, b, c) {
         serviceTime: Number(b),
         spaces: Number(c)
     };
-    HOURS_IN_SECONDS = 3600 * precision;
     try {
         const results = formatResults(runSimulation(inputs));
         return results;
