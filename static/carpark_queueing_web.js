@@ -1,7 +1,5 @@
-var precision = 1;
-var HOURS_IN_SECONDS = 3600 * precision;
-
-
+var lastarrival = 0
+const headroom = 0
 function percentageOfTime(percent, list) {
     let cumulativeSum = 0;
     const totalTime = list.reduce((sum, value) => sum + value, 0);
@@ -37,16 +35,18 @@ function runSimulation(inp) {
         carsQueued: 0,
         countArrivals: 0,
         countCarsParked: new Array(inp.spaces + 1).fill(0),
-        countCarsQueued: new Array(Math.ceil(inp.arrivalRate * inp.serviceTime)).fill(0),
+        countCarsQueued: new Array(Math.ceil(inp.arrivalRate * inp.serviceTime * 100)).fill(0),
         queue: 0,
         queueTest: 0,
         queueTime: 0
     };
 
     let hours = 0;
-    for (let i = 1; i <= inp.cycles * HOURS_IN_SECONDS; i++) {
-        if (i > 3600*1000*precision && i % 36000*precision === 0) {
-            hours = i / HOURS_IN_SECONDS;
+    const serviceTimeSteps = Math.ceil(inp.serviceTime * inp.precision);  // Adjust for decimal serviceTime
+
+    for (let i = 1; i <= inp.cycles * inp.hours_in_steps; i++) {
+        if (i > 3600 * 1000 * inp.precision && i % 36000 * inp.precision === 0) {
+            hours = i / inp.hours_in_steps;
             const currentQueueRatio = state.carsQueued / state.countArrivals;
             if (Math.abs(state.queueTest - currentQueueRatio) <= 1e-6) {
                 break;
@@ -56,16 +56,20 @@ function runSimulation(inp) {
         }
 
         // Check if a new car arrived and add to the car park
-        const arrival = Math.ceil(Math.random() * (HOURS_IN_SECONDS * inp.precision));
-        if (arrival <= inp.arrivalRate * inp.precision) {
-            state.countArrivals++;
-            if (state.carsParked.length < inp.spaces) {
-                state.carsParked.push(inp.serviceTime*inp.precision);
-            } else {
-                state.queue++;
-                state.carsQueued++;
+        if (lastarrival + headroom * inp.precision <=i){
+            const arrival = Math.ceil(Math.random() * inp.hours_in_steps);
+            if (arrival <= inp.arrivalRate) {
+                state.countArrivals++;
+                lastarrival = i
+                if (state.carsParked.length < inp.spaces) {
+                    state.carsParked.push(serviceTimeSteps);
+                } else {
+                    state.queue++;
+                    state.carsQueued++;
+
+                }
             }
-        }
+        }    
 
         // Count current car park utilization
         const index = Math.max(state.carsParked.length, 0);
@@ -81,23 +85,26 @@ function runSimulation(inp) {
 
             // Move finished cars out and queued cars in
             if (state.carsParked[0] === 0) {
+
                 state.carsParked.shift();
                 if (state.queue > 0) {
-                    state.carsParked.push(inp.serviceTime*inp.precision);
+                    state.carsParked.push(serviceTimeSteps);  // Adjust for decimal serviceTime
+
                     state.queue--;
                 }
             }
         }
     }
+
     const elapsedMs = performance.now() - startTime;
     return {
         elapsedTime: `${Math.round(elapsedMs)}ms`,
         hours,
         PercentCarsQueued: ((state.carsQueued * 100) / state.countArrivals).toFixed(1),
-        QueueTimePerQueuedVehicle: (state.queueTime / state.carsQueued / precision).toFixed(1),
-        QueueTimePerArrival: (state.queueTime / state.countArrivals / precision).toFixed(1),
-        theoreticalMinSpace: ((state.countArrivals / hours * inp.serviceTime) / HOURS_IN_SECONDS * precision).toFixed(2),
-        modelDemandSpace: ((inp.arrivalRate * inp.serviceTime) / HOURS_IN_SECONDS * precision).toFixed(2),
+        QueueTimePerQueuedVehicle: (state.queueTime / state.carsQueued / inp.precision).toFixed(1),
+        QueueTimePerArrival: (state.queueTime / state.countArrivals / inp.precision).toFixed(1),
+        theoreticalMinSpace: ((state.countArrivals / hours * inp.serviceTime) / 3600).toFixed(2),
+        modelDemandSpace: ((inp.arrivalRate * inp.serviceTime) / inp.hours_in_steps * inp.precision).toFixed(2),
         percentiles: calculatePercentiles(state.countCarsParked, state.countCarsQueued)
     };
 }
@@ -131,28 +138,30 @@ export function formatResults(results) {
     return output;
 }
 
-function getDecimalPlaces(num) {
-    if (!num.toString().includes('.')) return 0; // No decimal places
-    return num.toString().split('.')[1].length;  // Count decimal places
-}
-
 // Main function to simulate the process
 export function test(a, b, c) {
-    precision = 1;
+    let d =1;
+    if ((a % 1 !== 0) || (b % 1 !== 0) ) {
+        d = 10;
+    }
     const inputs = {
         arrivalRate: Number(a),
-        cycles: 10000,
-        precision: precision,
-        HOURS_IN_SECONDS: 3600*precision,
+        cycles: 3000,
+        precision: d,
+        hours_in_steps: 3600 * d,
         serviceTime: Number(b),
         spaces: Number(c)
+        
     };
-    HOURS_IN_SECONDS = 3600 * precision;
-    try {
-        const results = formatResults(runSimulation(inputs));
-        return results;
-    } catch (error) {
-        console.error('Error running simulation:', error);
+
+    if (inputs.arrivalRate * inputs.serviceTime / 3600 > inputs.spaces) {
+        return 'Error: Arrival rate too high for available spaces.';
+    } else {
+        try {
+            const results = formatResults(runSimulation(inputs));
+            return results;
+        } catch (error) {
+            console.error('Error running simulation:', error);
+        }
     }
 }
-

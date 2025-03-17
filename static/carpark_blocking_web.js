@@ -1,8 +1,7 @@
-
+const headroom = 3;
+var lastarrival = 0;
 
 // Define Functions
-
-
 function percentageOfTime(percent, list, totalTime) {
     const targetSum = totalTime * percent / 100;
     let cumulativeSum = 0;
@@ -16,28 +15,33 @@ function percentageOfTime(percent, list, totalTime) {
 
 const percentiles = [10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99];
 
-function runSimulation(a, b, c) {
+function runSimulation(a, b, c, d) {
     const startTime = performance.now();
     let arrivalRate = a;
     let serviceTime = b;
     let spaces = c;
-    let precision = 1;
-    let cycleCount = 10000;
+    let precision = d;
+    let cycleCount = 3000;
 
     let hours = 0;
     let arrival = 0;
     let countArrivals = 0;
-    let countCarsParked = new Array(arrivalRate * serviceTime).fill(0);  // pre-allocate array
+    let countCarsParked = new Array(Math.max(1, Math.ceil(arrivalRate * serviceTime))).fill(0);
     let countServiced = 0;
     let countBlocked = 0;
     let carsParked = [];
     let blocktest = 0;
     let totalTime = 0; // total time for percentiles
 
-
+    // Precompute reusable values
+    const arrivalThreshold = arrivalRate / (3600 * precision);
+    const serviceTimeSteps = Math.ceil(serviceTime * precision);
+    const hourSteps = 3600 * precision;
+    const checkInterval = 36000 * precision;
+    const maxIndex = countCarsParked.length - 1;
 
     for (let i = 1; i <= cycleCount * 3600 * precision; i++) {
-        if (i > (3600 * 1000 * precision) && i % (36000 * precision) === 0) {
+        if (i > (hourSteps * 1000) && i % checkInterval === 0) {
             hours = i / 3600 / precision;
             const currentblockratio = countBlocked / countArrivals;
             if (Math.abs(blocktest - currentblockratio) <= 1e-6) {
@@ -48,40 +52,46 @@ function runSimulation(a, b, c) {
         }
 
         // Generate arrival with less calculation
-        if (Math.random() <= arrivalRate / 3600 / precision) {
-            countArrivals++;
-            if (carsParked.length < spaces) {
-                carsParked.push(serviceTime * precision);
-                countServiced++;
-            } else {
-                countBlocked++;
+        if (lastarrival + headroom * precision <= i){
+            if (Math.random() <= arrivalThreshold) {
+                countArrivals++;
+                lastarrival = i;
+                if (carsParked.length < spaces) {
+                    carsParked.push(serviceTimeSteps);
+                    countServiced++;
+                } else {
+                    countBlocked++;
+                }
             }
         }
 
         // Parked car logic: In-place decrement and removal when necessary
         for (let j = 0; j < carsParked.length; j++) {
             carsParked[j]--;
-            while (carsParked.length > 0 && carsParked[0] === 0) {
-                carsParked.shift(); // Remove the first element if it's 0
-            }
-            
+        }
+
+        // Remove parked cars that are done
+        while (carsParked.length > 0 && carsParked[0] === 0) {
+            carsParked.shift();
         }
 
         // Update parking stats
-        countCarsParked[Math.min(carsParked.length, countCarsParked.length - 1)]++;
+        countCarsParked[Math.min(carsParked.length, maxIndex)]++;
     }
 
     // Calculate the elapsed time in reality and model
-    cycleCount = hours;
-    const  elapsedTime = performance.now()- startTime;
+    const elapsedTime = performance.now() - startTime;
 
     let textout = `Blocking Results:\n`;
     textout += `-----------------------------\n`;
     textout += `Elapsed: ${Math.round(elapsedTime)}ms\n`;
     textout += `Simulated Hours: ${hours} \n`;
-    textout += `Theoretical Min Spaces : ${(((arrivalRate * serviceTime) / (3600)).toFixed(2))}\n`;
-    textout += `Model Demand Spaces: ${(((countArrivals * serviceTime) / (3600 * cycleCount )).toFixed(2))}\n`;
-    textout += `Percentage of Cars Blocked: ${(countBlocked * 100 / countArrivals).toFixed(1)}%\n`;
+    textout += `Theoretical Min Spaces: ${(((arrivalRate * serviceTime) / (3600)).toFixed(2))}\n`;
+    textout += `Model Demand Spaces: ${(((countArrivals * serviceTime) / (3600 * hours)).toFixed(2))}\n`;
+
+    // Precompute percentage
+    const blockedPercentage = ((countBlocked * 100) / countArrivals).toFixed(1);
+    textout += `Percentage of Cars Blocked: ${blockedPercentage}%\n`;
     textout += `\n\n-----------------------------\n`;
     textout += `Percentiles (Parked):\n`;
 
@@ -97,9 +107,9 @@ function runSimulation(a, b, c) {
 }
 
 export function test(a, b, c) {
-
+    const d = 10;
     try {
-        const results = runSimulation(a, b, c);
+        const results = runSimulation(a, b, c, d);
         return results;
     } catch (error) {
         console.error('Error running simulation:', error);

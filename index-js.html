@@ -42,8 +42,20 @@
         }
 
         .resultsarea {
-            width: 30%;
+            width: 90%;
             height: 50vh;
+        }
+        .results-container {
+            display: flex;
+            gap: 20px; /* Adds space between the boxes */
+            margin-top: 10px;
+        }
+
+        .results-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 33%; /* Each box takes up one-third of the row */
         }
 
         .progress-container {
@@ -63,6 +75,12 @@
         }
         .error-message{
             color: red;
+            display: none;
+        }
+
+        h3 {
+            display:block;
+
         }
     </style>
 </head>
@@ -88,7 +106,7 @@
     </br>
 
         <button type="submit" id="button1" run="displaywheel" disabled>Run Code</button>
-        <div id="error-message" class="error-message">Spaces must exceed linear demand of <span id="error-value">0</span>
+        <div id="error-message" class="error-message">For queues to clear the space number must exceed: <span id="error-value">0</span>
         </div>
     </form>
 
@@ -96,9 +114,23 @@
     <div id="spinner-container">
         <div id="spinner" class="spinner"></div>
     </div>
-    <textarea class="resultsarea" id="results1" readonly></textarea>
-    <textarea class="resultsarea" id="results2" readonly></textarea>
-    <textarea class="resultsarea" id="results3" readonly></textarea>
+    
+    <div class="results-container">
+        <div class="results-box">
+            <h3>Infinite Spaces (M/M/1)</h3>
+            <textarea class="resultsarea" id="results1" readonly></textarea>
+        </div>
+    
+        <div class="results-box">
+            <h3>Finite Spaces without queueing (Erlang-B Blocking)</h3>
+            <textarea class="resultsarea" id="results2" readonly></textarea>
+        </div>
+    
+        <div class="results-box">
+            <h3>Finite Spaces with unlimited queueing (Erlang-C Queueing)</h3>
+            <textarea class="resultsarea" id="results3" readonly></textarea>
+        </div>
+    </div>
 
     <!-- The script that handles the form and invokes modeljs.js -->
     <script type="module">
@@ -155,7 +187,7 @@
 
             if (input3Value <= minRequiredValue) {
                 errorMessage.style.display = 'block';
-                run1.disabled = true;
+                run1.disabled = false;
             } else {
                 errorMessage.style.display = 'none';
                 run1.disabled = false;
