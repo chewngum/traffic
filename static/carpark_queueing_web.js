@@ -1,5 +1,4 @@
-var lastarrival = 0
-const headroom = 0
+
 function percentageOfTime(percent, list) {
     let cumulativeSum = 0;
     const totalTime = list.reduce((sum, value) => sum + value, 0);
@@ -30,6 +29,9 @@ function calculatePercentiles(countCarsParked, countCarsQueued) {
 
 function runSimulation(inp) {
     const startTime = performance.now();
+    var lastarrival = 0;
+    const headroom = 0;
+    const arrivalThreshold = inp.arrivalRate / (3600 * inp.precision - inp.arrivalRate * headroom * inp.precision);
     const state = {
         carsParked: [],
         carsQueued: 0,
@@ -56,9 +58,8 @@ function runSimulation(inp) {
         }
 
         // Check if a new car arrived and add to the car park
-        if (lastarrival + headroom * inp.precision <=i){
-            const arrival = Math.ceil(Math.random() * inp.hours_in_steps);
-            if (arrival <= inp.arrivalRate) {
+        if (lastarrival + headroom * inp.precision <= i){
+            if (Math.random() <= arrivalThreshold) {
                 state.countArrivals++;
                 lastarrival = i
                 if (state.carsParked.length < inp.spaces) {
@@ -103,8 +104,8 @@ function runSimulation(inp) {
         PercentCarsQueued: ((state.carsQueued * 100) / state.countArrivals).toFixed(1),
         QueueTimePerQueuedVehicle: (state.queueTime / state.carsQueued / inp.precision).toFixed(1),
         QueueTimePerArrival: (state.queueTime / state.countArrivals / inp.precision).toFixed(1),
-        theoreticalMinSpace: ((state.countArrivals / hours * inp.serviceTime) / 3600).toFixed(2),
-        modelDemandSpace: ((inp.arrivalRate * inp.serviceTime) / inp.hours_in_steps * inp.precision).toFixed(2),
+        theoreticalMinSpace: ((inp.arrivalRate * (inp.serviceTime)) / inp.hours_in_steps * inp.precision).toFixed(2),
+        modelDemandSpace: (state.countArrivals * (inp.serviceTime) / hours / 3600).toFixed(2),
         percentiles: calculatePercentiles(state.countCarsParked, state.countCarsQueued)
     };
 }

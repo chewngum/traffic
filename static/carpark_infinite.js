@@ -1,6 +1,7 @@
 
-var precision = 1;
-var HOURS_IN_SECONDS = 3600 * precision;
+var precision = 0;
+var HOURS_IN_SECONDS = 0;
+const headroom = 0;
 
 function percentageOfTime(percent, list) {
     let cumulativeSum = 0;
@@ -32,7 +33,7 @@ function initializeSimulation(inp) {
     let carsParked = new Uint32Array(serviceTime * inp.arrivalRate);
     let carIndex = 0;
     let carCount = 0;
-    let arrivalRateProbability = (inp.arrivalRate * precision) / HOURS_IN_SECONDS;
+    let arrivalRateProbability = (inp.arrivalRate) / (HOURS_IN_SECONDS - inp.arrivalRate * precision * headroom);
 
     return {
         serviceTime,
@@ -45,44 +46,31 @@ function initializeSimulation(inp) {
     };
 }
 
-function processArrivals(state) {
-    if (Math.random() < state.arrivalRateProbability) {
-        state.countArrivals++;
-        state.carsParked[(state.carIndex + state.carCount) % state.carsParked.length] = state.serviceTime;
-        state.carCount++;
-    }
-}
-
-function updateCarParkUtilization(state) {
-    state.countCarsParked[state.carCount]++;
-}
-
-function reduceParkedCarsTime(state) {
-    if (state.carCount > 0) {
-        for (let j = 0; j < state.carCount; j++) {
-            state.carsParked[(state.carIndex + j) % state.carsParked.length]--;
-        }
-
-        while (state.carCount > 0 && state.carsParked[state.carIndex] === 0) {
-            state.carIndex = (state.carIndex + 1) % state.carsParked.length;
-            state.carCount--;
-        }
-    }
-}
-
-function runSimulationLoop(state, cycles) {
-    for (let i = 1; i <= cycles * HOURS_IN_SECONDS; i++) {
-        processArrivals(state);
-        updateCarParkUtilization(state);
-        reduceParkedCarsTime(state);
-    }
-}
-
 function runSimulation(inp) {
     const startTime = performance.now();
     const state = initializeSimulation(inp);
-
-    runSimulationLoop(state, inp.cycles);
+    let lastarrival = 0
+    for (let i = 1; i <= inp.cycles * HOURS_IN_SECONDS; i++) {
+        if (lastarrival + headroom * precision <= i) {
+            if (Math.random() <= state.arrivalRateProbability) {
+                state.countArrivals++;
+                state.carsParked[(state.carIndex + state.carCount) % state.carsParked.length] = state.serviceTime;
+                state.carCount++;
+                lastarrival = i;
+            }
+        }
+        state.countCarsParked[state.carCount]++;
+        if (state.carCount > 0) {
+            for (let j = 0; j < state.carCount; j++) {
+                state.carsParked[(state.carIndex + j) % state.carsParked.length]--;
+            }
+    
+            while (state.carCount > 0 && state.carsParked[state.carIndex] === 0) {
+                state.carIndex = (state.carIndex + 1) % state.carsParked.length;
+                state.carCount--;
+            }
+        }
+    }
 
     let hours = inp.cycles;  // Correctly set simulated hours
 
@@ -106,8 +94,8 @@ export function formatResults(results) {
     output += `-----------------------------\n`;
     output += `Elapsed Time: ${results.elapsedTime}\n`;
     output += `Simulated Hours: ${results.hours}\n`;
-    output += `Theoretical Min Spaces: ${((results.arrivalRate * results.serviceTime) / (3600 * results.precision)).toFixed(2)}\n`;
-    output += `Model Demand Spaces: ${((results.countArrivals * results.serviceTime) / (3600 * results.hours * results.precision)).toFixed(2)}\n`;
+    output += `Theoretical Min Spaces: ${((results.arrivalRate * (results.serviceTime)) / (3600)).toFixed(2)}\n`;
+    output += `Model Demand Spaces: ${((results.countArrivals * results.serviceTime) / (3600 * results.hours)).toFixed(2)}\n`;
     output += `\n\n\n-----------------------------\n`;
     output += `Percentiles (Parked):\n`;
     for (const [percentile, value] of Object.entries(results.percentiles)) {
@@ -117,7 +105,12 @@ export function formatResults(results) {
 }
 
 export function test(a, b, c) {
-    precision = 1;
+    let d =1;
+    if ((a % 1 !== 0) || (b % 1 !== 0) ) {
+        d = 10;
+    }
+    precision = d;
+    HOURS_IN_SECONDS = 3600 * precision;
     const inputs = {
         arrivalRate: Number(a),
         cycles: 2500,
