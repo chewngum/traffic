@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Travel Questions - Flashcards</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f2f2f2;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      margin: 20px auto;
+      width: 90%;
+      max-width: 800px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      position: relative;
+      min-height: 220px;
+    }
+
+    .question {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .translation {
+      color: gray;
+      margin-bottom: 15px;
+    }
+
+    .answer {
+      display: none;
+      margin-top: 15px;
+    }
+
+    .btn-container {
+      position: absolute;
+      bottom: 30px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #completed {
+      margin-top: 40px;
+      text-align: left;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .completed-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .completed-correct {
+      background: #e6ffe6;
+    }
+
+    .completed-wrong {
+      background: #ffe6e6;
+    }
+
+    .restart-container {
+      display: flex;
+      justify-content: flex-start;
+      margin-top: 20px;
+    }
+
+    .card-columns {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .card-section {
+      width: 100%;
+    }
+
+    #loginContainer {
+      max-width: 400px;
+      margin: 100px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    #flashcardApp {
+      display: none;
+    }
+
+    #scoreTracker {
+      font-size: 1.1rem;
+      margin-top: 10px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div id="loginContainer">
+    <h2>Log in</h2>
+    <input type="text" id="username" placeholder="Username" />
+    <button onclick="login()">Enter</button>
+    <p id="loginError" style="color:red; display:none;">Incorrect username</p>
+  </div>
+
+  <div id="flashcardApp">
+    <div class="card">
+      <div class="card-columns">
+        <div class="card-section">
+          <div id="question" class="question"></div>
+          <div id="answer" class="answer"></div>
+        </div>
+      </div>
+      <div class="btn-container">
+        <button id="showBtn" onclick="showAnswer()">Show answer</button>
+        <button id="wrongBtn" onclick="markAnswer(false)" style="display:none; background-color: #dc3545">Incorrect</button>
+        <button id="rightBtn" onclick="markAnswer(true)" style="display:none; background-color: #28a745">Correct</button>
+      </div>
+    </div>
+
+    <div id="completed">
+      <h2>Completed answers <span id="scoreTracker"></span></h2>
+      <div id="completedList"></div>
+      <div id="restartContainer" class="restart-container" style="display:none;">
+        <button onclick="restart()">🔄 Restart</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const flashcardsData = [
+      { question: "¿Cuánto tiempo vas a estar aquí?", answer: "Un par de días.", translation: "How long are you here? / I'm here a couple of days." },
+      { question: "¿De dónde eres?", answer: "Soy de Australia.", translation: "Where are you from? / I'm from Australia." },
+      { question: "¿De qué parte?", answer: "Soy de Sídney.", translation: "Which part? / I'm from Sydney." },
+      { question: "¿Dónde has estado?", answer: "He estado en Argentina seis semanas, incluyendo un tiempo en el lado chileno de la frontera.", translation: "Where have you been? / I have been in Argentina 6 weeks including some time on the Chile side of the border." },
+      { question: "¿Cuándo y dónde empezaste?", answer: "Empecé en febrero, pero llevo viajando tres años.", translation: "Where and when did you start? / I started in February but I have been travelling 3 years." },
+      { question: "¿Por cuánto tiempo viajas?", answer: "Llevo viajando tres años.", translation: "How long are you travelling for? / I’ve been travelling three years." },
+      { question: "¿Viajas solo?", answer: "Viajo con mi pareja, Hanna.", translation: "Are you travelling solo? / I'm travelling with my partner, Hanna." },
+      { question: "¿Cómo te llamas?", answer: "Me llamo Peter.", translation: "What's your name? / My name is Peter." },
+      { question: "¿Cuántos años tienes?", answer: "Tengo 34 años.", translation: "How old are you? / I'm 34." },
+      { question: "¿A qué te dedicas?", answer: "Soy ingeniero civil, pero vendí una empresa de fotografía de bodas para pagar este viaje.", translation: "What do you do? / I'm a civil engineer but sold a wedding photography company to pay for this trip." },
+      { question: "¿Cuál es tu lugar favorito?", answer: "Lo que más me gusta es el norte de Irak.", translation: "What's your favourite place? / I love northern Iraq the most." }
+    ];
+
+    let current = 0;
+    let correctCount = 0;
+
+    function updateScore() {
+      const total = flashcardsData.length;
+      const remaining = total - current;
+      document.getElementById("scoreTracker").textContent = `${correctCount}/ ${current} with ${remaining} remaining`;
+    }
+
+    function login() {
+      const username = document.getElementById("username").value;
+      const error = document.getElementById("loginError");
+      if (username.trim().toLowerCase() === "guest") {
+        document.getElementById("loginContainer").style.display = "none";
+        document.getElementById("flashcardApp").style.display = "block";
+        loadCard(current);
+        updateScore();
+      } else {
+        error.style.display = "block";
+      }
+    }
+
+    function loadCard(index) {
+      const card = flashcardsData[index];
+      document.getElementById("question").textContent = card.question;
+      document.getElementById("answer").textContent = card.answer;
+      document.getElementById("answer").style.display = "none";
+      document.getElementById("showBtn").style.display = "inline-block";
+      document.getElementById("wrongBtn").style.display = "none";
+      document.getElementById("rightBtn").style.display = "none";
+    }
+
+    function showAnswer() {
+      document.getElementById("answer").style.display = "block";
+      document.getElementById("showBtn").style.display = "none";
+      document.getElementById("wrongBtn").style.display = "inline-block";
+      document.getElementById("rightBtn").style.display = "inline-block";
+    }
+
+    function markAnswer(isCorrect) {
+      const card = flashcardsData[current];
+      const completedList = document.getElementById("completedList");
+      const div = document.createElement("div");
+      div.className = `completed-grid ${isCorrect ? 'completed-correct' : 'completed-wrong'}`;
+      div.innerHTML = `
+        <div>
+          <strong>${card.question}</strong><br>${card.answer}
+        </div>
+        <div>
+          <em>${card.translation}</em>
+        </div>
+      `;
+      completedList.appendChild(div);
+
+      if (isCorrect) correctCount++;
+      current++;
+      updateScore();
+
+      if (current < flashcardsData.length) {
+        loadCard(current);
+      } else {
+        document.querySelector(".card").style.display = "none";
+        document.getElementById("restartContainer").style.display = "flex";
+      }
+    }
+
+    function restart() {
+      current = 0;
+      correctCount = 0;
+      document.getElementById("completedList").innerHTML = "";
+      document.querySelector(".card").style.display = "block";
+      document.getElementById("restartContainer").style.display = "none";
+      loadCard(current);
+      updateScore();
+    }
+  </script>
+</body>
+</html>

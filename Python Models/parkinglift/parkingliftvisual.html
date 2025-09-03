@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lift Simulator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .playback-controls {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .speed-slider {
+            width: 200px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 14px;
+        }
+
+        input, select {
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        .simulator {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
+        .building {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            position: relative;
+            min-height: 400px;
+        }
+
+        .level {
+            height: 120px;
+            border: 3px solid #dee2e6;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            position: relative;
+            background: linear-gradient(90deg, #ffffff 0%, #f8f9fa 100%);
+            overflow: visible;
+        }
+
+        .level:last-child {
+            margin-bottom: 0;
+        }
+
+        .level-label {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            font-weight: bold;
+            font-size: 18px;
+            color: #495057;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .lift {
+            width: 80px;
+            height: 100px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border: 3px solid #1e7e34;
+            border-radius: 10px;
+            position: absolute;
+            left: 100px;
+            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .lift::before {
+            content: '🛗';
+            font-size: 24px;
+        }
+
+        .lift.moving {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+        }
+
+        .passenger {
+            width: 35px;
+            height: 50px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            border: 2px solid #004085;
+            border-radius: 15px 15px 5px 5px;
+            position: absolute;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            font-size: 16px;
+        }
+
+        .passenger::before {
+            content: '👤';
+            color: white;
+        }
+
+        .passenger.in-lift {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            border-color: #d39e00;
+            position: relative;
+            width: 30px;
+            height: 40px;
+            font-size: 14px;
+        }
+
+        .queue {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            max-width: 200px;
+        }
+
+        .stats {
+            flex: 0 0 400px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            max-height: 800px;
+            overflow-y: auto;
+        }
+
+        .stat-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-section h3 {
+            margin: 0 0 15px 0;
+            color: #495057;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 14px;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .status {
+            background: #007bff;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .status.paused {
+            background: #6c757d;
+            animation: none;
+        }
+
+        .status.moving {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .speed-indicator {
+            background: #dc3545;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .log {
+            height: 120px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 3px;
+            padding: 1px 0;
+        }
+
+        .log-entry.arrival { color: #28a745; }
+        .log-entry.departure { color: #007bff; }
+        .log-entry.movement { color: #6c757d; }
+
+        .queue-stats {
+            font-size: 12px;
+        }
+
+        .queue-stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #28a745;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin: 0; color: #495057;">Lift Simulator</h1>
+            <div class="speed-indicator" id="speedIndicator">1.0 HRS/SEC</div>
+        </div>
+        
+        <div class="playback-controls">
+            <button class="btn btn-success" id="playBtn">▶ Play</button>
+            <button class="btn btn-warning" id="pauseBtn" disabled>⏸ Pause</button>
+            <button class="btn btn-danger" id="resetBtn">🔄 Reset</button>
+            
+            <div class="speed-control">
+                <label for="speedSlider">Speed:</label>
+                <input type="range" id="speedSlider" class="speed-slider" min="1" max="36000" value="3600" step="100">
+                <span id="speedValue">1.0 hrs/sec</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="arrivalRate">Arrival Rate (passengers/hour)</label>
+                <input type="number" id="arrivalRate" value="15" min="0" step="1">
+            </div>
+            <div class="control-group">
+                <label for="departureRate">Departure Rate (passengers/hour)</label>
+                <input type="number" id="departureRate" value="15" min="0" step="1">
+            </div>
+            <div class="control-group">
+                <label for="liftSpeed">Lift Movement Time (seconds)</label>
+                <input type="number" id="liftSpeed" value="5.4" min="0.5" step="0.1">
+            </div>
+        </div>
+
+        <div class="simulator">
+            <div class="building">
+                <div class="level" id="level1">
+                    <div class="level-label">Level 1</div>
+                    <div class="queue" id="level1Queue"></div>
+                </div>
+                <div class="level" id="lobby">
+                    <div class="level-label">Lobby</div>
+                    <div class="queue" id="lobbyQueue"></div>
+                </div>
+                <div class="lift" id="lift"></div>
+            </div>
+
+            <div class="stats">
+                <div class="status" id="status">Ready to Start</div>
+                
+                <div class="stat-section">
+                    <h3>Simulation Time</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Hours Simulated</span>
+                        <span class="stat-value" id="hoursSimulated">0.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Movement Utilisation</span>
+                        <span class="stat-value" id="movementUtilisation">0%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Passenger Utilisation</span>
+                        <span class="stat-value" id="passengerUtilisation">0%</span>
+                    </div>
+                </div>
+
+                <div class="stat-section">
+                    <h3>Passenger Stats (Per Hour)</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Passengers/hr</span>
+                        <span class="stat-value" id="totalPassengersRate">0.0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Trips Completed/hr</span>
+                        <span class="stat-value" id="tripsCompletedRate">0.0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Lobby Queue</span>
+                        <span class="stat-value" id="lobbyQueueCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Level 1 Queue</span>
+                        <span class="stat-value" id="level1QueueCount">0</span>
+                    </div>
+                </div>
+
+                <div class="stat-section">
+                    <h3>Average Wait Times</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Lobby (minutes)</span>
+                        <span class="stat-value" id="lobbyAvgWait">0.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Level 1 (minutes)</span>
+                        <span class="stat-value" id="level1AvgWait">0.00</span>
+                    </div>
+                </div>
+
+                <div class="stat-section">
+                    <h3>Current Rates</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Actual Arrivals/hr</span>
+                        <span class="stat-value" id="actualArrivals">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Actual Departures/hr</span>
+                        <span class="stat-value" id="actualDepartures">0</span>
+                    </div>
+                </div>
+
+                <div class="stat-section">
+                    <h3>Queue Length Distribution - Lobby</h3>
+                    <div class="queue-stats" id="lobbyQueueStats"></div>
+                </div>
+
+                <div class="stat-section">
+                    <h3>Queue Length Distribution - Level 1</h3>
+                    <div class="queue-stats" id="level1QueueStats"></div>
+                </div>
+
+                <div class="stat-section">
+                    <h3>Activity Log</h3>
+                    <div class="log" id="activityLog"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class LiftSimulator {
+            constructor() {
+                this.reset();
+                this.bindEvents();
+                this.updateLiftPosition();
+            }
+            
+            reset() {
+                // Clear any existing intervals
+                this.clearIntervals();
+                
+                this.lobbyQueue = [];
+                this.level1Queue = [];
+                this.liftPosition = 'lobby';
+                this.liftPassenger = null;
+                this.isMoving = false;
+                this.totalPassengers = 0;
+                this.tripsCompleted = 0;
+                this.passengerId = 0;
+                this.isRunning = false;
+                
+                // Get current values from inputs
+                this.arrivalRate = parseFloat(document.getElementById('arrivalRate').value) || 15;
+                this.departureRate = parseFloat(document.getElementById('departureRate').value) || 15;
+                this.liftSpeed = parseFloat(document.getElementById('liftSpeed').value) || 5.4;
+                this.speedMultiplier = parseInt(document.getElementById('speedSlider').value) || 3600;
+                
+                // Time tracking - use simulation time instead of real time
+                this.simulationTime = 0; // in seconds
+                this.lastUpdateTime = null;
+                
+                // Statistics
+                this.waitTimes = { lobby: [], level1: [] };
+                this.queueLengthHistory = { lobby: {}, level1: {} };
+                this.movementUtilizationTime = 0;
+                this.passengerUtilizationTime = 0;
+                this.lastStatsTime = 0;
+                this.passengerCounts = { arrivals: 0, departures: 0 };
+                this.startSimTime = 0;
+                
+                // Update UI
+                document.getElementById('playBtn').disabled = false;
+                document.getElementById('pauseBtn').disabled = true;
+                
+                // Reset lift position visually
+                this.updateLiftPosition();
+                
+                // Clear log
+                document.getElementById('activityLog').innerHTML = '';
+                
+                this.updateDisplay();
+                this.updateAdvancedStats();
+            }
+
+            clearIntervals() {
+                if (this.mainLoop) clearInterval(this.mainLoop);
+                if (this.displayLoop) clearInterval(this.displayLoop);
+                if (this.statsLoop) clearInterval(this.statsLoop);
+            }
+            
+            bindEvents() {
+                // Playback controls
+                document.getElementById('playBtn').addEventListener('click', () => this.play());
+                document.getElementById('pauseBtn').addEventListener('click', () => this.pause());
+                document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+                
+                // Speed control
+                const speedSlider = document.getElementById('speedSlider');
+                const speedValue = document.getElementById('speedValue');
+                const speedIndicator = document.getElementById('speedIndicator');
+                
+                speedSlider.addEventListener('input', (e) => {
+                    this.speedMultiplier = parseInt(e.target.value);
+                    const hoursPerSec = this.speedMultiplier / 3600;
+                    speedValue.textContent = `${hoursPerSec.toFixed(1)} hrs/sec`;
+                    speedIndicator.textContent = `${hoursPerSec.toFixed(1)} HRS/SEC`;
+                });
+                
+                // Parameter controls
+                document.getElementById('arrivalRate').addEventListener('change', (e) => {
+                    this.arrivalRate = parseFloat(e.target.value) || 0;
+                });
+                
+                document.getElementById('departureRate').addEventListener('change', (e) => {
+                    this.departureRate = parseFloat(e.target.value) || 0;
+                });
+                
+                document.getElementById('liftSpeed').addEventListener('change', (e) => {
+                    this.liftSpeed = parseFloat(e.target.value) || 1;
+                });
+            }
+            
+            play() {
+                if (this.isRunning) return;
+                
+                this.isRunning = true;
+                this.lastUpdateTime = Date.now();
+                
+                document.getElementById('playBtn').disabled = true;
+                document.getElementById('pauseBtn').disabled = false;
+                
+                this.start();
+            }
+            
+            pause() {
+                if (!this.isRunning) return;
+                
+                this.isRunning = false;
+                
+                document.getElementById('playBtn').disabled = false;
+                document.getElementById('pauseBtn').disabled = true;
+                
+                this.clearIntervals();
+            }
+            
+            start() {
+                // Main simulation loop - runs at 20Hz for better precision at high speeds
+                this.mainLoop = setInterval(() => {
+                    const now = Date.now();
+                    const realDeltaTime = (now - this.lastUpdateTime) / 1000; // Real seconds elapsed
+                    const simDeltaTime = realDeltaTime * this.speedMultiplier; // Simulation seconds elapsed
+                    this.lastUpdateTime = now;
+                    this.simulationTime += simDeltaTime;
+                    
+                    // Use smaller time steps at high speeds to maintain accuracy
+                    const maxStepSize = 0.1; // Maximum 0.1 simulation seconds per step
+                    let remainingTime = simDeltaTime;
+                    
+                    while (remainingTime > 0) {
+                        const stepSize = Math.min(remainingTime, maxStepSize);
+                        
+                        // Generate passengers
+                        this.generatePassengers(stepSize);
+                        
+                        // Update lift logic
+                        this.updateLift(stepSize);
+                        
+                        remainingTime -= stepSize;
+                    }
+                    
+                }, 50); // 20Hz update rate
+                
+                // Display update loop - runs at 5Hz for smooth visuals
+                this.displayLoop = setInterval(() => {
+                    this.updateDisplay();
+                }, 200);
+                
+                // Stats update loop - runs at 2Hz
+                this.statsLoop = setInterval(() => {
+                    this.updateAdvancedStats();
+                }, 500);
+            }
+
+            // Helper function to generate Poisson-distributed random numbers
+            poissonRandom(lambda) {
+                // For very small lambda (< 0.001), use direct probability
+                if (lambda < 0.001) {
+                    return Math.random() < lambda ? 1 : 0;
+                }
+                
+                // For small lambda (< 30), use Knuth's algorithm
+                if (lambda < 30) {
+                    const L = Math.exp(-lambda);
+                    let k = 0;
+                    let p = 1.0;
+                    do {
+                        k++;
+                        p *= Math.random();
+                    } while (p > L);
+                    return k - 1;
+                }
+                
+                // For large lambda, use normal approximation
+                const normal = this.normalRandom() * Math.sqrt(lambda) + lambda;
+                return Math.max(0, Math.round(normal));
+            }
+
+            // Helper function for normal distribution (Box-Muller transform)
+            normalRandom() {
+                if (this.spareRandom !== undefined) {
+                    const val = this.spareRandom;
+                    this.spareRandom = undefined;
+                    return val;
+                }
+                
+                const u = Math.random();
+                const v = Math.random();
+                const mag = Math.sqrt(-2.0 * Math.log(u));
+                this.spareRandom = mag * Math.cos(2.0 * Math.PI * v);
+                return mag * Math.sin(2.0 * Math.PI * v);
+            }
+
+            generatePassengers(deltaTime) {
+                // Convert hourly rates to rates per deltaTime period using Poisson distribution
+                const arrivalLambda = (this.arrivalRate / 3600) * deltaTime; // arrivals per deltaTime
+                const departureLambda = (this.departureRate / 3600) * deltaTime; // departures per deltaTime
+                
+                // Generate Poisson-distributed number of arrivals
+                if (this.arrivalRate > 0) {
+                    const arrivals = this.poissonRandom(arrivalLambda);
+                    for (let i = 0; i < arrivals; i++) {
+                        this.addPassenger('lobby');
+                    }
+                }
+                
+                // Generate Poisson-distributed number of departures
+                if (this.departureRate > 0) {
+                    const departures = this.poissonRandom(departureLambda);
+                    for (let i = 0; i < departures; i++) {
+                        this.addPassenger('level1');
+                    }
+                }
+            }
+            
+            addPassenger(location) {
+                const passenger = {
+                    id: this.passengerId++,
+                    destination: location === 'lobby' ? 'level1' : 'lobby',
+                    arrivalTime: this.simulationTime
+                };
+                
+                if (location === 'lobby') {
+                    this.lobbyQueue.push(passenger);
+                    this.passengerCounts.arrivals++;
+                    this.log(`Passenger ${passenger.id} arrived at lobby`, 'arrival');
+                } else {
+                    this.level1Queue.push(passenger);
+                    this.passengerCounts.departures++;
+                    this.log(`Passenger ${passenger.id} wants to go to lobby`, 'departure');
+                }
+                
+                this.totalPassengers++;
+            }
+            
+            updateLift(deltaTime) {
+                // If lift is moving, check if movement is complete
+                if (this.isMoving) {
+                    this.movementTimeRemaining -= deltaTime;
+                    if (this.movementTimeRemaining <= 0) {
+                        this.isMoving = false;
+                        this.liftPosition = this.targetPosition;
+                        this.updateLiftPosition();
+                        this.log(`Lift arrived at ${this.liftPosition}`, 'movement');
+                        
+                        // Remove visual moving state
+                        document.getElementById('lift').classList.remove('moving');
+                    }
+                    return;
+                }
+                
+                // If lift has passenger, move to destination
+                if (this.liftPassenger) {
+                    const destination = this.liftPassenger.destination;
+                    if (this.liftPosition !== destination) {
+                        this.moveLift(destination);
+                        return;
+                    } else {
+                        // Drop off passenger - calculate wait time
+                        const waitTime = this.simulationTime - this.liftPassenger.arrivalTime;
+                        const originFloor = destination === 'lobby' ? 'level1' : 'lobby';
+                        this.waitTimes[originFloor].push(waitTime);
+                        
+                        this.log(`Passenger ${this.liftPassenger.id} reached ${destination}`, 'movement');
+                        this.liftPassenger = null;
+                        this.tripsCompleted++;
+                        return;
+                    }
+                }
+                
+                // Pick up passenger from current floor (only if not moving)
+                if (this.liftPosition === 'lobby' && this.lobbyQueue.length > 0) {
+                    this.liftPassenger = this.lobbyQueue.shift();
+                    this.log(`Passenger ${this.liftPassenger.id} entered lift at lobby`, 'movement');
+                    return;
+                }
+                
+                if (this.liftPosition === 'level1' && this.level1Queue.length > 0) {
+                    this.liftPassenger = this.level1Queue.shift();
+                    this.log(`Passenger ${this.liftPassenger.id} entered lift at level 1`, 'movement');
+                    return;
+                }
+                
+                // Decide where to move next
+                // Priority: 1) Current floor has passengers, 2) Other floor has passengers, 3) Return to lobby
+                const currentFloorHasPassengers = (this.liftPosition === 'lobby' && this.lobbyQueue.length > 0) ||
+                                                (this.liftPosition === 'level1' && this.level1Queue.length > 0);
+                
+                if (currentFloorHasPassengers) {
+                    // Stay put, passengers will be picked up in next iteration
+                    return;
+                }
+                
+                // Move to the other floor if it has passengers
+                if (this.liftPosition === 'lobby' && this.level1Queue.length > 0) {
+                    this.moveLift('level1');
+                    return;
+                }
+                
+                if (this.liftPosition === 'level1' && this.lobbyQueue.length > 0) {
+                    this.moveLift('lobby');
+                    return;
+                }
+                
+                // If at level 1 with no work to do anywhere, return to lobby (default position)
+                if (this.liftPosition === 'level1' && this.lobbyQueue.length === 0 && this.level1Queue.length === 0) {
+                    this.moveLift('lobby');
+                }
+            }
+            
+            moveLift(destination) {
+                if (this.isMoving || this.liftPosition === destination) return;
+                
+                this.isMoving = true;
+                this.targetPosition = destination;
+                this.movementTimeRemaining = this.liftSpeed;
+                
+                this.log(`Lift moving from ${this.liftPosition} to ${destination}`, 'movement');
+                
+                // Add visual moving state
+                document.getElementById('lift').classList.add('moving');
+                
+                // Start visual animation
+                this.animateLift(destination);
+            }
+
+            animateLift(destination) {
+                const lift = document.getElementById('lift');
+                const targetY = destination === 'level1' ? '10px' : '150px';
+                lift.style.top = targetY;
+            }
+
+            updateLiftPosition() {
+                const lift = document.getElementById('lift');
+                const targetY = this.liftPosition === 'level1' ? '10px' : '150px';
+                lift.style.top = targetY;
+                lift.style.transition = 'none';
+                
+                // Re-enable transition after setting position
+                setTimeout(() => {
+                    lift.style.transition = 'all 1s cubic-bezier(0.4, 0, 0.2, 1)';
+                }, 50);
+            }
+            
+            updateDisplay() {
+                // Update queues
+                this.updateQueue('lobbyQueue', this.lobbyQueue);
+                this.updateQueue('level1Queue', this.level1Queue);
+                
+                // Update lift passenger
+                const lift = document.getElementById('lift');
+                const existingPassenger = lift.querySelector('.passenger');
+                if (existingPassenger) {
+                    existingPassenger.remove();
+                }
+                
+                if (this.liftPassenger) {
+                    const passengerEl = document.createElement('div');
+                    passengerEl.className = 'passenger in-lift';
+                    lift.appendChild(passengerEl);
+                }
+                
+                // Update basic stats
+                const hoursElapsed = this.simulationTime / 3600;
+                const totalPassengersRate = hoursElapsed > 0 ? (this.totalPassengers / hoursElapsed).toFixed(1) : '0.0';
+                const tripsCompletedRate = hoursElapsed > 0 ? (this.tripsCompleted / hoursElapsed).toFixed(1) : '0.0';
+                
+                document.getElementById('totalPassengersRate').textContent = totalPassengersRate;
+                document.getElementById('tripsCompletedRate').textContent = tripsCompletedRate;
+                document.getElementById('lobbyQueueCount').textContent = this.lobbyQueue.length;
+                document.getElementById('level1QueueCount').textContent = this.level1Queue.length;
+                
+                // Update status
+                let status = 'Idle at Lobby';
+                let statusClass = 'status';
+                
+                if (!this.isRunning) {
+                    status = 'Paused';
+                    statusClass = 'status paused';
+                } else if (this.isMoving) {
+                    status = `Moving to ${this.targetPosition}`;
+                    statusClass = 'status moving';
+                } else if (this.liftPassenger) {
+                    status = `Passenger aboard (→ ${this.liftPassenger.destination})`;
+                } else if (this.lobbyQueue.length > 0 || this.level1Queue.length > 0) {
+                    status = `Passengers waiting (Lobby: ${this.lobbyQueue.length}, L1: ${this.level1Queue.length})`;
+                } else {
+                    status = `Idle at ${this.liftPosition}`;
+                }
+                
+                const statusEl = document.getElementById('status');
+                statusEl.textContent = status;
+                statusEl.className = statusClass;
+            }
+            
+            updateAdvancedStats() {
+                // Record queue lengths for distribution
+                this.recordQueueLengths();
+                
+                // Update simulation time
+                const hoursSimulated = this.simulationTime / 3600;
+                document.getElementById('hoursSimulated').textContent = hoursSimulated.toFixed(2);
+                
+                // Update utilization rates
+                const isMoving = this.isMoving;
+                const hasPassenger = this.liftPassenger !== null;
+                
+                if (isMoving) {
+                    this.movementUtilizationTime += this.simulationTime - this.lastStatsTime;
+                }
+                if (isMoving && hasPassenger) {
+                    this.passengerUtilizationTime += this.simulationTime - this.lastStatsTime;
+                }
+                this.lastStatsTime = this.simulationTime;
+                
+                const movementUtilization = this.simulationTime > 0 ? 
+                    (this.movementUtilizationTime / this.simulationTime) * 100 : 0;
+                const passengerUtilization = this.simulationTime > 0 ? 
+                    (this.passengerUtilizationTime / this.simulationTime) * 100 : 0;
+                    
+                document.getElementById('movementUtilisation').textContent = Math.min(100, movementUtilization).toFixed(1) + '%';
+                document.getElementById('passengerUtilisation').textContent = Math.min(100, passengerUtilization).toFixed(1) + '%';
+                
+                // Update average wait times
+                const lobbyAvg = this.waitTimes.lobby.length > 0 ? 
+                    this.waitTimes.lobby.reduce((a, b) => a + b, 0) / this.waitTimes.lobby.length / 60 : 0;
+                const level1Avg = this.waitTimes.level1.length > 0 ? 
+                    this.waitTimes.level1.reduce((a, b) => a + b, 0) / this.waitTimes.level1.length / 60 : 0;
+                
+                document.getElementById('lobbyAvgWait').textContent = lobbyAvg.toFixed(2);
+                document.getElementById('level1AvgWait').textContent = level1Avg.toFixed(2);
+                
+                // Update queue distribution
+                this.updateQueueDistribution('lobby', this.queueLengthHistory.lobby);
+                this.updateQueueDistribution('level1', this.queueLengthHistory.level1);
+                
+                // Update actual rates
+                const hoursElapsed = this.simulationTime / 3600;
+                const actualArrivals = hoursElapsed > 0 ? (this.passengerCounts.arrivals / hoursElapsed).toFixed(1) : '0';
+                const actualDepartures = hoursElapsed > 0 ? (this.passengerCounts.departures / hoursElapsed).toFixed(1) : '0';
+                
+                document.getElementById('actualArrivals').textContent = actualArrivals;
+                document.getElementById('actualDepartures').textContent = actualDepartures;
+            }
+            
+            recordQueueLengths() {
+                // Record lobby queue length
+                const lobbyLength = this.lobbyQueue.length;
+                this.queueLengthHistory.lobby[lobbyLength] = (this.queueLengthHistory.lobby[lobbyLength] || 0) + 1;
+                
+                // Record level1 queue length
+                const level1Length = this.level1Queue.length;
+                this.queueLengthHistory.level1[level1Length] = (this.queueLengthHistory.level1[level1Length] || 0) + 1;
+            }
+            
+            updateQueueDistribution(floor, history) {
+                const container = document.getElementById(`${floor}QueueStats`);
+                container.innerHTML = '';
+                
+                const totalSamples = Object.values(history).reduce((a, b) => a + b, 0);
+                if (totalSamples === 0) return;
+                
+                // Sort by queue length
+                const sortedEntries = Object.entries(history).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+                
+                sortedEntries.forEach(([length, count]) => {
+                    const percentage = (count / totalSamples * 100).toFixed(1);
+                    
+                    const item = document.createElement('div');
+                    item.className = 'queue-stat-item';
+                    item.innerHTML = `
+                        <span>Queue ${length}:</span>
+                        <span>${percentage}%</span>
+                    `;
+                    
+                    const progressBar = document.createElement('div');
+                    progressBar.className = 'progress-bar';
+                    const progressFill = document.createElement('div');
+                    progressFill.className = 'progress-fill';
+                    progressFill.style.width = `${percentage}%`;
+                    progressBar.appendChild(progressFill);
+                    
+                    container.appendChild(item);
+                    container.appendChild(progressBar);
+                });
+            }
+            
+            updateQueue(queueId, queue) {
+                const queueEl = document.getElementById(queueId);
+                queueEl.innerHTML = '';
+                
+                queue.forEach((passenger, index) => {
+                    const passengerEl = document.createElement('div');
+                    passengerEl.className = 'passenger';
+                    passengerEl.style.left = `${5 + (index % 5) * 30}px`;
+                    passengerEl.style.top = `${20 + Math.floor(index / 5) * 40}px`;
+                    passengerEl.title = `Passenger ${passenger.id} - Waiting ${((this.simulationTime - passenger.arrivalTime) / 60).toFixed(1)} min`;
+                    queueEl.appendChild(passengerEl);
+                });
+            }
+            
+            log(message, type = '') {
+                const logEl = document.getElementById('activityLog');
+                const simTime = (this.simulationTime / 60).toFixed(1); // Convert to minutes
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${type}`;
+                entry.textContent = `${simTime}m: ${message}`;
+                logEl.appendChild(entry);
+                logEl.scrollTop = logEl.scrollHeight;
+                
+                // Keep only last 100 entries
+                while (logEl.children.length > 100) {
+                    logEl.removeChild(logEl.firstChild);
+                }
+            }
+        }
+        
+        // Start simulator
+        const simulator = new LiftSimulator();
+    </script>
+</body>
+</html>

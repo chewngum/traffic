@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Queuing Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 30px;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            height: fit-content;
+            backdrop-filter: blur(10px);
+        }
+
+        .results {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .control-group input, .control-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .control-group input:focus, .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .run-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .run-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .run-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status.running {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status.complete {
+            background-color: #d1edff;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .results-section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: rgba(248, 249, 250, 0.8);
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .results-section h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            font-size: 14px;
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            font-weight: 500;
+        }
+
+        .metric-value {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .queue-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .queue-table th {
+            background-color: #f8f9fa;
+            padding: 6px 8px;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid #e9ecef;
+            font-size: 11px;
+        }
+
+        .queue-table td {
+            padding: 4px 8px;
+            border: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .queue-table td:first-child {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background-color: #e1e5e9;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .average-note {
+            background: rgba(255,215,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #ffd700;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .theoretical-note {
+            background: rgba(0,150,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #0096ff;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 Two Way Passing Simulation</h1>
+            <p>Bi-Directional Single Lane Scenario - Two Way Passing Test</p>
+        </div>
+
+        <div class="main-content">
+            <div class="controls">
+                <h3 style="margin-bottom: 20px; color: #667eea;">Simulation Parameters</h3>
+                
+                <div class="control-group">
+                    <label for="arrivalRateA">Queue A Arrival Rate (cars/hour)</label>
+                    <input type="number" id="arrivalRateA" value="15" min="0" step="0.1">
+                </div>
+
+                <div class="control-group">
+                    <label for="arrivalRateB">Queue B Arrival Rate (cars/hour)</label>
+                    <input type="number" id="arrivalRateB" value="15" min="0" step="0.1">
+                </div>
+
+                <div class="control-group">
+                    <label for="serviceTime">Service Time (seconds)</label>
+                    <input type="number" id="serviceTime" value="5.4" min="0.1" step="0.1">
+                </div>
+
+                <div class="control-group">
+                    <label for="simulationHours">Simulation Duration (hours)</label>
+                    <input type="number" id="simulationHours" value="1000" min="0" max="10000" step="10">
+                </div>
+
+                <div class="control-group">
+                    <label for="minGap">Minimum Gap Between Arrivals (seconds)</label>
+                    <input type="number" id="minGap" value="0" min="0" step="0.1">
+                </div>
+
+                <div class="control-group">
+                    <label for="minFollowUp">Minimum Follow-up Time (same direction)</label>
+                    <select id="minFollowUp" onchange="toggleCustomFollowUp()">
+                        <option value="0">0 seconds (no spacing)</option>
+                        <option value="minGap">Same as minimum gap</option>
+                        <option value="serviceTime" selected>Same as service time</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+
+                <div class="control-group" id="customFollowUpGroup" style="display: none;">
+                    <label for="customFollowUp">Custom Follow-up Time (seconds)</label>
+                    <input type="number" id="customFollowUp" value="2" min="0" max="60" step="0.1">
+                </div>
+
+                <div class="control-group">
+                    <label for="priorityScheme">Priority Scheme</label>
+                    <select id="priorityScheme">
+                        <option value="A">Queue A Priority</option>
+                        <option value="B">Queue B Priority</option>
+                        <option value="FCFS" selected>First Come First Served (FCFS)</option>
+                    </select>
+                </div>
+
+                <button class="run-button" id="runSimulation">
+                    🎯 Run Simulation
+                </button>
+
+                <div class="status" id="status" style="display: none;"></div>
+                <div class="progress-bar" id="progressContainer" style="display: none;">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div class="results" id="resultsContainer">
+                <div style="text-align: center; padding: 50px; color: #999;">
+                    <h3>📊 Averaged Results will appear here</h3>
+                    <p>Configure your parameters and click "Run Simulation" to start<br>
+                    The results will be averaged across 100 simulation runs</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class QueueSimulation {
+            constructor(seed = null) {
+                this.seed = seed;
+                this.rng = this.createRNG(seed || Math.floor(Math.random() * 1000000));
+                this.events = [];
+                this.queueLengths = [0, 0];
+                this.roadOccupied = false;
+                this.roadDirection = null; // 0 for A, 1 for B, null for empty
+                this.carsOnRoad = []; // Array of {direction, departureTime}
+                this.lastEntryTime = [null, null]; // Last entry time for each direction
+                this.queueTime = [{}, {}];
+                this.serverBusyTime = 0;
+                this.lastEventTime = 0;
+                this.hourlyMaxLength = [];
+                this.arrivalsSame = [0, 0];
+                this.arrivalsOpposite = [0, 0];
+                this.fcfsQueue = []; // Stores {arrivalTime, direction, id} - don't remove until served
+                this.nextCustomerId = 0;
+                this.roadOccupancyPeriods = []; // Track periods of road occupation for utilization
+            }
+
+            createRNG(seed) {
+                let state = seed;
+                return function() {
+                    state = (state * 1664525 + 1013904223) % Math.pow(2, 32);
+                    return state / Math.pow(2, 32);
+                }
+            }
+
+            heapPush(heap, item) {
+                heap.push(item);
+                this.heapifyUp(heap, heap.length - 1);
+            }
+
+            heapPop(heap) {
+                if (heap.length === 0) return null;
+                if (heap.length === 1) return heap.pop();
+                
+                const result = heap[0];
+                heap[0] = heap.pop();
+                this.heapifyDown(heap, 0);
+                return result;
+            }
+
+            heapifyUp(heap, index) {
+                while (index > 0) {
+                    const parentIndex = Math.floor((index - 1) / 2);
+                    if (heap[parentIndex][0] <= heap[index][0]) break;
+                    [heap[parentIndex], heap[index]] = [heap[index], heap[parentIndex]];
+                    index = parentIndex;
+                }
+            }
+
+            heapifyDown(heap, index) {
+                while (true) {
+                    let minIndex = index;
+                    const leftChild = 2 * index + 1;
+                    const rightChild = 2 * index + 2;
+
+                    if (leftChild < heap.length && heap[leftChild][0] < heap[minIndex][0]) {
+                        minIndex = leftChild;
+                    }
+                    if (rightChild < heap.length && heap[rightChild][0] < heap[minIndex][0]) {
+                        minIndex = rightChild;
+                    }
+                    if (minIndex === index) break;
+                    [heap[index], heap[minIndex]] = [heap[minIndex], heap[index]];
+                    index = minIndex;
+                }
+            }
+
+            exponentialRandom(rate) {
+                return -Math.log(this.rng()) / rate;
+            }
+
+            adjustedInterarrival(targetRate, minGap) {
+                if (minGap === 0) {
+                    return this.exponentialRandom(targetRate);
+                }
+                
+                const targetMean = 1 / targetRate;
+                
+                if (minGap >= targetMean) {
+                    return minGap;
+                }
+                
+                const adjustedMean = targetMean - minGap;
+                const adjustedRate = 1 / adjustedMean;
+                
+                return minGap + this.exponentialRandom(adjustedRate);
+            }
+
+            canEnterRoad(direction, currentTime, minFollowUp) {
+                // If road is empty, can always enter
+                if (!this.roadOccupied) return true;
+                
+                // If opposite direction is on road, cannot enter
+                if (this.roadDirection !== null && this.roadDirection !== direction) {
+                    return false;
+                }
+                
+                // Same direction: check follow-up time constraint
+                if (minFollowUp > 0 && this.lastEntryTime[direction] !== null) {
+                    const timeSinceLastEntry = currentTime - this.lastEntryTime[direction];
+                    return timeSinceLastEntry >= minFollowUp;
+                }
+                
+                return true;
+            }
+
+            hasWaitingCustomers() {
+                return this.fcfsQueue.length > 0 || this.queueLengths[0] > 0 || this.queueLengths[1] > 0;
+            }
+
+            canSkipQueue(direction, priorityScheme) {
+                // For FCFS: can't skip if anyone is waiting
+                if (priorityScheme === 'FCFS') {
+                    return this.fcfsQueue.length === 0;
+                }
+                
+                // For priority schemes: can skip if no one from higher priority queues is waiting
+                if (priorityScheme === 'A') {
+                    return this.queueLengths[0] === 0; // Can skip only if Queue A is empty
+                } else if (priorityScheme === 'B') {
+                    return this.queueLengths[1] === 0; // Can skip only if Queue B is empty
+                }
+                
+                return true;
+            }
+
+            enterRoad(direction, currentTime, serviceTime) {
+                if (!this.roadOccupied) {
+                    this.roadOccupied = true;
+                    this.roadDirection = direction;
+                    this.roadOccupancyPeriods.push({start: currentTime, end: null});
+                }
+                
+                const departureTime = currentTime + serviceTime;
+                this.carsOnRoad.push({direction, departureTime});
+                this.lastEntryTime[direction] = currentTime;
+                
+                this.heapPush(this.events, [departureTime, 'departure', direction]);
+            }
+
+            updateRoadOccupancy(currentTime) {
+                this.carsOnRoad = this.carsOnRoad.filter(car => car.departureTime > currentTime);
+                
+                if (this.carsOnRoad.length === 0) {
+                    if (this.roadOccupied) {
+                        const lastPeriod = this.roadOccupancyPeriods[this.roadOccupancyPeriods.length - 1];
+                        if (lastPeriod && lastPeriod.end === null) {
+                            lastPeriod.end = currentTime;
+                        }
+                    }
+                    this.roadOccupied = false;
+                    this.roadDirection = null;
+                } else {
+                    this.roadDirection = this.carsOnRoad[0].direction;
+                }
+            }
+
+            selectNextQueue(priorityScheme, currentTime, minFollowUp) {
+                if (priorityScheme === 'FCFS') {
+                    // Find the first customer in FCFS queue that can be served
+                    for (let i = 0; i < this.fcfsQueue.length; i++) {
+                        const customer = this.fcfsQueue[i];
+                        if (this.canEnterRoad(customer.direction, currentTime, minFollowUp)) {
+                            // Remove this customer from FCFS queue
+                            this.fcfsQueue.splice(i, 1);
+                            return customer.direction;
+                        }
+                    }
+                    return null;
+                } else if (priorityScheme === 'A') {
+                    if (this.queueLengths[0] > 0 && this.canEnterRoad(0, currentTime, minFollowUp)) return 0;
+                    if (this.queueLengths[1] > 0 && this.canEnterRoad(1, currentTime, minFollowUp)) return 1;
+                } else if (priorityScheme === 'B') {
+                    if (this.queueLengths[1] > 0 && this.canEnterRoad(1, currentTime, minFollowUp)) return 1;
+                    if (this.queueLengths[0] > 0 && this.canEnterRoad(0, currentTime, minFollowUp)) return 0;
+                }
+                return null;
+            }
+
+            recordTime(currentTime) {
+                const dt = currentTime - this.lastEventTime;
+                
+                for (let i = 0; i < 2; i++) {
+                    const qLen = this.queueLengths[i];
+                    this.queueTime[i][qLen] = (this.queueTime[i][qLen] || 0) + dt;
+                    
+                    const hourIdx = Math.min(Math.floor(currentTime / 3600), this.numHours - 1);
+                    this.hourlyMaxLength[i][hourIdx] = Math.max(
+                        this.hourlyMaxLength[i][hourIdx] || 0, 
+                        qLen
+                    );
+                }
+                
+                this.lastEventTime = currentTime;
+            }
+
+            calculateRoadUtilization(simulationTime) {
+                let totalOccupiedTime = 0;
+                
+                for (const period of this.roadOccupancyPeriods) {
+                    const endTime = period.end !== null ? period.end : simulationTime;
+                    totalOccupiedTime += endTime - period.start;
+                }
+                
+                return (totalOccupiedTime / simulationTime) * 100;
+            }
+
+            simulate(params) {
+                const {
+                    arrivalRateA,
+                    arrivalRateB, 
+                    serviceTime,
+                    simulationTime,
+                    minGap,
+                    minFollowUp,
+                    priorityScheme
+                } = params;
+
+                this.numHours = Math.floor(simulationTime / 3600);
+                this.hourlyMaxLength = [
+                    new Array(this.numHours).fill(0),
+                    new Array(this.numHours).fill(0)
+                ];
+
+                const arrivalRate = [
+                    arrivalRateA / 3600,
+                    arrivalRateB / 3600
+                ];
+
+                for (let i = 0; i < 2; i++) {
+                    const firstArrival = this.adjustedInterarrival(arrivalRate[i], minGap);
+                    this.heapPush(this.events, [firstArrival, 'arrival', i]);
+                }
+
+                while (this.events.length > 0) {
+                    const event = this.heapPop(this.events);
+                    const [eventTime, eventType, qIndex] = event;
+
+                    if (eventTime > simulationTime) break;
+
+                    this.recordTime(eventTime);
+                    this.updateRoadOccupancy(eventTime);
+
+                    if (eventType === 'arrival') {
+                        // Check if car can skip queue and enter road immediately
+                        if (this.canEnterRoad(qIndex, eventTime, minFollowUp) && 
+                            this.canSkipQueue(qIndex, priorityScheme)) {
+                            // Enter road directly (greedy service)
+                            this.enterRoad(qIndex, eventTime, serviceTime);
+                        } else {
+                            // Must join queue
+                            this.queueLengths[qIndex]++;
+                            
+                            if (priorityScheme === 'FCFS') {
+                                this.fcfsQueue.push({
+                                    arrivalTime: eventTime, 
+                                    direction: qIndex,
+                                    id: this.nextCustomerId++
+                                });
+                            }
+
+                            // Track arrival statistics
+                            if (this.roadOccupied) {
+                                if (this.roadDirection === qIndex) {
+                                    this.arrivalsSame[qIndex]++;
+                                } else {
+                                    this.arrivalsOpposite[qIndex]++;
+                                }
+                            }
+                        }
+
+                        // Schedule next arrival
+                        const dt = this.adjustedInterarrival(arrivalRate[qIndex], minGap);
+                        const nextArrival = eventTime + dt;
+                        this.heapPush(this.events, [nextArrival, 'arrival', qIndex]);
+
+                    } else if (eventType === 'departure') {
+                        // Try to serve next car in queue (only one per departure event)
+                        this.processQueueAfterDeparture(eventTime, serviceTime, minFollowUp, priorityScheme);
+                    }
+                }
+
+                // Close any open occupancy period
+                if (this.roadOccupancyPeriods.length > 0) {
+                    const lastPeriod = this.roadOccupancyPeriods[this.roadOccupancyPeriods.length - 1];
+                    if (lastPeriod && lastPeriod.end === null) {
+                        lastPeriod.end = simulationTime;
+                    }
+                }
+
+                return this.calculateResults(simulationTime);
+            }
+
+            processQueueAfterDeparture(currentTime, serviceTime, minFollowUp, priorityScheme) {
+                // Only serve one car per departure event to avoid simultaneous service
+                const nextQueue = this.selectNextQueue(priorityScheme, currentTime, minFollowUp);
+                
+                if (nextQueue !== null) {
+                    this.queueLengths[nextQueue]--;
+                    this.enterRoad(nextQueue, currentTime, serviceTime);
+                }
+            }
+
+            calculateResults(simulationTime) {
+                const results = {
+                    queues: [],
+                    serverUtilization: this.calculateRoadUtilization(simulationTime),
+                    arrivalRates: []
+                };
+
+                for (let i = 0; i < 2; i++) {
+                    const queueName = i === 0 ? 'Queue A' : 'Queue B';
+                    const totalTime = Object.values(this.queueTime[i]).reduce((sum, time) => sum + time, 0);
+                    
+                    const lengthPercentages = {};
+                    for (const [length, time] of Object.entries(this.queueTime[i])) {
+                        lengthPercentages[length] = (time / totalTime) * 100;
+                    }
+
+                    const maxCounts = {};
+                    for (const hourMax of this.hourlyMaxLength[i]) {
+                        maxCounts[hourMax] = (maxCounts[hourMax] || 0) + 1;
+                    }
+
+                    const maxPercentages = {};
+                    for (const [length, count] of Object.entries(maxCounts)) {
+                        maxPercentages[length] = (count / this.numHours) * 100;
+                    }
+
+                    results.queues.push({
+                        name: queueName,
+                        lengthPercentages,
+                        maxPercentages
+                    });
+
+                    const rateSamePerHour = this.arrivalsSame[i] / (simulationTime / 3600);
+                    const rateOppositePerHour = this.arrivalsOpposite[i] / (simulationTime / 3600);
+                    
+                    results.arrivalRates.push({
+                        name: queueName,
+                        sameQueue: rateSamePerHour,
+                        oppositeQueue: rateOppositePerHour
+                    });
+                }
+
+                return results;
+            }
+        }
+
+        async function runMultipleSimulations(params, progressCallback) {
+            const numSeeds = 100;
+            const allResults = [];
+            let totalServerUtil = 0;
+
+            const aggregateQueueTime = [{}, {}];
+            const aggregateMaxCounts = [{}, {}];
+            const aggregateArrivalRates = [
+                { same: 0, opposite: 0 },
+                { same: 0, opposite: 0 }
+            ];
+
+            for (let seed = 1; seed <= numSeeds; seed++) {
+                if (seed % 5 === 0 && progressCallback) {
+                    await new Promise(resolve => {
+                        progressCallback(seed / numSeeds * 100);
+                        setTimeout(resolve, 1);
+                    });
+                }
+
+                const simulation = new QueueSimulation(seed);
+                const result = simulation.simulate(params);
+                allResults.push(result);
+
+                totalServerUtil += result.serverUtilization;
+
+                for (let i = 0; i < 2; i++) {
+                    for (const [length, percent] of Object.entries(result.queues[i].lengthPercentages)) {
+                        aggregateQueueTime[i][length] = (aggregateQueueTime[i][length] || 0) + percent;
+                    }
+
+                    for (const [length, percent] of Object.entries(result.queues[i].maxPercentages)) {
+                        aggregateMaxCounts[i][length] = (aggregateMaxCounts[i][length] || 0) + percent;
+                    }
+
+                    aggregateArrivalRates[i].same += result.arrivalRates[i].sameQueue;
+                    aggregateArrivalRates[i].opposite += result.arrivalRates[i].oppositeQueue;
+                }
+            }
+
+            const avgResults = {
+                queues: [],
+                serverUtilization: totalServerUtil / numSeeds,
+                arrivalRates: [],
+                numSeeds: numSeeds
+            };
+
+            for (let i = 0; i < 2; i++) {
+                const queueName = i === 0 ? 'Queue A' : 'Queue B';
+                
+                const avgLengthPercentages = {};
+                for (const [length, totalPercent] of Object.entries(aggregateQueueTime[i])) {
+                    avgLengthPercentages[length] = totalPercent / numSeeds;
+                }
+
+                const avgMaxPercentages = {};
+                for (const [length, totalPercent] of Object.entries(aggregateMaxCounts[i])) {
+                    avgMaxPercentages[length] = totalPercent / numSeeds;
+                }
+
+                avgResults.queues.push({
+                    name: queueName,
+                    lengthPercentages: avgLengthPercentages,
+                    maxPercentages: avgMaxPercentages
+                });
+
+                avgResults.arrivalRates.push({
+                    name: queueName,
+                    sameQueue: aggregateArrivalRates[i].same / numSeeds,
+                    oppositeQueue: aggregateArrivalRates[i].opposite / numSeeds
+                });
+            }
+
+            return avgResults;
+        }
+
+        function calculateTheoreticalResults(params) {
+            const totalArrivalRate = params.arrivalRateA + params.arrivalRateB;
+            const serviceRate = 3600 / params.serviceTime; // cars per hour
+            const utilization = totalArrivalRate / serviceRate;
+            const p0 = Math.max(0, 1 - utilization); // Probability of empty system
+            
+            return {
+                utilization: utilization * 100,
+                p0: p0 * 100,
+                applicable: utilization < 1.0
+            };
+        }
+
+        function displayResults(results, params) {
+            const container = document.getElementById('resultsContainer');
+            const theoretical = calculateTheoreticalResults(params);
+            
+            let html = `
+                <div class="average-note">
+                    📊 Results from ${params.simulationTime/3600} hours x ${results.numSeeds} seeds analysed and averaged below
+                </div>
+            `;
+            
+            
+            html += `
+                <div class="results-grid">
+                    <div>
+                        <div class="results-section">
+                            <h3>📈 Road Segment Utilisation</h3>
+                            <div class="metric">
+                                <span class="metric-label">Occupied Time</span>
+                                <span class="metric-value">${results.serverUtilization.toFixed(2)}%</span>
+                            </div>
+                        </div>
+            `;
+
+            // Combined queue statistics for each queue
+            for (const queue of results.queues) {
+                html += `
+                    <div class="results-section">
+                        <h3>📊 ${queue.name} - Queue Probability</h3>
+                        <table class="queue-table">
+                            <thead>
+                                <tr>
+                                    <th>Length</th>
+                                    <th>Continuous Time %</th>
+                                    <th>Max Observed Per Discrete Hour %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                // Get all unique lengths that appear in either percentage or max data
+                const allLengths = new Set([
+                    ...Object.keys(queue.lengthPercentages),
+                    ...Object.keys(queue.maxPercentages)
+                ]);
+                
+                const sortedLengths = Array.from(allLengths)
+                    .map(l => parseInt(l))
+                    .sort((a, b) => a - b)
+                    .slice(0, 20);
+                
+                for (const length of sortedLengths) {
+                    const timePercent = queue.lengthPercentages[length] || 0;
+                    const maxPercent = queue.maxPercentages[length] || 0;
+                    
+                    if (timePercent > 0.01 || maxPercent > 0.01) { // Only show if > 0.01%
+                        html += `
+                            <tr>
+                                <td>${length}</td>
+                                <td>${timePercent.toFixed(2)}%</td>
+                                <td>${maxPercent.toFixed(2)}%</td>
+                            </tr>
+                        `;
+                    }
+                }
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            html += `
+                    </div>
+                    <div>
+            `;
+
+            // Average arrival rates while server busy
+            for (const arrivalRate of results.arrivalRates) {
+                html += `
+                    <div class="results-section">
+                        <h3>🚗 ${arrivalRate.name} - Queue Causes</h3>
+                        <div class="metric">
+                            <span class="metric-label">Busy Same Direction</span>
+                            <span class="metric-value">${arrivalRate.sameQueue.toFixed(2)} cars/hr</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Busy Opposite Direction</span>
+                            <span class="metric-value">${arrivalRate.oppositeQueue.toFixed(2)} cars/hr</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function getMinFollowUpValue() {
+            const selection = document.getElementById('minFollowUp').value;
+            const serviceTime = parseFloat(document.getElementById('serviceTime').value);
+            const minGap = parseFloat(document.getElementById('minGap').value);
+            
+            switch(selection) {
+                case '0': return 0;
+                case 'minGap': return minGap;
+                case 'serviceTime': return serviceTime;
+                case 'custom': return parseFloat(document.getElementById('customFollowUp').value);
+                default: return serviceTime;
+            }
+        }
+
+        function toggleCustomFollowUp() {
+            const selection = document.getElementById('minFollowUp').value;
+            const customGroup = document.getElementById('customFollowUpGroup');
+            customGroup.style.display = selection === 'custom' ? 'block' : 'none';
+        }
+
+        document.getElementById('runSimulation').addEventListener('click', async () => {
+            const button = document.getElementById('runSimulation');
+            const status = document.getElementById('status');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+
+            button.disabled = true;
+            button.textContent = '⏳ Running 100 Seeds...';
+            status.style.display = 'block';
+            status.className = 'status running';
+            status.textContent = 'Running simulation across 100 seeds...';
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '0%';
+
+            const params = {
+                arrivalRateA: parseFloat(document.getElementById('arrivalRateA').value),
+                arrivalRateB: parseFloat(document.getElementById('arrivalRateB').value),
+                serviceTime: parseFloat(document.getElementById('serviceTime').value),
+                simulationTime: parseFloat(document.getElementById('simulationHours').value) * 3600,
+                minGap: parseFloat(document.getElementById('minGap').value),
+                minFollowUp: getMinFollowUpValue(),
+                priorityScheme: document.getElementById('priorityScheme').value
+            };
+
+            try {
+                const results = await runMultipleSimulations(params, (progress) => {
+                    progressFill.style.width = progress + '%';
+                });
+
+                progressFill.style.width = '100%';
+                status.className = 'status complete';
+                status.textContent = '✅ Simulation completed successfully! (100 seeds averaged)';
+                
+                displayResults(results, params);
+
+                setTimeout(() => {
+                    status.style.display = 'none';
+                    progressContainer.style.display = 'none';
+                }, 3000);
+
+            } catch (error) {
+                status.className = 'status';
+                status.style.backgroundColor = '#f8d7da';
+                status.style.color = '#721c24';
+                status.textContent = '❌ Error: ' + error.message;
+            }
+
+            button.disabled = false;
+            button.textContent = '🎯 Run Simulation';
+        });
+    </script>
+</body>
+</html>

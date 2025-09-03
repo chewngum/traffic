@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elevator Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 25px;
+        }
+        
+        .form-section {
+            background: #f8f9fa;
+            padding: 18px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .compact-section {
+            padding: 15px;
+        }
+        
+        .form-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #34495e;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .rates-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            background: white;
+        }
+        
+        .rate-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .rate-row label {
+            font-size: 12px;
+            margin-bottom: 0;
+        }
+        
+        .rate-row input {
+            padding: 8px;
+            font-size: 13px;
+        }
+        
+        .controls {
+            grid-column: span 2;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+        
+        .results {
+            grid-column: span 2;
+            margin-top: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            border-left: 4px solid #28a745;
+            display: none;
+        }
+        
+        .results h2 {
+            color: #155724;
+            margin-bottom: 20px;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                grid-column: span 1;
+            }
+            
+            .results {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Car Lift Simulator</h1>
+            <p>Detailed simulation of operating car lift with multi-seed averaging</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="form-section compact-section">
+                <h2>Building Configuration</h2>
+                <div class="form-group">
+                    <label for="numFloors">Number of Floors (2-10):</label>
+                    <input type="number" id="numFloors" min="2" value="2">
+                </div>
+                <div class="form-group">
+                    <label for="lobbyFloor">Lobby Floor:</label>
+                    <input type="number" id="lobbyFloor" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label for="simHours">Simulation Duration (hours):</label>
+                    <input type="number" id="simHours" step="1" min="1" value="1000">
+                </div>
+                <div class="form-group">
+                    <label for="numSeeds">Number of Seeds (for averaging):</label>
+                    <input type="number" id="numSeeds" min="1" value="20">
+                </div>
+            </div>
+            
+            <div class="form-section compact-section">
+                <h2>Elevator Timing (seconds)</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group">
+                        <label for="doorOpenTime">Door Opening:</label>
+                        <input type="number" id="doorOpenTime" step="0.1" value="5">
+                    </div>
+                    <div class="form-group">
+                        <label for="enterTime">Entering:</label>
+                        <input type="number" id="enterTime" step="0.1" value="15">
+                    </div>
+                    <div class="form-group">
+                        <label for="doorCloseTime">Door Closing:</label>
+                        <input type="number" id="doorCloseTime" step="0.1" value="5">
+                    </div>
+                    <div class="form-group">
+                        <label for="verticalSpeed">Vertical (s/floor):</label>
+                        <input type="number" id="verticalSpeed" step="0.1" value="20">
+                    </div>
+                    <div class="form-group">
+                        <label for="exitTime">Exiting:</label>
+                        <input type="number" id="exitTime" step="0.1" value="15">
+                    </div>
+                    <div class="form-group">
+                        <label for="bufferTime">Buffer:</label>
+                        <input type="number" id="bufferTime" step="0.1" value="2">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="minHeadway">Min Passenger Headway (s):</label>
+                    <input type="number" id="minHeadway" step="0.1" value="3.0">
+                </div>
+            </div>
+            
+            <div class="form-section" style="grid-column: span 2;">
+                <h2>Traffic Rates (cars per hour)</h2>
+                <div class="rates-container" id="ratesContainer">
+                    <!-- Rates will be generated dynamically -->
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-primary" onclick="runSimulation()">Run Simulation</button>
+                <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+            </div>
+            
+            <div class="results" id="results">
+                <h2>Simulation Results</h2>
+                <div id="resultsContent">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Running simulation...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate rate inputs based on number of floors
+        function generateRateInputs() {
+            const numFloors = parseInt(document.getElementById('numFloors').value) || 2;
+            const lobbyFloor = parseInt(document.getElementById('lobbyFloor').value) || 1;
+            const container = document.getElementById('ratesContainer');
+            
+            container.innerHTML = '';
+            
+            for (let f = 1; f <= numFloors; f++) {
+                if (f === lobbyFloor) continue;
+                
+                const rateRow = document.createElement('div');
+                rateRow.className = 'rate-row';
+                rateRow.innerHTML = `
+                    <div>
+                        <label>Floor ${f}</label>
+                    </div>
+                    <div>
+                        <label>Arrivals (lobby→${f}):</label>
+                        <input type="number" id="arrivalRate${f}" step="0.1" value="15" min="0">
+                    </div>
+                    <div>
+                        <label>Departures (${f}→lobby):</label>
+                        <input type="number" id="departureRate${f}" step="0.1" value="15" min="0">
+                    </div>
+                `;
+                container.appendChild(rateRow);
+            }
+        }
+
+        // Update lobby floor max based on number of floors
+        document.getElementById('numFloors').addEventListener('input', function() {
+            const numFloors = parseInt(this.value) || 5;
+            const lobbyInput = document.getElementById('lobbyFloor');
+            lobbyInput.max = numFloors;
+            if (parseInt(lobbyInput.value) > numFloors) {
+                lobbyInput.value = numFloors;
+            }
+            generateRateInputs();
+        });
+
+        document.getElementById('lobbyFloor').addEventListener('input', generateRateInputs);
+
+        // Initialize
+        generateRateInputs();
+
+        // Elevator simulation implementation
+        class Event {
+            constructor(time, eventType, passenger = null, targetFloor = null) {
+                this.time = time;
+                this.eventType = eventType;
+                this.passenger = passenger;
+                this.targetFloor = targetFloor;
+            }
+        }
+
+        class Passenger {
+            constructor(origin, destination, arrivalTime, id) {
+                this.origin = origin;
+                this.destination = destination;
+                this.arrivalTime = arrivalTime;
+                this.boardTime = null;
+                this.exitTime = null;
+                this.id = id;
+            }
+        }
+
+        class Elevator {
+            constructor() {
+                this.currentFloor = parseInt(document.getElementById('lobbyFloor').value) || 1;
+                this.direction = 1;
+                this.state = "IDLE";
+                this.passenger = null;
+                this.targetFloor = null;
+                this.stateStartTime = 0;
+            }
+        }
+
+        // Priority queue implementation
+        class PriorityQueue {
+            constructor() {
+                this.items = [];
+            }
+            
+            push(item) {
+                this.items.push(item);
+                this.items.sort((a, b) => a.time - b.time);
+            }
+            
+            pop() {
+                return this.items.shift();
+            }
+            
+            isEmpty() {
+                return this.items.length === 0;
+            }
+        }
+
+        // Seeded random number generator
+        class SeededRandom {
+            constructor(seed) {
+                this.seed = seed;
+            }
+            
+            next() {
+                this.seed = (this.seed * 1664525 + 1013904223) % 4294967296;
+                return this.seed / 4294967296;
+            }
+            
+            exponential(rate) {
+                return -Math.log(this.next()) / rate;
+            }
+        }
+
+        async function runSimulation() {
+            const results = document.getElementById('results');
+            const resultsContent = document.getElementById('resultsContent');
+            results.style.display = 'block';
+            resultsContent.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Running simulation...</p>
+                </div>
+            `;
+
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            try {
+                const numSeeds = parseInt(document.getElementById('numSeeds').value) || 1;
+                const allResults = [];
+                
+                for (let seed = 0; seed < numSeeds; seed++) {
+                    resultsContent.innerHTML = `
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            <p>Running simulation ${seed + 1} of ${numSeeds}...</p>
+                        </div>
+                    `;
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    const result = await simulateElevatorSingle(seed);
+                    allResults.push(result);
+                }
+                
+                const averagedResult = averageResults(allResults);
+                displayResults(averagedResult, numSeeds);
+                
+            } catch (error) {
+                resultsContent.innerHTML = `<div style="color: red; text-align: center;">Error: ${error.message}</div>`;
+            }
+        }
+
+        function averageResults(results) {
+            if (results.length === 0) return null;
+            
+            const first = results[0];
+            const avgResult = {
+                simHours: first.simHours,
+                numFloors: first.numFloors,
+                lobbyFloor: first.lobbyFloor,
+                numSeeds: results.length,
+                
+                // Averaged metrics
+                served: results.reduce((sum, r) => sum + r.served, 0) / results.length,
+                utilizationRate: results.reduce((sum, r) => sum + r.utilizationRate, 0) / results.length,
+                busyProbability: results.reduce((sum, r) => sum + r.busyProbability, 0) / results.length,
+                actualArrivalRate: results.reduce((sum, r) => sum + r.actualArrivalRate, 0) / results.length,
+                
+                // Exit-waiting encounter percentages by floor
+                exitWaitingPercentagesByFloor: {},
+                
+                // Averaged wait and service times
+                avgWaitTimesByFloor: {},
+                avgServiceTimesByFloor: {},
+                
+                // State time tracking (averaged)
+                stateTimeTracking: {},
+                
+                // Queue statistics
+                avgQueueStats: {}
+            };
+            
+            // Calculate exit-waiting percentages by floor
+            for (let f = 1; f <= first.numFloors; f++) {
+                let totalTripsFromFloor = 0;
+                let totalExitWaitingFromFloor = 0;
+                
+                for (const result of results) {
+                    totalTripsFromFloor += result.processedByFloor[f] || 0;
+                    totalExitWaitingFromFloor += result.exitWithWaitingByFloor[f] || 0;
+                }
+                
+                avgResult.exitWaitingPercentagesByFloor[f] = totalTripsFromFloor > 0 
+                    ? (totalExitWaitingFromFloor / totalTripsFromFloor) * 100 
+                    : 0;
+            }
+            
+            // Average wait times by floor
+            for (let f = 1; f <= first.numFloors; f++) {
+                const allWaitTimes = [];
+                for (const result of results) {
+                    if (result.waitTimesByOrigin[f]) {
+                        allWaitTimes.push(...result.waitTimesByOrigin[f]);
+                    }
+                }
+                avgResult.avgWaitTimesByFloor[f] = allWaitTimes.length > 0 
+                    ? allWaitTimes.reduce((sum, time) => sum + time, 0) / allWaitTimes.length 
+                    : 0;
+            }
+            
+            // Average service times by floor
+            for (let f = 1; f <= first.numFloors; f++) {
+                const allServiceTimes = [];
+                for (const result of results) {
+                    if (result.serviceTimesByOrigin[f]) {
+                        allServiceTimes.push(...result.serviceTimesByOrigin[f]);
+                    }
+                }
+                avgResult.avgServiceTimesByFloor[f] = allServiceTimes.length > 0 
+                    ? allServiceTimes.reduce((sum, time) => sum + time, 0) / allServiceTimes.length 
+                    : 0;
+            }
+            
+            // Average state tracking
+            const stateKeys = Object.keys(first.stateTimeTracking);
+            for (const state of stateKeys) {
+                avgResult.stateTimeTracking[state] = results.reduce((sum, r) => 
+                    sum + (r.stateTimeTracking[state] || 0), 0) / results.length;
+            }
+            
+            // Average queue statistics
+            for (let f = 1; f <= first.numFloors; f++) {
+                const avgHist = {};
+                let totalTime = 0;
+                
+                for (const result of results) {
+                    const hist = result.queueHist[f] || {};
+                    for (const [qLen, time] of Object.entries(hist)) {
+                        avgHist[qLen] = (avgHist[qLen] || 0) + time;
+                        totalTime += time;
+                    }
+                }
+                
+                if (totalTime > 0) {
+                    avgResult.avgQueueStats[f] = avgHist;
+                }
+            }
+            
+            return avgResult;
+        }
+
+        async function simulateElevatorSingle(seed) {
+            const numFloors = parseInt(document.getElementById('numFloors').value);
+            const lobbyFloor = parseInt(document.getElementById('lobbyFloor').value);
+            const simHours = parseFloat(document.getElementById('simHours').value);
+            const simTime = simHours * 3600.0;
+            
+            const doorOpenTime = parseFloat(document.getElementById('doorOpenTime').value);
+            const enterTime = parseFloat(document.getElementById('enterTime').value);
+            const doorCloseTime = parseFloat(document.getElementById('doorCloseTime').value);
+            const verticalSpeed = parseFloat(document.getElementById('verticalSpeed').value);
+            const exitTime = parseFloat(document.getElementById('exitTime').value);
+            const bufferTime = parseFloat(document.getElementById('bufferTime').value);
+            const minHeadway = parseFloat(document.getElementById('minHeadway').value);
+            
+            const arrivalRateUp = new Array(numFloors + 1).fill(0);
+            const departureRateDown = new Array(numFloors + 1).fill(0);
+            
+            for (let f = 1; f <= numFloors; f++) {
+                if (f === lobbyFloor) continue;
+                const arrivalInput = document.getElementById(`arrivalRate${f}`);
+                const departureInput = document.getElementById(`departureRate${f}`);
+                if (arrivalInput) arrivalRateUp[f] = parseFloat(arrivalInput.value) / 3600.0;
+                if (departureInput) departureRateDown[f] = parseFloat(departureInput.value) / 3600.0;
+            }
+            
+            const rng = new SeededRandom(seed * 12345 + 67890);
+            
+            const elevator = new Elevator();
+            elevator.currentFloor = lobbyFloor;
+            const eventQueue = new PriorityQueue();
+            const floorQueues = Array.from({length: numFloors + 1}, () => []);
+            const queueHist = Array.from({length: numFloors + 1}, () => ({}));
+            const queueLastChangeTime = Array.from({length: numFloors + 1}, () => 0.0);
+            const served = [];
+            const waitTimesByOrigin = {};
+            const serviceTimesByOrigin = {};
+
+            const arrivalsByFloor = Array(numFloors + 1).fill(0);
+            const processedByFloor = Array(numFloors + 1).fill(0);
+            let nextPassengerId = 1;
+            let arrivalCount = 0;
+            let arrivalsWhenIdle = 0;
+            let exitWithWaitingCount = 0;
+            let exitWithWaitingByFloor = Array(numFloors + 1).fill(0);
+            
+            let stateTimeTracking = {
+                'IDLE': 0.0,
+                'DOORS_OPENING': 0.0,
+                'LOADING': 0.0,
+                'DOORS_CLOSING': 0.0,
+                'MOVING': 0.0,
+                'TRAVELING': 0.0,
+                'EXITING': 0.0
+            };
+            let lastStateChangeTime = 0.0;
+            
+            function trackStateChange(currentTime, newState) {
+                const timeInPreviousState = currentTime - lastStateChangeTime;
+                if (elevator.state in stateTimeTracking) {
+                    stateTimeTracking[elevator.state] += timeInPreviousState;
+                }
+                elevator.state = newState;
+                lastStateChangeTime = currentTime;
+            }
+            
+            function travelTime(a, b) {
+                return Math.abs(a - b) * verticalSpeed + bufferTime;
+            }
+            
+            function scheduleNextArrivalForFloor(destFloor, lastArrivalTime) {
+                const rate = arrivalRateUp[destFloor];
+                if (rate > 0) {
+                    const exponentialInterval = rng.exponential(rate);
+                    const actualInterval = Math.max(exponentialInterval, minHeadway);
+                    const t = lastArrivalTime + actualInterval;
+                    if (t <= simTime) {
+                        const p = new Passenger(lobbyFloor, destFloor, t, nextPassengerId++);
+                        eventQueue.push(new Event(t, "passenger_arrival", p));
+                    }
+                }
+            }
+
+            function scheduleNextDepartureForFloor(originFloor, lastArrivalTime) {
+                const rate = departureRateDown[originFloor];
+                if (rate > 0) {
+                    const exponentialInterval = rng.exponential(rate);
+                    const actualInterval = Math.max(exponentialInterval, minHeadway);
+                    const t = lastArrivalTime + actualInterval;
+                    if (t <= simTime) {
+                        const p = new Passenger(originFloor, lobbyFloor, t, nextPassengerId++);
+                        eventQueue.push(new Event(t, "passenger_arrival", p));
+                    }
+                }
+            }
+            
+            function sampleQueues(currentTime) {
+                for (let f = 1; f <= numFloors; f++) {
+                    const queueLength = floorQueues[f].length;
+                    const timeDelta = currentTime - queueLastChangeTime[f];
+                    
+                    if (timeDelta > 0) {
+                        queueHist[f][queueLength] = (queueHist[f][queueLength] || 0) + timeDelta;
+                    }
+                    queueLastChangeTime[f] = currentTime;
+                }
+            }
+            
+            function findNearestRequestFloor() {
+                let bestFloor = null;
+                let minDistance = Infinity;
+                
+                for (let f = 1; f <= numFloors; f++) {
+                    if (floorQueues[f].length > 0) {
+                        const distance = Math.abs(f - elevator.currentFloor);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            bestFloor = f;
+                        }
+                    }
+                }
+                
+                return bestFloor;
+            }
+            
+            function beginPickup(currentTime, floor) {
+                if (floorQueues[floor].length === 0) {
+                    return false;
+                }
+                
+                if (elevator.state !== "IDLE") {
+                    return false;
+                }
+                
+                trackStateChange(currentTime, "DOORS_OPENING");
+                elevator.stateStartTime = currentTime;
+                elevator.targetFloor = floor;
+                
+                eventQueue.push(new Event(currentTime + doorOpenTime, "doors_opened"));
+                return true;
+            }
+            
+            function beginMove(currentTime, targetFloor) {
+                if (elevator.currentFloor === targetFloor) {
+                    return beginPickup(currentTime, targetFloor);
+                }
+                
+                trackStateChange(currentTime, "MOVING");
+                elevator.stateStartTime = currentTime;
+                elevator.targetFloor = targetFloor;
+                
+                const moveTime = travelTime(elevator.currentFloor, targetFloor);
+                
+                eventQueue.push(new Event(currentTime + moveTime, "move_completed", null, targetFloor));
+                return true;
+            }
+            
+            // Initialize arrival streams
+            for (let f = 1; f <= numFloors; f++) {
+                if (f === lobbyFloor) continue;
+                scheduleNextArrivalForFloor(f, 0.0);
+                scheduleNextDepartureForFloor(f, 0.0);
+            }
+            
+            let time = 0.0;
+            lastStateChangeTime = 0.0;
+            let eventCount = 0;
+            const maxEvents = Math.max(50000, simTime * 10);
+            
+            while (!eventQueue.isEmpty() && time <= simTime && eventCount < maxEvents) {
+                const evt = eventQueue.pop();
+                
+                time = evt.time;
+                eventCount++;
+                
+                sampleQueues(time);
+                
+                if (evt.eventType === "passenger_arrival") {
+                    const p = evt.passenger;
+                    floorQueues[p.origin].push(p);
+                    arrivalCount++;
+                    arrivalsByFloor[p.origin]++;
+                    
+                    if (elevator.state === "IDLE") {
+                        arrivalsWhenIdle++;
+                    }
+
+                    if (p.origin === lobbyFloor) {
+                        scheduleNextArrivalForFloor(p.destination, p.arrivalTime);
+                    } else {
+                        scheduleNextDepartureForFloor(p.origin, p.arrivalTime);
+                    }
+
+                    if (elevator.state === "IDLE") {
+                        const targetFloor = findNearestRequestFloor();
+                        if (targetFloor !== null) {
+                            beginMove(time, targetFloor);
+                        }
+                    }
+                    
+                } else if (evt.eventType === "move_completed") {
+                    if (elevator.state !== "MOVING") {
+                        continue;
+                    }
+                    
+                    elevator.currentFloor = evt.targetFloor;
+                    trackStateChange(time, "IDLE");
+                    
+                    if (floorQueues[elevator.currentFloor].length > 0) {
+                        beginPickup(time, elevator.currentFloor);
+                    } else {
+                        const nextTarget = findNearestRequestFloor();
+                        if (nextTarget !== null) {
+                            beginMove(time, nextTarget);
+                        } else if (elevator.currentFloor !== lobbyFloor) {
+                            beginMove(time, lobbyFloor);
+                        }
+                    }
+                    
+                } else if (evt.eventType === "doors_opened") {
+                    if (elevator.state !== "DOORS_OPENING") {
+                        continue;
+                    }
+                    
+                    if (floorQueues[elevator.currentFloor].length > 0) {
+                        const p = floorQueues[elevator.currentFloor].shift();
+                        p.boardTime = time;
+                        elevator.passenger = p;
+                        trackStateChange(time, "LOADING");
+                        
+                        const loadingTime = enterTime;
+                        eventQueue.push(new Event(time + loadingTime, "loading_completed"));
+                    } else {
+                        trackStateChange(time, "DOORS_CLOSING");
+                        eventQueue.push(new Event(time + doorCloseTime, "doors_closed_empty"));
+                    }
+                    
+                } else if (evt.eventType === "loading_completed") {
+                    if (elevator.state !== "LOADING" || elevator.passenger === null) {
+                        continue;
+                    }
+                    
+                    trackStateChange(time, "DOORS_CLOSING");
+                    eventQueue.push(new Event(time + doorCloseTime, "doors_closed"));
+                    
+                } else if (evt.eventType === "doors_closed") {
+                    if (elevator.state !== "DOORS_CLOSING" || elevator.passenger === null) {
+                        continue;
+                    }
+                    
+                    trackStateChange(time, "TRAVELING");
+                    const p = elevator.passenger;
+                    
+                    const travelTime = Math.abs(elevator.currentFloor - p.destination) * verticalSpeed + bufferTime;
+                    eventQueue.push(new Event(time + travelTime, "trip_completed"));
+                    
+                } else if (evt.eventType === "doors_closed_empty") {
+                    if (elevator.state !== "DOORS_CLOSING") {
+                        continue;
+                    }
+                    
+                    trackStateChange(time, "IDLE");
+                    
+                    const nextTarget = findNearestRequestFloor();
+                    if (nextTarget !== null) {
+                        beginMove(time, nextTarget);
+                    } else if (elevator.currentFloor !== lobbyFloor) {
+                        beginMove(time, lobbyFloor);
+                    }
+                    
+                } else if (evt.eventType === "trip_completed") {
+                    if (elevator.state !== "TRAVELING" || elevator.passenger === null) {
+                        continue;
+                    }
+                    
+                    elevator.currentFloor = elevator.passenger.destination;
+                    trackStateChange(time, "DOORS_OPENING");
+                    
+                    eventQueue.push(new Event(time + doorOpenTime, "arrival_doors_opened"));
+                    
+                } else if (evt.eventType === "arrival_doors_opened") {
+                    if (elevator.state !== "DOORS_OPENING") {
+                        continue;
+                    }
+                    
+                    trackStateChange(time, "EXITING");
+                    eventQueue.push(new Event(time + exitTime, "exiting_completed"));
+                    
+                } else if (evt.eventType === "exiting_completed") {
+                    if (elevator.state !== "EXITING") {
+                        continue;
+                    }
+                    
+                    const p = elevator.passenger;
+                    p.exitTime = time;
+                    served.push(p);
+                    processedByFloor[p.origin]++;
+                    
+                    // Count when passenger exits and there's someone waiting at this floor
+                    if (floorQueues[elevator.currentFloor].length > 0) {
+                        exitWithWaitingCount++;
+                        exitWithWaitingByFloor[elevator.currentFloor]++;
+                    }
+                    
+                    elevator.passenger = null;
+                    
+                    trackStateChange(time, "DOORS_CLOSING");
+                    eventQueue.push(new Event(time + doorCloseTime, "arrival_doors_closed"));
+                    
+                } else if (evt.eventType === "arrival_doors_closed") {
+                    if (elevator.state !== "DOORS_CLOSING") {
+                        continue;
+                    }
+                    
+                    trackStateChange(time, "IDLE");
+                    
+                    if (floorQueues[elevator.currentFloor].length > 0) {
+                        beginPickup(time, elevator.currentFloor);
+                    } else {
+                        const nextTarget = findNearestRequestFloor();
+                        if (nextTarget !== null) {
+                            beginMove(time, nextTarget);
+                        } else if (elevator.currentFloor !== lobbyFloor) {
+                            beginMove(time, lobbyFloor);
+                        }
+                    }
+                }
+            }
+            
+            trackStateChange(time, "FINAL");
+            sampleQueues(time);
+            
+            for (const p of served) {
+                if (p.boardTime !== null) {
+                    if (!waitTimesByOrigin[p.origin]) waitTimesByOrigin[p.origin] = [];
+                    waitTimesByOrigin[p.origin].push(p.boardTime - p.arrivalTime);
+                }
+                
+                if (p.exitTime !== null && p.boardTime !== null) {
+                    if (!serviceTimesByOrigin[p.origin]) serviceTimesByOrigin[p.origin] = [];
+                    serviceTimesByOrigin[p.origin].push(p.exitTime - p.boardTime);
+                }
+            }
+            
+            const totalIdleTime = stateTimeTracking['IDLE'];
+            const utilizationRate = ((time - totalIdleTime) / time) * 100.0;
+            const busyProbability = arrivalCount > 0 ? ((arrivalCount - arrivalsWhenIdle) / arrivalCount) * 100.0 : 0.0;
+            
+            return {
+                simHours: time / 3600,
+                served: served.length,
+                utilizationRate,
+                busyProbability,
+                waitTimesByOrigin,
+                serviceTimesByOrigin,
+                queueHist,
+                numFloors,
+                lobbyFloor,
+                processedByFloor,
+                exitWithWaitingByFloor,
+                actualArrivalRate: arrivalCount / (time / 3600),
+                stateTimeTracking,
+            };
+        }
+        
+        function displayResults(result, numSeeds) {
+            const content = document.getElementById('resultsContent');
+            
+            let html = `
+                <div style="background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 8px; padding: 15px; margin-bottom: 20px; color: #0056b3;">
+                    <strong>Averaged Results:</strong> Based on ${numSeeds} simulation run${numSeeds > 1 ? 's' : ''} with different random seeds
+                </div>
+                
+                <div class="results-grid">
+                    <div class="stat-card">
+                        <h3>Exit-Waiting Encounter Rate</h3>
+                        <div style="margin-top: 10px; font-size: 0.9em;">
+                            <strong>% of trips from each floor that encounter waiting passengers at destination:</strong>
+            `;
+            
+            for (let f = 1; f <= result.numFloors; f++) {
+                const percentage = result.exitWaitingPercentagesByFloor[f] || 0;
+                html += `<br>Floor ${f}: ${percentage.toFixed(2)}%`;
+            }
+            
+            html += `
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Throughput Analysis</h3>
+                        <div class="stat-value">${(result.served / result.simHours).toFixed(2)}</div>
+                        <p>Passengers served per hour (avg)</p>
+                        <div style="margin-top: 10px; font-size: 0.9em;">
+                            <strong>Arrivals:</strong> ${(result.actualArrivalRate).toFixed(2)}/hr
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Elevator Utilization</h3>
+                        <div class="stat-value">${result.utilizationRate.toFixed(2)}%</div>
+                        <p>Active operation time (avg)</p>
+                    </div>
+                </div>
+                
+                <div class="results-grid" style="margin-top: 20px;">
+                    <div class="stat-card">
+                        <h3>State Time Breakdown (hours, avg)</h3>
+                        <p><strong>Idle:</strong> ${(result.stateTimeTracking.IDLE / 3600).toFixed(2)}h</p>
+                        <p><strong>Doors Opening:</strong> ${(result.stateTimeTracking.DOORS_OPENING / 3600).toFixed(2)}h</p>
+                        <p><strong>Entering:</strong> ${(result.stateTimeTracking.LOADING / 3600).toFixed(2)}h</p>
+                        <p><strong>Doors Closing:</strong> ${(result.stateTimeTracking.DOORS_CLOSING / 3600).toFixed(2)}h</p>
+                        <p><strong>Moving Empty:</strong> ${(result.stateTimeTracking.MOVING / 3600).toFixed(2)}h</p>
+                        <p><strong>Moving Full:</strong> ${(result.stateTimeTracking.TRAVELING / 3600).toFixed(2)}h</p>
+                        <p><strong>Exiting:</strong> ${(result.stateTimeTracking.EXITING / 3600).toFixed(2)}h</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Average Wait Times by Floor</h3>
+            `;
+            
+            for (let f = 1; f <= result.numFloors; f++) {
+                const avg = result.avgWaitTimesByFloor[f] || 0;
+                if (avg > 0) {
+                    html += `<p>Floor ${f}: ${avg.toFixed(2)}s</p>`;
+                }
+            }
+            
+            html += `
+                    </div>
+                    <div class="stat-card">
+                        <h3>Average Service Times by Origin</h3>
+                        <p><small>Boarding to exit time (avg)</small></p>
+            `;
+            
+            for (let f = 1; f <= result.numFloors; f++) {
+                const avg = result.avgServiceTimesByFloor[f] || 0;
+                if (avg > 0) {
+                    html += `<p>Floor ${f}: ${avg.toFixed(2)}s</p>`;
+                }
+            }
+            
+            html += `
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h2 style="color: #155724; margin-bottom: 20px;">Queue Length Distribution (% of time, averaged)</h2>
+                    <div class="results-grid">
+            `;
+            
+            for (let f = 1; f <= result.numFloors; f++) {
+                const hist = result.avgQueueStats[f] || {};
+                const totalTime = Object.values(hist).reduce((a, b) => a + b, 0);
+                
+                if (totalTime > 0) {
+                    html += `<div class="stat-card">
+                        <h3>Floor ${f}</h3>
+                        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px;margin-top:10px;">
+                            <thead>
+                                <tr style="background:#f8f9fa;">
+                                    <th style="padding:8px;text-align:center;border:1px solid #dee2e6;">Queue Length</th>
+                                    <th style="padding:8px;text-align:center;border:1px solid #dee2e6;">Time %</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                    
+                    const sortedEntries = Object.entries(hist).sort(([a], [b]) => parseInt(a) - parseInt(b));
+                    
+                    for (const [qLen, timeSpent] of sortedEntries) {
+                        const pct = (timeSpent / totalTime * 100).toFixed(2);
+                        if (parseFloat(pct) >= 0.01) {
+                            html += `
+                                <tr>
+                                    <td style="text-align:center;padding:6px;border:1px solid #dee2e6;">${qLen}</td>
+                                    <td style="text-align:right;padding:6px;border:1px solid #dee2e6;">${pct}%</td>
+                                </tr>
+                            `;
+                        }
+                    }
+                    html += '</tbody></table></div>';
+                }
+            }
+            
+            html += `</div></div>`;
+            
+            content.innerHTML = html;
+        }
+
+        function resetForm() {
+            document.getElementById('numFloors').value = 2;
+            document.getElementById('lobbyFloor').value = 1;
+            document.getElementById('simHours').value = 1000;
+            document.getElementById('numSeeds').value = 5;
+            
+            document.getElementById('doorOpenTime').value = 5;
+            document.getElementById('enterTime').value = 15;
+            document.getElementById('doorCloseTime').value = 5;
+            document.getElementById('verticalSpeed').value = 20;
+            document.getElementById('exitTime').value = 15;
+            document.getElementById('bufferTime').value = 2;
+            document.getElementById('minHeadway').value = 3;
+            
+            generateRateInputs();
+            
+            document.getElementById('results').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

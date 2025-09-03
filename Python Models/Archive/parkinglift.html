@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elevator Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+        
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .form-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #34495e;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .rates-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            background: white;
+        }
+        
+        .rate-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .rate-row label {
+            font-size: 12px;
+            margin-bottom: 0;
+        }
+        
+        .rate-row input {
+            padding: 8px;
+            font-size: 13px;
+        }
+        
+        .controls {
+            grid-column: span 2;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+        
+        .results {
+            grid-column: span 2;
+            margin-top: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            border-left: 4px solid #28a745;
+            display: none;
+        }
+        
+        .results h2 {
+            color: #155724;
+            margin-bottom: 20px;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .queue-histogram {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .histogram-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .bar-label {
+            width: 80px;
+            font-size: 12px;
+            text-align: right;
+            margin-right: 10px;
+        }
+        
+        .bar {
+            height: 20px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 3px;
+            flex-grow: 0;
+            flex-shrink: 0;
+        }
+        
+        .bar-percentage {
+            margin-left: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #2c3e50;
+            min-width: 50px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                grid-column: span 1;
+            }
+            
+            .results {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Car Lift Simulator</h1>
+            <p>Detailed simulation of operating car lift</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="form-section">
+                <h2>Building Configuration</h2>
+                <div class="form-group">
+                    <label for="numFloors">Number of Floors (1-10):</label>
+                    <input type="number" id="numFloors" min="1" max="10" value="2">
+                </div>
+                <div class="form-group">
+                    <label for="lobbyFloor">Lobby Floor:</label>
+                    <input type="number" id="lobbyFloor" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label for="simHours">Simulation Duration (hours):</label>
+                    <input type="number" id="simHours" step="1" min="1" value="1000">
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Elevator Timing (seconds)</h2>
+                <div class="form-group">
+                    <label for="doorOpenTime">Door Opening Time:</label>
+                    <input type="number" id="doorOpenTime" step="0.1" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="enterTime">Entering Time:</label>
+                    <input type="number" id="enterTime" step="0.1" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="doorCloseTime">Door Closing Time:</label>
+                    <input type="number" id="doorCloseTime" step="0.1" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="selectionTime">Floor Selection Time:</label>
+                    <input type="number" id="selectionTime" step="0.1" value="30">
+                </div>
+                <div class="form-group">
+                    <label for="verticalSpeed">Vertical Speed (s per floor):</label>
+                    <input type="number" id="verticalSpeed" step="0.1" value="30">
+                </div>
+                <div class="form-group">
+                    <label for="exitTime">Exiting Time:</label>
+                    <input type="number" id="exitTime" step="0.1" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="bufferTime">Levelling Buffer Time:</label>
+                    <input type="number" id="bufferTime" step="0.1" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="minHeadway">Minimum Passenger Headway (s):</label>
+                    <input type="number" id="minHeadway" step="0.1" value="3.0">
+                </div>
+            </div>
+            
+            <div class="form-section" style="grid-column: span 2;">
+                <h2>Traffic Rates (passengers per hour)</h2>
+                <div class="rates-container" id="ratesContainer">
+                    <!-- Rates will be generated dynamically -->
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-primary" onclick="runSimulation()">Run Simulation</button>
+                <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+            </div>
+            
+            <div class="results" id="results">
+                <h2>Simulation Results</h2>
+                <div id="resultsContent">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Running simulation...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate rate inputs based on number of floors
+        function generateRateInputs() {
+            const numFloors = parseInt(document.getElementById('numFloors').value) || 2;
+            const lobbyFloor = parseInt(document.getElementById('lobbyFloor').value) || 1;
+            const container = document.getElementById('ratesContainer');
+            
+            container.innerHTML = '';
+            
+            for (let f = 1; f <= numFloors; f++) {
+                if (f === lobbyFloor) continue;
+                
+                const rateRow = document.createElement('div');
+                rateRow.className = 'rate-row';
+                rateRow.innerHTML = `
+                    <div>
+                        <label>Floor ${f}</label>
+                    </div>
+                    <div>
+                        <label>Arrivals (lobby→${f}):</label>
+                        <input type="number" id="arrivalRate${f}" step="0.1" value="3" min="0">
+                    </div>
+                    <div>
+                        <label>Departures (${f}→lobby):</label>
+                        <input type="number" id="departureRate${f}" step="0.1" value="3" min="0">
+                    </div>
+                `;
+                container.appendChild(rateRow);
+            }
+        }
+
+        // Update lobby floor max based on number of floors
+        document.getElementById('numFloors').addEventListener('input', function() {
+            const numFloors = parseInt(this.value) || 5;
+            const lobbyInput = document.getElementById('lobbyFloor');
+            lobbyInput.max = numFloors;
+            if (parseInt(lobbyInput.value) > numFloors) {
+                lobbyInput.value = numFloors;
+            }
+            generateRateInputs();
+        });
+
+        document.getElementById('lobbyFloor').addEventListener('input', generateRateInputs);
+
+        // Initialize
+        generateRateInputs();
+
+        // FIXED Elevator simulation implementation
+        class Event {
+            constructor(time, eventType, passenger = null, targetFloor = null) {
+                this.time = time;
+                this.eventType = eventType;
+                this.passenger = passenger;
+                this.targetFloor = targetFloor;
+            }
+        }
+
+        class Passenger {
+            constructor(origin, destination, arrivalTime, id) {
+                this.origin = origin;
+                this.destination = destination;
+                this.arrivalTime = arrivalTime;
+                this.boardTime = null;
+                this.exitTime = null;
+                this.id = id; // Unique identifier for tracking
+            }
+            
+            get direction() {
+                return this.origin === parseInt(document.getElementById('lobbyFloor').value) ? "Up" : "Down";
+            }
+        }
+
+        class Elevator {
+            constructor() {
+                this.currentFloor = parseInt(document.getElementById('lobbyFloor').value) || 1;
+                this.direction = 1;
+                this.state = "IDLE"; // IDLE, MOVING, DOORS_OPENING, LOADING, DOORS_CLOSING, TRAVELING, UNLOADING
+                this.passenger = null;
+                this.utilizationTime = 0.0;
+                this.targetFloor = null;
+                this.stateStartTime = 0;
+            }
+        }
+
+        // Priority queue implementation
+        class PriorityQueue {
+            constructor() {
+                this.items = [];
+            }
+            
+            push(item) {
+                this.items.push(item);
+                this.items.sort((a, b) => a.time - b.time);
+            }
+            
+            pop() {
+                return this.items.shift();
+            }
+            
+            isEmpty() {
+                return this.items.length === 0;
+            }
+        }
+
+        // Random exponential distribution
+        function randomExponential(rate) {
+            return -Math.log(Math.random()) / rate;
+        }
+
+        async function runSimulation() {
+            // Show results section with loading
+            const results = document.getElementById('results');
+            const resultsContent = document.getElementById('resultsContent');
+            results.style.display = 'block';
+            resultsContent.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Running simulation...</p>
+                </div>
+            `;
+
+            // Small delay to show loading animation
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            try {
+                // Get parameters
+                const numFloors = parseInt(document.getElementById('numFloors').value);
+                const lobbyFloor = parseInt(document.getElementById('lobbyFloor').value);
+                const simHours = parseFloat(document.getElementById('simHours').value);
+                const simTime = simHours * 3600.0;
+                
+                // Timing parameters
+                const doorOpenTime = parseFloat(document.getElementById('doorOpenTime').value);
+                const enterTime = parseFloat(document.getElementById('enterTime').value);
+                const doorCloseTime = parseFloat(document.getElementById('doorCloseTime').value);
+                const selectionTime = parseFloat(document.getElementById('selectionTime').value);
+                const verticalSpeed = parseFloat(document.getElementById('verticalSpeed').value);
+                const exitTime = parseFloat(document.getElementById('exitTime').value);
+                const bufferTime = parseFloat(document.getElementById('bufferTime').value);
+                const minHeadway = parseFloat(document.getElementById('minHeadway').value);
+                
+                // Rates
+                const arrivalRateUp = new Array(numFloors + 1).fill(0);
+                const departureRateDown = new Array(numFloors + 1).fill(0);
+                
+                for (let f = 1; f <= numFloors; f++) {
+                    if (f === lobbyFloor) continue;
+                    const arrivalInput = document.getElementById(`arrivalRate${f}`);
+                    const departureInput = document.getElementById(`departureRate${f}`);
+                    if (arrivalInput) arrivalRateUp[f] = parseFloat(arrivalInput.value) / 3600.0;
+                    if (departureInput) departureRateDown[f] = parseFloat(departureInput.value) / 3600.0;
+                }
+                
+                // Run simulation
+                const result = await simulateElevator({
+                    numFloors, lobbyFloor, simTime, simHours,
+                    doorOpenTime, enterTime, doorCloseTime, selectionTime,
+                    verticalSpeed, exitTime, bufferTime, minHeadway,
+                    arrivalRateUp, departureRateDown
+                });
+                
+                // Display results
+                displayResults(result);
+                
+            } catch (error) {
+                resultsContent.innerHTML = `<div style="color: red; text-align: center;">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function simulateElevator(params) {
+            const {
+                numFloors, lobbyFloor, simTime, simHours,
+                doorOpenTime, enterTime, doorCloseTime, selectionTime,
+                verticalSpeed, exitTime, bufferTime, minHeadway,
+                arrivalRateUp, departureRateDown
+            } = params;
+            
+            const elevator = new Elevator();
+            elevator.currentFloor = lobbyFloor;
+            const eventQueue = new PriorityQueue();
+            const floorQueues = Array.from({length: numFloors + 1}, () => []);
+            const queueHist = Array.from({length: numFloors + 1}, () => ({}));
+            const queueLastChangeTime = Array.from({length: numFloors + 1}, () => 0.0);
+            const served = [];
+            const waitTimesByOrigin = {};
+            const serviceTimesByDirection = {};
+
+            // Tracking variables
+            const arrivalsByFloor = Array(numFloors + 1).fill(0);
+            const processedByFloor = Array(numFloors + 1).fill(0);
+            let nextPassengerId = 1;
+            let arrivalCount = 0;
+            let lostPassengers = 0; // Track passengers that get lost
+            
+            // Helper functions
+            function travelTime(a, b) {
+                return Math.abs(a - b) * verticalSpeed + bufferTime;
+            }
+            
+            function scheduleNextArrivalForFloor(destFloor, lastArrivalTime) {
+                const rate = arrivalRateUp[destFloor];
+                if (rate > 0) {
+                    const exponentialInterval = randomExponential(rate);
+                    const actualInterval = Math.max(exponentialInterval, minHeadway);
+                    const t = lastArrivalTime + actualInterval;
+                    if (t <= simTime) {
+                        const p = new Passenger(lobbyFloor, destFloor, t, nextPassengerId++);
+                        eventQueue.push(new Event(t, "passenger_arrival", p));
+                    }
+                }
+            }
+
+            function scheduleNextDepartureForFloor(originFloor, lastArrivalTime) {
+                const rate = departureRateDown[originFloor];
+                if (rate > 0) {
+                    const exponentialInterval = randomExponential(rate);
+                    const actualInterval = Math.max(exponentialInterval, minHeadway);
+                    const t = lastArrivalTime + actualInterval;
+                    if (t <= simTime) {
+                        const p = new Passenger(originFloor, lobbyFloor, t, nextPassengerId++);
+                        eventQueue.push(new Event(t, "passenger_arrival", p));
+                    }
+                }
+            }
+            
+            function sampleQueues(currentTime) {
+                for (let f = 1; f <= numFloors; f++) {
+                    const queueLength = floorQueues[f].length;
+                    const timeDelta = currentTime - queueLastChangeTime[f];
+                    
+                    if (timeDelta > 0) {
+                        queueHist[f][queueLength] = (queueHist[f][queueLength] || 0) + timeDelta;
+                    }
+                    queueLastChangeTime[f] = currentTime;
+                }
+            }
+            
+            function findNearestRequestFloor() {
+                // Find closest floor with waiting passengers
+                let bestFloor = null;
+                let minDistance = Infinity;
+                
+                for (let f = 1; f <= numFloors; f++) {
+                    if (floorQueues[f].length > 0) {
+                        const distance = Math.abs(f - elevator.currentFloor);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            bestFloor = f;
+                        }
+                    }
+                }
+                
+                return bestFloor;
+            }
+            
+            function beginPickup(currentTime, floor) {
+                // FIXED: Only dequeue when actually beginning service process
+                if (floorQueues[floor].length === 0) {
+                    console.warn(`Warning: Attempted pickup from empty queue at floor ${floor} at time ${currentTime}`);
+                    return false;
+                }
+                
+                if (elevator.state !== "IDLE") {
+                    console.warn(`Warning: Attempted pickup while elevator busy (state: ${elevator.state})`);
+                    return false;
+                }
+                
+                // Begin door opening process
+                elevator.state = "DOORS_OPENING";
+                elevator.stateStartTime = currentTime;
+                elevator.targetFloor = floor;
+                
+                // Schedule door opening completion
+                eventQueue.push(new Event(currentTime + doorOpenTime, "doors_opened"));
+                return true;
+            }
+            
+            function beginMove(currentTime, targetFloor) {
+                if (elevator.currentFloor === targetFloor) {
+                    // Already at target, begin pickup immediately
+                    return beginPickup(currentTime, targetFloor);
+                }
+                
+                elevator.state = "MOVING";
+                elevator.stateStartTime = currentTime;
+                elevator.targetFloor = targetFloor;
+                
+                const moveTime = travelTime(elevator.currentFloor, targetFloor);
+                elevator.utilizationTime += moveTime;
+                
+                eventQueue.push(new Event(currentTime + moveTime, "move_completed", null, targetFloor));
+                return true;
+            }
+            
+            // Initialize independent arrival streams
+            for (let f = 1; f <= numFloors; f++) {
+                if (f === lobbyFloor) continue;
+                scheduleNextArrivalForFloor(f, 0.0);
+                scheduleNextDepartureForFloor(f, 0.0);
+            }
+            
+            let time = 0.0;
+            let eventCount = 0;
+            const maxEvents = Math.max(50000, simTime * 10);
+            const progressInterval = Math.max(1000, maxEvents / 100);
+            
+            while (!eventQueue.isEmpty() && time <= simTime && eventCount < maxEvents) {
+                const evt = eventQueue.pop();
+                time = evt.time;
+                eventCount++;
+                
+                // Progress update
+                if (eventCount % progressInterval === 0) {
+                    const progress = Math.min(100, (time / simTime) * 100);
+                    const resultsContent = document.getElementById('resultsContent');
+                    resultsContent.innerHTML = `
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            <p>Running simulation... ${progress.toFixed(1)}%</p>
+                            <p>Events processed: ${eventCount.toLocaleString()}</p>
+                            <p>Sim time: ${(time/3600).toFixed(1)}h / ${(simTime/3600).toFixed(1)}h</p>
+                        </div>
+                    `;
+                    await new Promise(resolve => setTimeout(resolve, 1));
+                }
+                
+                sampleQueues(time);
+                
+                if (evt.eventType === "passenger_arrival") {
+                    const p = evt.passenger;
+                    floorQueues[p.origin].push(p);
+                    arrivalCount++;
+                    arrivalsByFloor[p.origin]++;
+
+                    // Schedule next arrival for this stream
+                    if (p.origin === lobbyFloor) {
+                        scheduleNextArrivalForFloor(p.destination, p.arrivalTime);
+                    } else {
+                        scheduleNextDepartureForFloor(p.origin, p.arrivalTime);
+                    }
+
+                    // If elevator is idle, start serving
+                    if (elevator.state === "IDLE") {
+                        const targetFloor = findNearestRequestFloor();
+                        if (targetFloor !== null) {
+                            beginMove(time, targetFloor);
+                        }
+                    }
+                    
+                } else if (evt.eventType === "move_completed") {
+                    if (elevator.state !== "MOVING") {
+                        console.warn(`Move completed but elevator not in MOVING state: ${elevator.state}`);
+                        continue;
+                    }
+                    
+                    elevator.currentFloor = evt.targetFloor;
+                    elevator.state = "IDLE";
+                    
+                    // Now attempt pickup at this floor
+                    if (floorQueues[elevator.currentFloor].length > 0) {
+                        beginPickup(time, elevator.currentFloor);
+                    } else {
+                        // No one here, look for next request
+                        const nextTarget = findNearestRequestFloor();
+                        if (nextTarget !== null) {
+                            beginMove(time, nextTarget);
+                        } else {
+                            // Return to lobby if not already there
+                            if (elevator.currentFloor !== lobbyFloor) {
+                                beginMove(time, lobbyFloor);
+                            }
+                        }
+                    }
+                    
+                } else if (evt.eventType === "doors_opened") {
+                    if (elevator.state !== "DOORS_OPENING") {
+                        console.warn(`Doors opened but elevator not in DOORS_OPENING state: ${elevator.state}`);
+                        continue;
+                    }
+                    
+                    elevator.utilizationTime += doorOpenTime;
+                    
+                    // FIXED: Only dequeue passenger when doors are actually open
+                    if (floorQueues[elevator.currentFloor].length > 0) {
+                        const p = floorQueues[elevator.currentFloor].shift();
+                        p.boardTime = time;
+                        elevator.passenger = p;
+                        elevator.state = "LOADING";
+                        
+                        // Schedule loading completion
+                        const loadingTime = enterTime + selectionTime;
+                        elevator.utilizationTime += loadingTime;
+                        eventQueue.push(new Event(time + loadingTime, "loading_completed"));
+                    } else {
+                        // No passenger to pick up - this shouldn't happen but handle gracefully
+                        elevator.state = "IDLE";
+                        console.warn(`Doors opened but no passenger at floor ${elevator.currentFloor}`);
+                    }
+                    
+                } else if (evt.eventType === "loading_completed") {
+                    if (elevator.state !== "LOADING" || elevator.passenger === null) {
+                        console.warn(`Loading completed but elevator not in LOADING state or no passenger`);
+                        continue;
+                    }
+                    
+                    elevator.state = "DOORS_CLOSING";
+                    
+                    // Schedule door closing completion
+                    elevator.utilizationTime += doorCloseTime;
+                    eventQueue.push(new Event(time + doorCloseTime, "doors_closed"));
+                    
+                } else if (evt.eventType === "doors_closed") {
+                    if (elevator.state !== "DOORS_CLOSING" || elevator.passenger === null) {
+                        console.warn(`Doors closed but elevator not in DOORS_CLOSING state or no passenger`);
+                        continue;
+                    }
+                    
+                    elevator.state = "TRAVELING";
+                    const p = elevator.passenger;
+                    
+                    // Schedule travel completion
+                    const travelTime = Math.abs(elevator.currentFloor - p.destination) * verticalSpeed + bufferTime;
+                    elevator.utilizationTime += travelTime;
+                    eventQueue.push(new Event(time + travelTime, "trip_completed"));
+                    
+                } else if (evt.eventType === "trip_completed") {
+                    if (elevator.state !== "TRAVELING" || elevator.passenger === null) {
+                        console.warn(`Trip completed but elevator not in TRAVELING state or no passenger`);
+                        continue;
+                    }
+                    
+                    const p = elevator.passenger;
+                    elevator.currentFloor = p.destination;
+                    p.exitTime = time + exitTime;
+                    elevator.utilizationTime += exitTime;
+                    
+                    // FIXED: Complete the service before clearing passenger
+                    served.push(p);
+                    processedByFloor[p.origin]++;
+                    elevator.passenger = null;
+                    elevator.state = "IDLE";
+                    
+                    // Look for next request
+                    const nextTarget = findNearestRequestFloor();
+                    if (nextTarget !== null) {
+                        beginMove(time, nextTarget);
+                    } else if (elevator.currentFloor !== lobbyFloor) {
+                        // Return to lobby
+                        beginMove(time, lobbyFloor);
+                    }
+                }
+            }
+            
+            // Final queue sampling
+            sampleQueues(time);
+            
+            // Calculate remaining passengers
+            let remainingInQueues = 0;
+            for (let f = 1; f <= numFloors; f++) {
+                remainingInQueues += floorQueues[f].length;
+            }
+            
+            const passengerInElevator = elevator.passenger ? 1 : 0;
+            const totalProcessed = served.length + remainingInQueues + passengerInElevator;
+            
+            // Calculate statistics
+            for (const p of served) {
+                if (p.boardTime !== null) {
+                    if (!waitTimesByOrigin[p.origin]) waitTimesByOrigin[p.origin] = [];
+                    waitTimesByOrigin[p.origin].push(p.boardTime - p.arrivalTime);
+                }
+                
+                if (p.exitTime !== null && p.boardTime !== null) {
+                    if (!serviceTimesByDirection[p.direction]) serviceTimesByDirection[p.direction] = [];
+                    serviceTimesByDirection[p.direction].push(p.exitTime - p.boardTime);
+                }
+            }
+            
+            // Calculate expected arrivals for validation
+            let expectedArrivals = 0;
+            for (let f = 1; f <= numFloors; f++) {
+                if (f === lobbyFloor) continue;
+                expectedArrivals += (arrivalRateUp[f] + departureRateDown[f]) * (time / 3600);
+            }
+            
+            const utilizationRate = (elevator.utilizationTime / time) * 100.0;
+            const arrivalBalanceOk = Math.abs(arrivalCount - totalProcessed) <= 1; // Allow small rounding
+            
+            return {
+                simHours: time / 3600, // Actual simulation time
+                served: served.length,
+                utilizationRate,
+                waitTimesByOrigin,
+                serviceTimesByDirection,
+                queueHist,
+                numFloors,
+                lobbyFloor,
+                expectedArrivals: Math.round(expectedArrivals),
+                remainingInQueues,
+                passengerInElevator,
+                totalPassengers: totalProcessed,
+                eventCount,
+                maxEvents,
+                finalTime: time,
+                hitEventLimit: eventCount >= maxEvents,
+                actualArrivals: arrivalCount,
+                actualArrivalRate: arrivalCount / (time / 3600),
+                arrivalsByFloor,
+                processedByFloor,
+                queueLengthsByFloor: floorQueues.map(q => q.length),
+                passengerInElevatorOrigin: elevator.passenger ? elevator.passenger.origin : null,
+                arrivalBalanceOk,
+                arrivalBalanceDiff: arrivalCount - totalProcessed,
+                lostPassengers,
+                elevatorState: elevator.state
+            };
+        }
+        
+        function displayResults(result) {
+            const content = document.getElementById('resultsContent');
+            
+            // Check for issues
+            let warnings = '';
+            
+            if (result.hitEventLimit) {
+                warnings += `
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin-bottom: 20px; color: #856404;">
+                        <strong>Event Limit Reached:</strong> Simulation stopped at ${result.eventCount.toLocaleString()} events 
+                        (${result.simHours.toFixed(1)}h). Consider reducing traffic rates for longer simulations.
+                    </div>
+                `;
+            }
+            
+            if (!result.arrivalBalanceOk) {
+                warnings += `
+                    <div style="background: #f8d7da; border: 1px solid #f5c2c7; border-radius: 8px; padding: 15px; margin-bottom: 20px; color: #842029;">
+                        <strong>Passenger Balance Issue:</strong><br>
+                        Arrivals: ${result.actualArrivals} | Accounted: ${result.totalPassengers} | Difference: ${result.arrivalBalanceDiff}
+                    </div>
+                `;
+            }
+            
+            if (result.lostPassengers > 0) {
+                warnings += `
+                    <div style="background: #f8d7da; border: 1px solid #f5c2c7; border-radius: 8px; padding: 15px; margin-bottom: 20px; color: #842029;">
+                        <strong>Lost Passengers:</strong> ${result.lostPassengers} passengers were dequeued but never served.
+                    </div>
+                `;
+            }
+
+            // Per-floor diagnostic
+            let perFloorDiag = '';
+            for (let f = 1; f <= result.numFloors; f++) {
+                if (f === result.lobbyFloor) continue;
+
+                const arrivals = result.arrivalsByFloor[f] || 0;
+                const served = result.processedByFloor[f] || 0;
+                const inQueue = result.queueLengthsByFloor[f] || 0;
+                const inElev = (result.passengerInElevatorOrigin === f) ? 1 : 0;
+                const accounted = served + inQueue + inElev;
+                const mismatch = arrivals - accounted;
+
+                if (Math.abs(mismatch) > 0) {
+                    perFloorDiag += `
+                        <tr>
+                            <td>Floor ${f}</td>
+                            <td>${arrivals}</td>
+                            <td>${served}</td>
+                            <td>${inQueue}</td>
+                            <td>${inElev}</td>
+                            <td style="color: ${mismatch > 0 ? '#dc3545' : '#28a745'}">${mismatch}</td>
+                        </tr>
+                    `;
+                }
+            }
+
+            if (perFloorDiag) {
+                warnings += `
+                    <div style="background:#f0f8ff;border:1px solid #bee5eb;border-radius:8px;padding:15px;margin-bottom:20px;">
+                        <strong>Per-Floor Passenger Accounting:</strong>
+                        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;margin-top:10px;background:#fff;">
+                            <thead>
+                                <tr style="background:#f8f9fa;">
+                                    <th>Floor</th><th>Arrived</th><th>Served</th><th>In Queue</th><th>In Elevator</th><th>Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${perFloorDiag}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            // Calculate averages
+            const avgWaitTimes = {};
+            for (const [floor, times] of Object.entries(result.waitTimesByOrigin)) {
+                avgWaitTimes[floor] = times.length > 0 ? times.reduce((a, b) => a + b) / times.length : 0;
+            }
+            
+            const avgServiceTimes = {};
+            for (const [direction, times] of Object.entries(result.serviceTimesByDirection)) {
+                avgServiceTimes[direction] = times.length > 0 ? times.reduce((a, b) => a + b) / times.length : 0;
+            }
+            
+            let html = warnings + `
+                <div class="results-grid">
+                    <div class="stat-card">
+                        <h3>Throughput Analysis</h3>
+                        <div class="stat-value">${(result.served / result.simHours).toFixed(1)}</div>
+                        <p>Passengers served per hour</p>
+                        <p><small>Expected: ${(result.expectedArrivals / result.simHours).toFixed(1)}/hr</small></p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Elevator Utilization</h3>
+                        <div class="stat-value">${result.utilizationRate.toFixed(2)}%</div>
+                        <p>Active operation time</p>
+                        <p><small>State: ${result.elevatorState}</small></p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Passenger Status</h3>
+                        <div class="stat-value">${result.served}</div>
+                        <p>Completed journeys</p>
+                        <p><small>Waiting: ${result.remainingInQueues} | In elevator: ${result.passengerInElevator}</small></p>
+                    </div>
+                </div>
+                
+                <div class="results-grid" style="margin-top: 20px;">
+                    <div class="stat-card">
+                        <h3>Average Wait Times by Floor</h3>
+            `;
+            
+            for (let f = 1; f <= result.numFloors; f++) {
+                if (f === result.lobbyFloor) continue;
+                const avg = avgWaitTimes[f] || 0;
+                const count = result.waitTimesByOrigin[f]?.length || 0;
+                html += `<p>Floor ${f}: ${avg.toFixed(2)}s (${count} served)</p>`;
+            }
+            
+            html += `
+                    </div>
+                    <div class="stat-card">
+                        <h3>Average Service Times</h3>
+                        <p><small>Boarding to exit time</small></p>
+            `;
+            
+            for (const [direction, avg] of Object.entries(avgServiceTimes)) {
+                const count = result.serviceTimesByDirection[direction]?.length || 0;
+                html += `<p>${direction}: ${avg.toFixed(2)}s (${count} trips)</p>`;
+            }
+            
+            html += `
+                    </div>
+                    <div class="stat-card">
+                        <h3>System Performance</h3>
+                        <p>Total arrivals: ${result.actualArrivals}</p>
+                        <p>Service efficiency: ${((result.served / result.actualArrivals) * 100).toFixed(1)}%</p>
+                        <p>Events processed: ${result.eventCount.toLocaleString()}</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card" style="margin-top: 20px;">
+                    <h3>Queue Length Distribution (% of time)</h3>
+            `;
+            
+            for (let f = 1; f <= result.numFloors; f++) {
+                if (f === result.lobbyFloor) continue;
+                
+                const hist = result.queueHist[f] || {};
+                const totalTime = Object.values(hist).reduce((a, b) => a + b, 0);
+                
+                if (totalTime > 0) {
+                    html += `<div class="queue-histogram">
+                        <h4>Floor ${f}</h4>`;
+                    
+                    const maxTime = Math.max(...Object.values(hist));
+                    const sortedEntries = Object.entries(hist).sort(([a], [b]) => parseInt(a) - parseInt(b));
+                    
+                    for (const [qLen, timeSpent] of sortedEntries) {
+                        const pct = (timeSpent / totalTime * 100).toFixed(2);
+                        const barWidth = Math.max(2, (timeSpent / maxTime * 200));
+                        if (parseFloat(pct) >= 0.1) { // Only show significant percentages
+                            html += `
+                                <div class="histogram-bar">
+                                    <div class="bar-label">Length ${qLen}:</div>
+                                    <div class="bar" style="width: ${barWidth}px;"></div>
+                                    <div class="bar-percentage">${pct}%</div>
+                                </div>
+                            `;
+                        }
+                    }
+                    html += '</div>';
+                }
+            }
+            
+            html += `</div>`;
+            
+            content.innerHTML = html;
+        }
+
+        function resetForm() {
+            document.getElementById('numFloors').value = 2;
+            document.getElementById('lobbyFloor').value = 1;
+            document.getElementById('simHours').value = 1000;
+            
+            document.getElementById('doorOpenTime').value = 0;
+            document.getElementById('enterTime').value = 0;
+            document.getElementById('doorCloseTime').value = 0;
+            document.getElementById('selectionTime').value = 5.4;
+            document.getElementById('verticalSpeed').value = 0;
+            document.getElementById('exitTime').value = 0;
+            document.getElementById('bufferTime').value = 0.0;
+            document.getElementById('minHeadway').value = 0.0;
+            
+            generateRateInputs();
+            
+            document.getElementById('results').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

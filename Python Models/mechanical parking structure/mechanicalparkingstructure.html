@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mechanical Parking Structure Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .panel h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group-full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #4f46e5;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .headway-section {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .headway-section h3 {
+            color: #0369a1;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .run-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .run-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .run-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #4f46e5;
+        }
+
+        .metric-card h3 {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #6b7280;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-card .value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .metric-card.wait-time {
+            border-left-color: #f59e0b;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+        }
+
+        .tables-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .table-section {
+            background: #f9fafb;
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .table-section h3 {
+            color: #1f2937;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .distribution-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .distribution-table th {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .distribution-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.9rem;
+        }
+
+        .distribution-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .wait-stats {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .wait-stats h4 {
+            color: #374151;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .wait-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .wait-stat:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 1200px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .tables-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-top: 4px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏗️ Mechanical Parking Structure Simulation</h1>
+            <p>Advanced Discrete Event Simulation with Minimum Headway Control</p>
+        </div>
+        
+        <div class="content">
+            <div class="panel">
+                <h2>
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+                    </svg>
+                    Configuration
+                </h2>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="entryRate">Entry Rate (cars/hour):</label>
+                        <input type="number" id="entryRate" value="6" min="0" step="0.1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="exitRate">Exit Rate (cars/hour):</label>
+                        <input type="number" id="exitRate" value="3" min="0" step="0.1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="entryServiceTime">Entry Service Time (seconds):</label>
+                        <input type="number" id="entryServiceTime" value="30" min="0.1" step="0.1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="exitServiceTime">Exit Service Time (seconds):</label>
+                        <input type="number" id="exitServiceTime" value="40" min="0.1" step="0.1">
+                    </div>
+                </div>
+
+                <div class="headway-section">
+                    <h3>
+                        🚗 Minimum Headway Settings
+                    </h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="entryHeadway">Entry Min Headway (seconds):</label>
+                            <input type="number" id="entryHeadway" value="3" min="0" step="0.1">
+                            <div class="help-text">Minimum time between consecutive entries</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="exitHeadwayMode">Exit Headway Mode:</label>
+                            <select id="exitHeadwayMode" onchange="toggleExitHeadway()">
+                                <option value="same">Same as Entry</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" id="exitHeadwayGroup" style="display: none;">
+                        <label for="exitHeadway">Exit Min Headway (seconds):</label>
+                        <input type="number" id="exitHeadway" value="3" min="0" step="0.1">
+                        <div class="help-text">Minimum time between consecutive exits</div>
+                    </div>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="simulationHours">Simulation Hours:</label>
+                        <input type="number" id="simulationHours" value="1000" min="10" step="10">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="numSeeds">Number of Seeds (for averaging):</label>
+                        <input type="number" id="numSeeds" value="100" min="1" step="1">
+                    </div>
+                    
+                    <div class="form-group form-group-full">
+                        <label for="priority">Priority Mode:</label>
+                        <select id="priority">
+                            <option value="FCFS">First Come First Served</option>
+                            <option value="CARS">Cars Priority</option>
+                            <option value="PEOPLE">People Priority</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button class="run-btn" onclick="runSimulation()">
+                    Run Simulation
+                </button>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Running simulation... This may take a moment.</p>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    Results
+                </h2>
+                
+                <div class="results" id="results">
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <h3>Utilization</h3>
+                            <div class="value" id="utilization">-</div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <h3>Entry Delay Probability</h3>
+                            <div class="value" id="delayEntry">-</div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <h3>Exit Delay Probability</h3>
+                            <div class="value" id="delayExit">-</div>
+                        </div>
+                        
+                        <div class="metric-card wait-time">
+                            <h3>Avg Entry Wait</h3>
+                            <div class="value" id="avgEntryWait">-</div>
+                        </div>
+                        
+                        <div class="metric-card wait-time">
+                            <h3>Avg Exit Wait</h3>
+                            <div class="value" id="avgExitWait">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tables-container">
+                        <div class="table-section">
+                            <h3>Entry Queue Analysis</h3>
+                            <table class="distribution-table" id="entryTable">
+                                <thead>
+                                    <tr>
+                                        <th>Length</th>
+                                        <th>% Time</th>
+                                        <th>% Hours Max</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            
+                            <div class="wait-stats">
+                                <h4>Wait Time Statistics</h4>
+                                <div class="wait-stat">
+                                    <span>Avg. wait per arrival:</span>
+                                    <span id="entryWaitArrival">-</span>
+                                </div>
+                                <div class="wait-stat">
+                                    <span>Avg. wait per queued:</span>
+                                    <span id="entryWaitQueued">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-section">
+                            <h3>Exit Queue Analysis</h3>
+                            <table class="distribution-table" id="exitTable">
+                                <thead>
+                                    <tr>
+                                        <th>Length</th>
+                                        <th>% Time</th>
+                                        <th>% Hours Max</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            
+                            <div class="wait-stats">
+                                <h4>Wait Time Statistics</h4>
+                                <div class="wait-stat">
+                                    <span>Avg. wait per arrival:</span>
+                                    <span id="exitWaitArrival">-</span>
+                                </div>
+                                <div class="wait-stat">
+                                    <span>Avg. wait per queued:</span>
+                                    <span id="exitWaitQueued">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="noResults" style="text-align: center; padding: 40px; color: #6b7280;">
+                    <svg style="width: 48px; height: 48px; margin: 0 auto 15px; opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <p>Configure parameters and run simulation to see results</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function mulberry32(a) {
+            return function() {
+                var t = a += 0x6D2B79F5;
+                t = Math.imul(t ^ t >>> 15, t | 1);
+                t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            };
+        }
+
+        function toggleExitHeadway() {
+            const mode = document.getElementById('exitHeadwayMode').value;
+            const exitGroup = document.getElementById('exitHeadwayGroup');
+            
+            if (mode === 'custom') {
+                exitGroup.style.display = 'block';
+            } else {
+                exitGroup.style.display = 'none';
+            }
+        }
+
+        function generateArrivalWithHeadway(rng, rate, minHeadway, currentTime, lastArrival) {
+            // Generate exponential inter-arrival time
+            const expInterArrival = -Math.log(rng()) / (rate / 3600);
+            
+            // Calculate next arrival time based on exponential distribution
+            const proposedTime = currentTime + expInterArrival;
+            
+            // Enforce minimum headway constraint
+            const minAllowedTime = lastArrival + minHeadway;
+            const actualTime = Math.max(proposedTime, minAllowedTime);
+            
+            return actualTime;
+        }
+
+        function runSingleSimulation(seed, config) {
+            const rng = mulberry32(seed);
+            
+            const SIM_TIME = config.simulationHours * 3600;
+            
+            // Event list: [time, type]
+            const FEL = [];
+            
+            function pushEvent(time, type) {
+                FEL.push([time, type]);
+                FEL.sort((a, b) => a[0] - b[0]);
+            }
+            
+            function popEvent() {
+                return FEL.shift();
+            }
+            
+            // Track last arrival times for headway enforcement
+            let lastEntryArrival = 0;
+            let lastExitArrival = 0;
+            
+            // Initial events with headway consideration
+            if (config.entryRate > 0) {
+                const firstEntry = generateArrivalWithHeadway(rng, config.entryRate, config.entryHeadway, 0, 0);
+                pushEvent(firstEntry, "arrival_entry");
+                lastEntryArrival = firstEntry;
+            }
+            if (config.exitRate > 0) {
+                const firstExit = generateArrivalWithHeadway(rng, config.exitRate, config.exitHeadway, 0, 0);
+                pushEvent(firstExit, "arrival_exit");
+                lastExitArrival = firstExit;
+            }
+
+            // State
+            const entryQueue = [];
+            const exitQueue = [];
+            let serverBusyUntil = 0.0;
+
+            // Statistics
+            let busyTime = 0.0;
+            let lastTime = 0.0;
+            const queueLengthTimeEntry = new Map();
+            const queueLengthTimeExit = new Map();
+            const maxQueueEntry = new Map();
+            const maxQueueExit = new Map();
+
+            let delayedEntry = 0, totalEntry = 0;
+            let delayedExit = 0, totalExit = 0;
+            const entryWaitTimes = [];
+            const exitWaitTimes = [];
+
+            while (FEL.length > 0) {
+                const [time, event] = popEvent();
+                if (time > SIM_TIME) break;
+
+                // Record queue length time
+                const dt = time - lastTime;
+                const entryLen = entryQueue.length;
+                const exitLen = exitQueue.length;
+                
+                queueLengthTimeEntry.set(entryLen, (queueLengthTimeEntry.get(entryLen) || 0) + dt);
+                queueLengthTimeExit.set(exitLen, (queueLengthTimeExit.get(exitLen) || 0) + dt);
+                
+                lastTime = time;
+
+                if (event === "arrival_entry") {
+                    totalEntry += 1;
+                    entryQueue.push(time);
+                    
+                    // Schedule next entry with headway constraint
+                    const nextEntry = generateArrivalWithHeadway(rng, config.entryRate, config.entryHeadway, time, lastEntryArrival);
+                    if (nextEntry <= SIM_TIME) {
+                        pushEvent(nextEntry, "arrival_entry");
+                        lastEntryArrival = nextEntry;
+                    }
+
+                } else if (event === "arrival_exit") {
+                    totalExit += 1;
+                    exitQueue.push(time);
+                    
+                    // Schedule next exit with headway constraint
+                    const nextExit = generateArrivalWithHeadway(rng, config.exitRate, config.exitHeadway, time, lastExitArrival);
+                    if (nextExit <= SIM_TIME) {
+                        pushEvent(nextExit, "arrival_exit");
+                        lastExitArrival = nextExit;
+                    }
+
+                } else if (event === "departure") {
+                    serverBusyUntil = time;
+                }
+
+                // Start service if server free
+                if (time >= serverBusyUntil) {
+                    let chosen = null;
+                    
+                    if (entryQueue.length > 0 || exitQueue.length > 0) {
+                        if (config.priority === "FCFS") {
+                            if (entryQueue.length > 0 && exitQueue.length > 0) {
+                                if (entryQueue[0] <= exitQueue[0]) {
+                                    chosen = ["entry", entryQueue.shift()];
+                                } else {
+                                    chosen = ["exit", exitQueue.shift()];
+                                }
+                            } else if (entryQueue.length > 0) {
+                                chosen = ["entry", entryQueue.shift()];
+                            } else if (exitQueue.length > 0) {
+                                chosen = ["exit", exitQueue.shift()];
+                            }
+                        } else if (config.priority === "CARS") {
+                            if (entryQueue.length > 0) {
+                                chosen = ["entry", entryQueue.shift()];
+                            } else if (exitQueue.length > 0) {
+                                chosen = ["exit", exitQueue.shift()];
+                            }
+                        } else if (config.priority === "PEOPLE") {
+                            if (exitQueue.length > 0) {
+                                chosen = ["exit", exitQueue.shift()];
+                            } else if (entryQueue.length > 0) {
+                                chosen = ["entry", entryQueue.shift()];
+                            }
+                        }
+                    }
+
+                    if (chosen) {
+                        const [kind, arrivalTime] = chosen;
+                        const wait = time - arrivalTime;
+                        
+                        if (kind === "entry") {
+                            if (wait > 0) delayedEntry += 1;
+                            entryWaitTimes.push(wait);
+                            const serviceTime = config.entryServiceTime;
+                            const finishTime = time + serviceTime;
+                            pushEvent(finishTime, "departure");
+                            busyTime += serviceTime;
+                            serverBusyUntil = finishTime;
+                        } else {
+                            if (wait > 0) delayedExit += 1;
+                            exitWaitTimes.push(wait);
+                            const serviceTime = config.exitServiceTime;
+                            const finishTime = time + serviceTime;
+                            pushEvent(finishTime, "departure");
+                            busyTime += serviceTime;
+                            serverBusyUntil = finishTime;
+                        }
+                    }
+                }
+
+                // Record max queue per hour
+                const hour = Math.floor(time / 3600);
+                maxQueueEntry.set(hour, Math.max(maxQueueEntry.get(hour) || 0, entryQueue.length));
+                maxQueueExit.set(hour, Math.max(maxQueueExit.get(hour) || 0, exitQueue.length));
+            }
+
+            // Calculate results
+            const totalTime = SIM_TIME;
+            const utilisation = busyTime / totalTime;
+
+            // Convert to percentages
+            const entryHist = new Map();
+            const exitHist = new Map();
+            for (const [k, v] of queueLengthTimeEntry) {
+                entryHist.set(k, v / totalTime * 100);
+            }
+            for (const [k, v] of queueLengthTimeExit) {
+                exitHist.set(k, v / totalTime * 100);
+            }
+
+            // Max queue histograms
+            const entryMaxHist = new Map();
+            const exitMaxHist = new Map();
+            const entryCounts = new Map();
+            const exitCounts = new Map();
+            
+            for (const [h, q] of maxQueueEntry) {
+                entryCounts.set(q, (entryCounts.get(q) || 0) + 1);
+            }
+            for (const [h, q] of maxQueueExit) {
+                exitCounts.set(q, (exitCounts.get(q) || 0) + 1);
+            }
+            
+            for (const [k, v] of entryCounts) {
+                entryMaxHist.set(k, v / config.simulationHours * 100);
+            }
+            for (const [k, v] of exitCounts) {
+                exitMaxHist.set(k, v / config.simulationHours * 100);
+            }
+
+            // Wait time calculations
+            const avgWaitEntryArrival = totalEntry > 0 ? entryWaitTimes.reduce((a, b) => a + b, 0) / totalEntry : 0;
+            const delayedEntryWaits = entryWaitTimes.filter(w => w > 0);
+            const avgWaitEntryQueued = delayedEntry > 0 ? delayedEntryWaits.reduce((a, b) => a + b, 0) / delayedEntry : 0;
+            
+            const avgWaitExitArrival = totalExit > 0 ? exitWaitTimes.reduce((a, b) => a + b, 0) / totalExit : 0;
+            const delayedExitWaits = exitWaitTimes.filter(w => w > 0);
+            const avgWaitExitQueued = delayedExit > 0 ? delayedExitWaits.reduce((a, b) => a + b, 0) / delayedExit : 0;
+
+            return {
+                utilisation,
+                delayEntry: totalEntry > 0 ? delayedEntry / totalEntry : 0,
+                delayExit: totalExit > 0 ? delayedExit / totalExit : 0,
+                entryHist,
+                exitHist,
+                entryMaxHist,
+                exitMaxHist,
+                avgWaitEntryArrival,
+                avgWaitEntryQueued,
+                avgWaitExitArrival,
+                avgWaitExitQueued
+            };
+        }
+
+        async function runSimulation() {
+            const config = {
+                entryRate: parseFloat(document.getElementById('entryRate').value),
+                exitRate: parseFloat(document.getElementById('exitRate').value),
+                entryServiceTime: parseFloat(document.getElementById('entryServiceTime').value),
+                exitServiceTime: parseFloat(document.getElementById('exitServiceTime').value),
+                entryHeadway: parseFloat(document.getElementById('entryHeadway').value),
+                exitHeadway: document.getElementById('exitHeadwayMode').value === 'same' 
+                    ? parseFloat(document.getElementById('entryHeadway').value)
+                    : parseFloat(document.getElementById('exitHeadway').value),
+                simulationHours: parseInt(document.getElementById('simulationHours').value),
+                numSeeds: parseInt(document.getElementById('numSeeds').value),
+                priority: document.getElementById('priority').value
+            };
+
+            // Show loading state
+            document.querySelector('.run-btn').disabled = true;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('noResults').style.display = 'none';
+
+            // Run simulation with delay to allow UI updates
+            setTimeout(() => {
+                try {
+                    // Aggregate results
+                    const agg = {
+                        utilisation: 0,
+                        delayEntry: 0,
+                        delayExit: 0,
+                        avgWaitEntryArrival: 0,
+                        avgWaitEntryQueued: 0,
+                        avgWaitExitArrival: 0,
+                        avgWaitExitQueued: 0
+                    };
+                    const aggEntryHist = new Map();
+                    const aggExitHist = new Map();
+                    const aggEntryMax = new Map();
+                    const aggExitMax = new Map();
+
+                    for (let s = 0; s < config.numSeeds; s++) {
+                        const result = runSingleSimulation(s, config);
+                        
+                        agg.utilisation += result.utilisation;
+                        agg.delayEntry += result.delayEntry;
+                        agg.delayExit += result.delayExit;
+                        agg.avgWaitEntryArrival += result.avgWaitEntryArrival;
+                        agg.avgWaitEntryQueued += result.avgWaitEntryQueued;
+                        agg.avgWaitExitArrival += result.avgWaitExitArrival;
+                        agg.avgWaitExitQueued += result.avgWaitExitQueued;
+
+                        for (const [k, v] of result.entryHist) {
+                            aggEntryHist.set(k, (aggEntryHist.get(k) || 0) + v);
+                        }
+                        for (const [k, v] of result.exitHist) {
+                            aggExitHist.set(k, (aggExitHist.get(k) || 0) + v);
+                        }
+                        for (const [k, v] of result.entryMaxHist) {
+                            aggEntryMax.set(k, (aggEntryMax.get(k) || 0) + v);
+                        }
+                        for (const [k, v] of result.exitMaxHist) {
+                            aggExitMax.set(k, (aggExitMax.get(k) || 0) + v);
+                        }
+                    }
+
+                    // Calculate averages
+                    for (const key in agg) {
+                        agg[key] /= config.numSeeds;
+                    }
+                    for (const [k, v] of aggEntryHist) {
+                        aggEntryHist.set(k, v / config.numSeeds);
+                    }
+                    for (const [k, v] of aggExitHist) {
+                        aggExitHist.set(k, v / config.numSeeds);
+                    }
+                    for (const [k, v] of aggEntryMax) {
+                        aggEntryMax.set(k, v / config.numSeeds);
+                    }
+                    for (const [k, v] of aggExitMax) {
+                        aggExitMax.set(k, v / config.numSeeds);
+                    }
+
+                    // Display results
+                    document.getElementById('utilization').textContent = (agg.utilisation * 100).toFixed(2) + '%';
+                    document.getElementById('delayEntry').textContent = (agg.delayEntry * 100).toFixed(2) + '%';
+                    document.getElementById('delayExit').textContent = (agg.delayExit * 100).toFixed(2) + '%';
+                    
+                    document.getElementById('avgEntryWait').textContent = agg.avgWaitEntryArrival.toFixed(2) + ' s';
+                    document.getElementById('avgExitWait').textContent = agg.avgWaitExitArrival.toFixed(2) + ' s';
+                    
+                    document.getElementById('entryWaitArrival').textContent = agg.avgWaitEntryArrival.toFixed(2) + ' s';
+                    document.getElementById('entryWaitQueued').textContent = agg.avgWaitEntryQueued.toFixed(2) + ' s';
+                    document.getElementById('exitWaitArrival').textContent = agg.avgWaitExitArrival.toFixed(2) + ' s';
+                    document.getElementById('exitWaitQueued').textContent = agg.avgWaitExitQueued.toFixed(2) + ' s';
+
+                    // Build tables
+                    buildTable('entryTable', aggEntryHist, aggEntryMax);
+                    buildTable('exitTable', aggExitHist, aggExitMax);
+
+                    // Show results
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('results').style.display = 'block';
+
+                } catch (error) {
+                    console.error('Simulation error:', error);
+                    alert('An error occurred during simulation. Please check your parameters.');
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('noResults').style.display = 'block';
+                }
+
+                document.querySelector('.run-btn').disabled = false;
+            }, 100);
+        }
+
+        function buildTable(tableId, timeHist, maxHist) {
+            const table = document.getElementById(tableId);
+            const tbody = table.querySelector('tbody');
+            tbody.innerHTML = '';
+
+            const allKeys = new Set([...timeHist.keys(), ...maxHist.keys()]);
+            const sortedKeys = Array.from(allKeys).sort((a, b) => a - b);
+
+            for (const q of sortedKeys) {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = q;
+                row.insertCell(1).textContent = (timeHist.get(q) || 0).toFixed(2) + '%';
+                row.insertCell(2).textContent = (maxHist.get(q) || 0).toFixed(2) + '%';
+            }
+        }
+    </script>
+</body>
+</html>
