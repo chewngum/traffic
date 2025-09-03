@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One-Lane Road Traffic Simulation</title>
+<style>
+    body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; min-height:100vh;}
+    .container { max-width:1200px; margin:0 auto; background: rgba(255,255,255,0.1); backdrop-filter:blur(10px); border-radius:20px; padding:30px; box-shadow:0 8px 32px rgba(31,38,135,0.37);}
+    h1 { text-align:center; margin-bottom:30px; font-size:2.5em; text-shadow:0 2px 4px rgba(0,0,0,0.3);}
+    .controls, .results-grid { display:grid; gap:15px;}
+    .controls { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom:30px; padding:20px; background: rgba(255,255,255,0.1); border-radius:15px;}
+    .control-group { display:flex; flex-direction:column;}
+    label { margin-bottom:8px; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,0.3);}
+    input, select { padding:10px; border:none; border-radius:8px; font-size:16px; }
+    button { padding:12px 25px; background: linear-gradient(45deg, #ff6b6b, #ee5a24); color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; transition:all 0.3s ease; text-transform:uppercase; letter-spacing:1px;}
+    button:hover { transform:translateY(-2px); box-shadow:0 5px 15px rgba(0,0,0,0.3);}
+    button:disabled { background:#666; cursor:not-allowed; transform:none; }
+    .progress { width:100%; height:20px; background: rgba(255,255,255,0.2); border-radius:10px; margin:20px 0; overflow:hidden;}
+    .progress-bar { height:100%; background: linear-gradient(90deg,#4facfe 0%,#00f2fe 100%); width:0%; transition: width 0.3s ease; }
+    .results { margin-top:30px; }
+    .results-grid { grid-template-columns:1fr 1fr; margin-bottom:30px; }
+    .direction-results { background: rgba(255,255,255,0.1); padding:20px; border-radius:15px; }
+    .direction-results h3 { text-align:center; margin-bottom:5px; color:#ffd700; }
+    .queue-stats { margin-bottom:10px; padding:8px; background: rgba(255,255,255,0.1); border-radius:8px; }
+    .summary { background: rgba(255,255,255,0.15); padding:20px; border-radius:15px; text-align:center; }
+    .summary h3 { color:#ffd700; margin-bottom:15px; }
+    .status { margin:10px 0; font-weight:600; }
+    .diagram-container { margin-top:15px; font-family: monospace; font-size:16px; }
+    table { border-collapse: collapse; margin: 10px auto; }
+    table td { padding:5px 10px; }
+    .param { text-align:left; width:50%; }
+    .value { text-align:right; width:50%; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🚗 One-Lane Road Traffic Simulation</h1>
+
+<div class="controls">
+    <div class="control-group">
+        <label for="simulationHours">Simulation Hours:</label>
+        <input type="number" id="simulationHours" value="1000" min="1" step="1">
+    </div>
+    <div class="control-group">
+        <label for="numSeeds">Random Seeds:</label>
+        <input type="number" id="numSeeds" value="100" min="1" step="1">
+    </div>
+    <div class="control-group">
+        <label for="roadLength">Road Length (m):</label>
+        <input type="number" id="roadLength" value="30" min="0.1" step="0.1">
+    </div>
+    <div class="control-group">
+        <label for="carSpeed">Speed (km/h):</label>
+        <input type="number" id="carSpeed" value="20" min="1"  step="0.1">
+    </div>
+    <div class="control-group">
+        <label for="arrivalRateA">Direction A→B (cars/hour):</label>
+        <input type="number" id="arrivalRateA" value="15" min="0"  step="0.1">
+    </div>
+    <div class="control-group">
+        <label for="arrivalRateB">Direction B→A (cars/hour):</label>
+        <input type="number" id="arrivalRateB" value="15" min="0"  step="0.1">
+    </div>
+    <div class="control-group">
+        <label for="priority">Priority System:</label>
+        <select id="priority">
+            <option value="fifo">First Come First Served</option>
+            <option value="A">Direction A Priority</option>
+            <option value="B">Direction B Priority</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label for="minHeadway">Minimum Headway (sec):</label>
+        <input type="number" id="minHeadway" value="2" min="0.0" max="360000" step="0.1">
+    </div>
+    <div class="control-group">
+        <label for="followUpHeadway">Follow-up Headway:</label>
+        <select id="followUpHeadway" onchange="toggleCustomHeadway()">
+            <option value="minimum">Minimum headway</option>
+            <option value="full" selected>Whole road segment</option>
+            <option value="custom">Custom</option>
+        </select>
+    </div>
+    <div class="control-group" id="customHeadwayGroup" style="display:none;">
+        <label for="customHeadway">Custom Headway (sec):</label>
+        <input type="number" id="customHeadway" value="1" min="0" step="0.1">
+    </div>
+    <div class="control-group">
+        <button onclick="runSimulation()">Run Simulation</button>
+    </div>
+    <div id="warning" style="color: #ffd700; margin-top:10px; display:none; font-weight:600;"></div>
+
+</div>
+
+<div class="progress">
+    <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<div class="status" id="status">Ready to run simulation</div>
+
+<div class="results" id="results" style="display:none;">
+    <div class="results-grid">
+        <div class="direction-results">
+            <h3>Direction A → B</h3>
+            <p style="text-align:center;font-size:0.9em;">% of hours maximum queue | (cumulative) | % of total simulated time</p>
+            <div id="directionA"></div>
+        </div>
+        <div class="direction-results">
+            <h3>Direction B → A</h3>
+            <p style="text-align:center;font-size:0.9em;">% of hours maximum queue | (cumulative) | % of total simulated time</p>
+            <div id="directionB"></div>
+        </div>
+    </div>
+
+    <div class="summary">
+        <h3>Summary Statistics</h3>
+        <table id="summaryTable"></table>
+
+        <div class="diagram-container">
+            <label for="diagramPercentile">Max Queue Observed Anytime In The Hour:</label>
+            <select id="diagramPercentile" onchange="updateDiagram()">
+                <option value="10">10th percentile</option>
+                <option value="20">20th percentile</option>
+                <option value="30">30th percentile</option>
+                <option value="40">40th percentile</option>
+                <option value="50" selected>50th percentile</option>
+                <option value="60">60th percentile</option>
+                <option value="70">70th percentile</option>
+                <option value="80">80th percentile</option>
+                <option value="90">90th percentile</option>
+                <option value="95">95th percentile</option>
+                <option value="98">98th percentile</option>
+                <option value="99">99th percentile</option>
+                <option value="average">Average</option>
+            </select>
+            <pre id="roadDiagram"></pre>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+    class TrafficSimulation {
+        constructor(roadLength=30, carSpeed=20, arrivalRateA=15, arrivalRateB=15, priority='fifo', followUpHeadway='full', minHeadway=2){
+            this.roadLength = roadLength;
+            this.carSpeed = carSpeed;
+            this.traversalTime = this.roadLength/(this.carSpeed*1000/3600);
+            this.arrivalRateA = arrivalRateA;
+            this.arrivalRateB = arrivalRateB;
+            this.lambdaA = arrivalRateA/3600;
+            this.lambdaB = arrivalRateB/3600;
+            this.priority = priority;
+            this.followUpHeadway = followUpHeadway;
+            this.minHeadway = minHeadway;
+            // Calculate follow-up headway time
+            if(followUpHeadway === 'full') {
+                this.headwayTime = this.traversalTime;
+            } else if(followUpHeadway === 'minimum') {
+                this.headwayTime = minHeadway;
+            } else {
+                this.headwayTime = parseFloat(followUpHeadway);
+            }
+        }
+    
+        generateInterArrivalA(rng){
+            if(this.lambdaA===0) return Infinity;
+            const exponentialTime = -Math.log(rng())/this.lambdaA;
+            return Math.max(exponentialTime, this.minHeadway);
+        }
+        generateInterArrivalB(rng){
+            if(this.lambdaB===0) return Infinity;
+            const exponentialTime = -Math.log(rng())/this.lambdaB;
+            return Math.max(exponentialTime, this.minHeadway);
+        }
+    
+        createRNG(seed){
+            let state = seed;
+            return function(){ state=(state*1664525+1013904223)%Math.pow(2,32); return state/Math.pow(2,32); }
+        }
+    
+        runSingleSimulation(seed, hours) {
+    const rng = this.createRNG(seed);
+    const simTime = hours * 3600;
+    const ARRIVAL_A = 'ARRIVAL_A', ARRIVAL_B = 'ARRIVAL_B', DEPARTURE = 'DEPARTURE';
+    
+    let time = 0, queueA = [], queueB = [], roadOccupied = false, roadOccupiedBy = null, roadOccupiedSince = 0;
+    let hourlyMaxQueueA = [], hourlyMaxQueueB = [], queueingEvents = 0, twoWayConflictEvents = 0, sameDirConflictEvents = 0, totalRoadOccupiedTime = 0;
+    let currentHourMaxA = 0, currentHourMaxB = 0, currentHour = 0;
+    let events = [];
+
+    if (this.arrivalRateA > 0) events.push({ time: this.generateInterArrivalA(rng), type: ARRIVAL_A });
+    if (this.arrivalRateB > 0) events.push({ time: this.generateInterArrivalB(rng), type: ARRIVAL_B });
+
+    let queueTimeA = {}, queueTimeB = {}, lastTime = 0;
+    let lastDepartureA = -Infinity, lastDepartureB = -Infinity; // track last scheduled departures
+
+    while (time < simTime && events.length > 0) {
+        events.sort((a, b) => a.time - b.time);
+        const event = events.shift();
+        const deltaTime = event.time - lastTime;
+
+        queueTimeA[queueA.length] = (queueTimeA[queueA.length] || 0) + deltaTime;
+        queueTimeB[queueB.length] = (queueTimeB[queueB.length] || 0) + deltaTime;
+        lastTime = event.time;
+        time = event.time;
+
+        const newHour = Math.floor(time / 3600);
+        if (newHour > currentHour) {
+            hourlyMaxQueueA.push(Math.max(currentHourMaxA, queueA.length));
+            hourlyMaxQueueB.push(Math.max(currentHourMaxB, queueB.length));
+            currentHourMaxA = queueA.length;
+            currentHourMaxB = queueB.length;
+            currentHour = newHour;
+        }
+
+        switch (event.type) {
+            case ARRIVAL_A:
+                if (roadOccupied) {
+                    if (
+                        this.priority === 'A' &&
+                        roadOccupiedBy === 'A' &&
+                        queueA.length === 0 &&
+                        (time - roadOccupiedSince) >= this.headwayTime
+                    ) {
+                        // Skip queue: enter immediately
+                        roadOccupied = true;
+                        roadOccupiedBy = 'A';
+                        roadOccupiedSince = time;
+                        const departureTime = Math.max(lastDepartureA, time) + this.headwayTime;
+                        lastDepartureA = departureTime;
+                        totalRoadOccupiedTime += this.headwayTime; // ✅ add headway occupancy
+                        events.push({ time: departureTime, type: DEPARTURE });
+                    } else {
+                        // Normal queueing
+                        queueA.push(time);
+                        queueingEvents++;
+                        if (roadOccupiedBy === 'B') twoWayConflictEvents++;
+                        else if (roadOccupiedBy === 'A') sameDirConflictEvents++;
+                        currentHourMaxA = Math.max(currentHourMaxA, queueA.length);
+                    }
+                } else {
+                    // Road free
+                    roadOccupied = true;
+                    roadOccupiedBy = 'A';
+                    roadOccupiedSince = time;
+                    const departureTime = time + this.traversalTime;
+                    lastDepartureA = departureTime;
+                    totalRoadOccupiedTime += this.traversalTime; // ✅ add traversal occupancy
+                    events.push({ time: departureTime, type: DEPARTURE });
+                }
+                if (this.arrivalRateA > 0) events.push({ time: time + this.generateInterArrivalA(rng), type: ARRIVAL_A });
+                break;
+
+            case ARRIVAL_B:
+                if (roadOccupied) {
+                    if (
+                        this.priority === 'B' &&
+                        roadOccupiedBy === 'B' &&
+                        queueB.length === 0 &&
+                        (time - roadOccupiedSince) >= this.headwayTime
+                    ) {
+                        // Skip queue: enter immediately
+                        roadOccupied = true;
+                        roadOccupiedBy = 'B';
+                        roadOccupiedSince = time;
+                        const departureTime = Math.max(lastDepartureB, time) + this.headwayTime;
+                        lastDepartureB = departureTime;
+                        totalRoadOccupiedTime += this.headwayTime; // ✅ add headway occupancy
+                        events.push({ time: departureTime, type: DEPARTURE });
+                    } else {
+                        // Normal queueing
+                        queueB.push(time);
+                        queueingEvents++;
+                        if (roadOccupiedBy === 'A') twoWayConflictEvents++;
+                        else if (roadOccupiedBy === 'B') sameDirConflictEvents++;
+                        currentHourMaxB = Math.max(currentHourMaxB, queueB.length);
+                    }
+                } else {
+                    // Road free
+                    roadOccupied = true;
+                    roadOccupiedBy = 'B';
+                    roadOccupiedSince = time;
+                    const departureTime = time + this.traversalTime;
+                    lastDepartureB = departureTime;
+                    totalRoadOccupiedTime += this.traversalTime; // ✅ add traversal occupancy
+                    events.push({ time: departureTime, type: DEPARTURE });
+                }
+                if (this.arrivalRateB > 0) events.push({ time: time + this.generateInterArrivalB(rng), type: ARRIVAL_B });
+                break;
+
+            case DEPARTURE:
+                const previousDirection = roadOccupiedBy;
+                roadOccupied = false;
+                let nextDir = null;
+
+                // Apply priority logic
+                if (this.priority === 'fifo') {
+                    let earliestTime = Infinity;
+                    if (queueA.length > 0 && queueA[0] < earliestTime) { earliestTime = queueA[0]; nextDir = 'A'; }
+                    if (queueB.length > 0 && queueB[0] < earliestTime) { earliestTime = queueB[0]; nextDir = 'B'; }
+                } else if (this.priority === 'A') {
+                    if (queueA.length > 0) nextDir = 'A';
+                    else if (queueB.length > 0) nextDir = 'B';
+                } else if (this.priority === 'B') {
+                    if (queueB.length > 0) nextDir = 'B';
+                    else if (queueA.length > 0) nextDir = 'A';
+                }
+
+                if (nextDir === 'A') {
+                    queueA.shift();
+                    roadOccupied = true;
+                    roadOccupiedBy = 'A';
+                    roadOccupiedSince = time;
+                    const occupancy = (previousDirection === 'A') ? this.headwayTime : this.traversalTime;
+                    const departureTime = Math.max(lastDepartureA, time) + occupancy;
+                    lastDepartureA = departureTime;
+                    totalRoadOccupiedTime += occupancy; // ✅ add true occupancy
+                    events.push({ time: departureTime, type: DEPARTURE });
+                }
+                else if (nextDir === 'B') {
+                    queueB.shift();
+                    roadOccupied = true;
+                    roadOccupiedBy = 'B';
+                    roadOccupiedSince = time;
+                    const occupancy = (previousDirection === 'B') ? this.headwayTime : this.traversalTime;
+                    const departureTime = Math.max(lastDepartureB, time) + occupancy;
+                    lastDepartureB = departureTime;
+                    totalRoadOccupiedTime += occupancy; // ✅ add true occupancy
+                    events.push({ time: departureTime, type: DEPARTURE });
+                }
+                else {
+                    roadOccupiedBy = null;
+                }
+                break;
+        }
+
+        currentHourMaxA = Math.max(currentHourMaxA, queueA.length);
+        currentHourMaxB = Math.max(currentHourMaxB, queueB.length);
+    }
+
+    if (hourlyMaxQueueA.length < hours) {
+        hourlyMaxQueueA.push(Math.max(currentHourMaxA, queueA.length));
+        hourlyMaxQueueB.push(Math.max(currentHourMaxB, queueB.length));
+    }
+
+    const roadUtil = (totalRoadOccupiedTime / simTime) * 100;
+
+    return {
+        hourlyMaxQueueA: hourlyMaxQueueA.slice(0, hours),
+        hourlyMaxQueueB: hourlyMaxQueueB.slice(0, hours),
+        queueTimeA, queueTimeB,
+        queueingEvents, twoWayConflictEvents, sameDirConflictEvents,
+        avgQueueingEventsPerHour: queueingEvents / hours,
+        avgTwoWayConflictEventsPerHour: twoWayConflictEvents / hours,
+        avgSameDirConflictEventsPerHour: sameDirConflictEvents / hours,
+        roadUtilization: roadUtil
+    };
+}
+
+        async runMultipleSimulations(numSeeds,hours,progressCallback){
+            const allA={}, allB={};
+            let totalQueueing=0, totalTwoWay=0, totalSameDir=0, totalRoadUtil=0;
+            const totalQueueTimeA={}, totalQueueTimeB={};
+    
+            for(let seed=1; seed<=numSeeds; seed++){
+                if(seed%10===0 && progressCallback){
+                    await new Promise(r=>{progressCallback(seed/numSeeds*100); setTimeout(r,1);});
+                }
+                const res=this.runSingleSimulation(seed,hours);
+                totalQueueing+=res.queueingEvents;
+                totalTwoWay+=res.twoWayConflictEvents;
+                totalSameDir+=res.sameDirConflictEvents;
+                totalRoadUtil+=res.roadUtilization;
+    
+                res.hourlyMaxQueueA.forEach(q=>{if(!allA[q]) allA[q]=0; allA[q]++;});
+                res.hourlyMaxQueueB.forEach(q=>{if(!allB[q]) allB[q]=0; allB[q]++;});
+    
+                for(const q in res.queueTimeA) totalQueueTimeA[q] = (totalQueueTimeA[q]||0) + res.queueTimeA[q];
+                for(const q in res.queueTimeB) totalQueueTimeB[q] = (totalQueueTimeB[q]||0) + res.queueTimeB[q];
+            }
+    
+            const totalHours=numSeeds*hours, totalSimTime=numSeeds*hours*3600;
+            const percentagesA={}, percentagesB={}, queueTimePercentA={}, queueTimePercentB={};
+    
+            const maxA=Math.max(...Object.keys(allA).map(Number),0), maxB=Math.max(...Object.keys(allB).map(Number),0);
+            for(let i=0;i<=maxA;i++) percentagesA[i]=((allA[i]||0)/totalHours*100).toFixed(2);
+            for(let i=0;i<=maxB;i++) percentagesB[i]=((allB[i]||0)/totalHours*100).toFixed(2);
+            for(const q in totalQueueTimeA) queueTimePercentA[q] = (totalQueueTimeA[q]/totalSimTime*100).toFixed(2);
+            for(const q in totalQueueTimeB) queueTimePercentB[q] = (totalQueueTimeB[q]/totalSimTime*100).toFixed(2);
+    
+            return {
+                percentagesA, percentagesB, queueTimePercentA, queueTimePercentB,
+                avgQueueingEventsPerHour:(totalQueueing/totalHours).toFixed(3),
+                avgTwoWayConflictEventsPerHour:(totalTwoWay/totalHours).toFixed(3),
+                avgSameDirConflictEventsPerHour:(totalSameDir/totalHours).toFixed(3),
+                avgRoadUtilization:(totalRoadUtil/numSeeds).toFixed(2)
+            };
+        }
+    }
+    
+    let simResults=null, roadLen=30;
+    
+    async function runSimulation(){
+    const btn=document.querySelector('button'); 
+    if(btn.disabled) return;
+
+    const hours=parseInt(document.getElementById('simulationHours').value);
+    const numSeeds=parseInt(document.getElementById('numSeeds').value);
+    const product = numSeeds * hours;
+    const warningEl=document.getElementById('warning');
+
+    // If product < 100000, show warning and require second click
+    if(product < 100000){
+        if(warningEl.style.display === 'none'){ 
+            warningEl.textContent = "⚠️ Product of hours and seeds should be >= 100,000 for reliable results. Click again to run anyway.";
+            warningEl.style.display = 'block';
+            return; // stop here on first press
+        }
+        // If already warned once, allow run
+    } else {
+        // If product is sufficient, always hide warning
+        warningEl.style.display = 'none';
+    }
+
+    btn.disabled=true; btn.textContent='Running...';
+    roadLen=parseFloat(document.getElementById('roadLength').value);
+    const carSpeed=parseFloat(document.getElementById('carSpeed').value);
+    const arrivalRateA=parseFloat(document.getElementById('arrivalRateA').value);
+    const arrivalRateB=parseFloat(document.getElementById('arrivalRateB').value);
+    let priority=document.getElementById('priority').value;
+    if (arrivalRateA === 0 && arrivalRateB > 0) {
+        priority = "B";
+    } else if (arrivalRateB === 0 && arrivalRateA > 0) {
+        priority = "A";
+    }
+    const followUpHeadway=document.getElementById('followUpHeadway').value;
+    const minHeadway=parseFloat(document.getElementById('minHeadway').value);
+    let headwayValue = followUpHeadway;
+    if(followUpHeadway === 'custom') {
+        headwayValue = parseFloat(document.getElementById('customHeadway').value);
+    }
+    const statusEl=document.getElementById('status');
+    const progressBar=document.getElementById('progressBar');
+    statusEl.textContent='Initializing simulation...';
+    const sim=new TrafficSimulation(roadLen,carSpeed,arrivalRateA,arrivalRateB,priority,headwayValue,minHeadway);
+    try{
+        simResults=await sim.runMultipleSimulations(numSeeds,hours,(p)=>{progressBar.style.width=p+'%'; statusEl.textContent=`Running simulation: ${Math.round(p)}% complete`;});
+        displayResults(simResults,roadLen,carSpeed);
+        statusEl.textContent='Simulation completed successfully!';
+    }catch(e){statusEl.textContent='Error: '+e.message;}
+    btn.disabled=false; btn.textContent='Run Simulation';
+}
+
+    
+    function displayResults(results,roadLength,carSpeed){
+        const resultsEl=document.getElementById('results');
+        const dirA=document.getElementById('directionA'); const dirB=document.getElementById('directionB');
+        const summaryTable=document.getElementById('summaryTable');
+        const priority=document.getElementById('priority').value;
+        const followUpHeadway=document.getElementById('followUpHeadway').value;
+    
+        // Directional queue tables
+        // Directional queue tables
+        const displayQueue = (percentages, timePercent, container) => {
+            container.innerHTML = ''; 
+            let cumulative = 0;
+            Object.keys(percentages)
+                .sort((a,b) => parseInt(a) - parseInt(b))
+                .forEach(q => {
+                    cumulative += parseFloat(percentages[q]);
+                    // Ceiling at 100.0%
+                    const displayCumulative = Math.min(cumulative, 100.0);
+ 
+                    const div = document.createElement('div'); 
+                    div.className = 'queue-stats';
+                    div.innerHTML = `Queue length ${q}: ${percentages[q]}% (${displayCumulative.toFixed(1)}%) | ${timePercent[q]}% of time`;
+                    container.appendChild(div);
+                });
+        };
+
+        displayQueue(results.percentagesA,results.queueTimePercentA,dirA);
+        displayQueue(results.percentagesB,results.queueTimePercentB,dirB);
+    
+        // Summary statistics table
+        summaryTable.innerHTML='';
+        const addRow=(param,value)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td class="param">${param}</td><td class="value">${value}</td>`; summaryTable.appendChild(tr);}
+        const traversalTime=roadLength/(carSpeed*1000/3600);
+        addRow('Road Length', `${roadLength} m`);
+        addRow('Car Speed', `${carSpeed} km/h`);
+        addRow('Priority System', priority === 'fifo' ? 'First Come First Served' : `Direction ${priority} Priority`);
+        addRow('Follow-up Headway', followUpHeadway === 'full' ? 'Whole road segment' : `${followUpHeadway} seconds`);
+        addRow('Avg Queueing Events / Hour', results.avgQueueingEventsPerHour);
+        addRow('Two-Way Conflict Events / Hour', results.avgTwoWayConflictEventsPerHour);
+        addRow('Same-Direction Conflict Events / Hour', results.avgSameDirConflictEventsPerHour);
+        addRow('Avg Road Utilization', `${results.avgRoadUtilization}%`);
+        addRow('Traversal Time', `${traversalTime.toFixed(2)} s`);
+    
+        resultsEl.style.display='block';
+        updateDiagram();
+    }
+    
+    function updateDiagram(){
+        if(!simResults) return;
+        const sel=document.getElementById('diagramPercentile').value;
+        const qA=calculateQueue(simResults.percentagesA,sel);
+        const qB=calculateQueue(simResults.percentagesB,sel);
+        const roadDiagram=document.getElementById('roadDiagram');
+    
+        const numBlocks=Math.ceil(roadLen/5);
+        const blockChar='⬛';
+        const carA='🚗', carB='🚙';
+        const blocks = blockChar.repeat(numBlocks);
+        const carsA = carA.repeat(Math.ceil(qA));
+        const carsB = carB.repeat(Math.ceil(qB));
+        roadDiagram.textContent=`${carsA} ${blocks} ${carsB}\nA (${qA} cars) --> ${roadLen}m one way <-- B (${qB} cars)`;
+    }
+    
+    function calculateQueue(percentages,sel){
+        const qs=Object.keys(percentages).map(Number).sort((a,b)=>a-b);
+        if(sel==='average') return Object.keys(percentages).reduce((acc,k)=>acc+qs[k]*percentages[k]/100,0).toFixed(2);
+        const percentile=parseFloat(sel); let cum=0;
+        for(const q of qs){ cum+=parseFloat(percentages[q]); if(cum>=percentile) return q.toFixed(2);}
+        return qs[qs.length-1].toFixed(2);
+    }
+    
+    function toggleCustomHeadway() {
+        const followUpHeadway = document.getElementById('followUpHeadway').value;
+        const customGroup = document.getElementById('customHeadwayGroup');
+        if(followUpHeadway === 'custom') {
+            customGroup.style.display = 'flex';
+        } else {
+            customGroup.style.display = 'none';
+        }
+    }
+    </script>
+    
+</body>
+</html>

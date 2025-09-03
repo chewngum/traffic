@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Car Park Simulation</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        label, input, button { display: block; margin-bottom: 10px; }
+
+        #loadingContainer {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .spinner {
+            margin: 0 auto 10px;
+            width: 40px;
+            height: 40px;
+            border: 5px solid #ccc;
+            border-top: 5px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+            height: 15px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #007bff;
+            transition: width 0.4s ease;
+        }
+    </style>
+</head>
+<body>
+    <h1>Car Park Simulation</h1>
+    <form id="simForm">
+        <label for="ar">Arrival Rate (cars/hr):</label>
+        <input type="number" id="ar" step="0.1" required>
+
+        <label for="st">Service Time (sec):</label>
+        <input type="number" id="st" step="0.1" required>
+
+        <label for="sp">Spaces:</label>
+        <input type="number" id="sp" required>
+
+        <label for="hr">Headroom (sec):</label>
+        <input type="number" id="hr" step="0.1" required>
+
+        <button type="submit">Run Simulation</button>
+    </form>
+
+    <div id="loadingContainer">
+        <div class="spinner"></div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <p>Running simulations...</p>
+    </div>
+
+    <h2>Results:</h2>
+    <pre id="output1"></pre>
+    <pre id="output2"></pre>
+    <pre id="output3"></pre>
+
+    <script type="module">
+        const worker = new Worker('/static/carpark_queueing_worker.js');
+        import * as script1 from "/static/carpark_infinite.js";
+        import * as script2 from "/static/carpark_blocking_web.js";
+        import * as script3 from "/static/carpark_queueing_web.js";
+
+        function runWorker(a, b, c, h) {
+            return new Promise((resolve, reject) => {
+                worker.onmessage = (e) => resolve(e.data);
+                worker.onerror = (err) => reject(err);
+                worker.postMessage({ a, b, c, h });
+            });
+        }
+
+        function setProgress(percent) {
+            document.getElementById('progressBar').style.width = percent + '%';
+        }
+
+        document.getElementById('simForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const AR = parseFloat(document.getElementById('ar').value);
+            const ST = parseFloat(document.getElementById('st').value);
+            const SP = parseInt(document.getElementById('sp').value);
+            const HR = parseFloat(document.getElementById('hr').value);
+
+
+
+            try {
+                setProgress(20);
+                const p1 = script1.test(AR, ST, SP, HR);
+
+                setProgress(40);
+                const p2 = script2.test(AR, ST, SP, HR);
+
+                setProgress(60);
+                const p3 = runWorker(AR, ST, SP, HR);
+
+                const [result1, result2, result3] = await Promise.all([p1, p2, p3]);
+
+                setProgress(100);
+                output1.textContent = result1;
+                output2.textContent = result2;
+                output3.textContent = result3;
+            } catch (error) {
+                output3.textContent = 'Error: ' + error.message;
+                console.error(error);
+            } finally {
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                    setProgress(0);
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>
