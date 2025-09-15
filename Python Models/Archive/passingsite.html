@@ -165,13 +165,13 @@
     
         generateInterArrivalA(rng){
             if(this.lambdaA===0) return Infinity;
-            const exponentialTime = -Math.log(rng())/this.lambdaA;
-            return Math.max(exponentialTime, this.minHeadway);
+            const exponentialTime = -Math.log(rng())/(this.lambdaA *3600 / (3600 - this.lambdaA * this.minHeadway));
+            return exponentialTime + 50;
         }
         generateInterArrivalB(rng){
             if(this.lambdaB===0) return Infinity;
-            const exponentialTime = -Math.log(rng())/this.lambdaB;
-            return Math.max(exponentialTime, this.minHeadway);
+            const exponentialTime = -Math.log(rng())/(this.lambdaB *3600 / (3600 - this.lambdaB * this.minHeadway));
+            return exponentialTime + this.minHeadway;
         }
     
         createRNG(seed){

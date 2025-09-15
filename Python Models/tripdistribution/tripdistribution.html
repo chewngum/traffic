@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Network Builder</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 100vh; overflow: hidden; }
+        .container { display: flex; height: 100vh; }
+        .sidebar { width: 280px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-right: 2px solid rgba(255, 255, 255, 0.2); padding: 20px; overflow-y: auto; }
+        .main-canvas { flex: 1; position: relative; overflow: hidden; }
+        .canvas-container { width: 100%; height: 100%; position: relative; background: linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px); background-size: 40px 40px; cursor: crosshair; }
+        h1 { color: #333; margin-bottom: 20px; font-size: 1.4em; }
+        .tool-section { margin-bottom: 20px; padding: 12px; background: rgba(255, 255, 255, 0.7); border-radius: 8px; border: 1px solid rgba(0, 0, 0, 0.1); }
+        .tool-section h3 { color: #444; margin-bottom: 8px; font-size: 1em; }
+        .tool-btn { display: block; width: 100%; padding: 8px; margin: 3px 0; border: none; border-radius: 5px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; cursor: pointer; transition: all 0.2s ease; font-weight: 500; font-size: 13px; }
+        .tool-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(79, 172, 254, 0.4); }
+        .tool-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .intersection { position: absolute; width: 32px; height: 32px; background: linear-gradient(135deg, #ff6b6b, #ee5a52); border: 2px solid white; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3); cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; }
+        .intersection:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(255, 107, 107, 0.5); }
+        .intersection.selected { background: linear-gradient(135deg, #4ecdc4, #44a08d); transform: scale(1.2); }
+        .connection-indicator { position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #4ecdc4; border: 2px solid white; font-size: 8px; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .road { position: absolute; background: linear-gradient(90deg, #333 0%, #555 100%); height: 3px; transform-origin: left center; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); z-index: 1; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; backdrop-filter: blur(5px); }
+        .modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 12px; box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3); max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto; }
+        .modal h2 { margin-bottom: 15px; color: #333; font-size: 1.3em; }
+        .close { position: absolute; top: 10px; right: 15px; font-size: 20px; cursor: pointer; color: #999; }
+        .close:hover { color: #333; }
+        .legs-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .leg-section { border: 1px solid #ddd; border-radius: 8px; padding: 12px; background: #f9f9f9; }
+        .leg-title { font-weight: bold; margin-bottom: 8px; color: #333; display: flex; justify-content: space-between; align-items: center; }
+        .connected-indicator { background: #4ecdc4; color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; }
+        .movement-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .movement-table th, .movement-table td { border: 1px solid #ddd; padding: 4px 6px; text-align: center; }
+        .movement-table th { background: #f5f5f5; font-weight: 600; }
+        .movement-table input { width: 50px; padding: 2px; border: none; text-align: center; font-size: 11px; }
+        .stats-panel { background: rgba(255, 255, 255, 0.9); padding: 12px; border-radius: 8px; margin-top: 15px; font-size: 13px; }
+        .stats-panel h4 { margin-bottom: 8px; color: #333; }
+        .delete-btn { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-top: 8px; font-size: 12px; }
+        .input-group { margin: 8px 0; }
+        .input-group label { display: block; margin-bottom: 3px; color: #555; font-weight: 500; font-size: 13px; }
+        .input-group input { width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px; }
+        .grid-snap { font-size: 11px; margin-top: 5px; }
+        .leg-selector { margin: 20px 0; }
+        .leg-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 10px; max-width: 350px; margin: 0 auto; }
+        .leg-item { display: flex; align-items: center; justify-content: center; padding: 10px; border: 2px solid #ddd; border-radius: 6px; background: #f9f9f9; transition: all 0.2s ease; }
+        .leg-item:hover { background: #e3f2fd; border-color: #2196f3; }
+        .leg-item.selected { background: #e8f5e8; border-color: #4caf50; }
+        .leg-item label { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; font-weight: 500; }
+        .leg-item input[type="checkbox"] { margin: 0; transform: scale(1.2); }
+        .leg-center { display: flex; align-items: center; justify-content: center; border: 2px solid #ff6b6b; background: #fff3f3; }
+        .intersection-preview { width: 24px; height: 24px; background: linear-gradient(135deg, #ff6b6b, #ee5a52); border: 2px solid white; border-radius: 2px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); }
+        .connection-selector { display: flex; align-items: center; gap: 20px; margin: 20px 0; justify-content: center; }
+        .intersection-selector { flex: 1; text-align: center; }
+        .intersection-selector h3 { margin-bottom: 10px; color: #333; font-size: 1.1em; }
+        .leg-options { display: block; max-width: 200px; margin: 0 auto; }
+        .intersection-leg { position: absolute; background: #e91e63; z-index: 2; }
+        .intersection-leg.north { width: 2px; height: 12px; left: 50%; top: -12px; transform: translateX(-50%); }
+        .intersection-leg.south { width: 2px; height: 12px; left: 50%; bottom: -12px; transform: translateX(-50%); }
+        .intersection-leg.east { width: 12px; height: 2px; right: -12px; top: 50%; transform: translateY(-50%); }
+        .intersection-leg.west { width: 12px; height: 2px; left: -12px; top: 50%; transform: translateY(-50%); }
+        .intersection-leg.northeast { width: 8px; height: 2px; right: -8px; top: 25%; transform: rotate(45deg); transform-origin: left center; }
+        .intersection-leg.northwest { width: 8px; height: 2px; left: -8px; top: 25%; transform: rotate(-45deg); transform-origin: right center; }
+        .intersection-leg.southeast { width: 8px; height: 2px; right: -8px; bottom: 25%; transform: rotate(-45deg); transform-origin: left center; }
+        .intersection-leg.southwest { width: 8px; height: 2px; left: -8px; bottom: 25%; transform: rotate(45deg); transform-origin: right center; }
+        .leg-option { display: flex; align-items: center; padding: 8px 12px; border: 2px solid #ddd; border-radius: 6px; background: #f9f9f9; cursor: pointer; transition: all 0.2s ease; }
+        .leg-option:hover { background: #e3f2fd; border-color: #2196f3; }
+        .leg-option.selected { background: #e8f5e8; border-color: #4caf50; }
+        .leg-option.unavailable { background: #ffebee; border-color: #f44336; cursor: not-allowed; opacity: 0.6; }
+        .leg-option input[type="radio"] { margin-right: 8px; }
+        .leg-option label { cursor: pointer; font-size: 13px; font-weight: 500; }
+        .connection-arrow { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .arrow { font-size: 24px; color: #666; font-weight: bold; }
+        .leg-status { font-size: 10px; color: #666; margin-left: auto; }
+        .leg-status.connected { color: #f44336; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1>Traffic Network Builder</h1>
+            
+            <div class="tool-section">
+                <h3>Tools</h3>
+                <button class="tool-btn active" data-tool="intersection">Add Intersection</button>
+                <button class="tool-btn" data-tool="road">Connect Roads</button>
+                <button class="tool-btn" data-tool="select">Select/Edit</button>
+                <button class="tool-btn" data-tool="delete">Delete Mode</button>
+                <div class="grid-snap">
+                    <label><input type="checkbox" id="grid-snap" checked> Snap to Grid</label>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <h3>Network Statistics</h3>
+                <div class="stats-panel">
+                    <div><strong>Intersections:</strong> <span id="intersection-count">0</span></div>
+                    <div><strong>Roads:</strong> <span id="road-count">0</span></div>
+                    <div><strong>Total Light/Hour:</strong> <span id="total-light">0</span></div>
+                    <div><strong>Total Heavy/Hour:</strong> <span id="total-heavy">0</span></div>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <h3>Export/Import</h3>
+                <button class="tool-btn" onclick="exportNetwork()">Export Network</button>
+                <button class="tool-btn" onclick="importNetwork()">Import Network</button>
+                <input type="file" id="import-file" accept=".json" style="display: none;">
+            </div>
+        </div>
+
+        <div class="main-canvas">
+            <div class="canvas-container" id="canvas"></div>
+        </div>
+    </div>
+
+
+    <!-- Leg Selection Modal -->
+    <div class="modal" id="leg-selection-modal">
+        <div class="modal-content">
+            <span class="close" onclick="cancelIntersectionCreation()">&times;</span>
+            <h2>Select Intersection Legs</h2>
+            <div class="input-group">
+                <label for="new-intersection-name">Intersection Name:</label>
+                <input type="text" id="new-intersection-name" placeholder="e.g., Main St & Oak Ave">
+            </div>
+            
+            <div class="leg-selector">
+                <div class="leg-grid">
+                    <div class="leg-item"><label><input type="checkbox" data-direction="northwest" onchange="updateLegSelection(this)"> NW</label></div>
+                    <div class="leg-item"><label><input type="checkbox" data-direction="north" onchange="updateLegSelection(this)"> N</label></div>
+                    <div class="leg-item"><label><input type="checkbox" data-direction="northeast" onchange="updateLegSelection(this)"> NE</label></div>
+                    <div class="leg-item"><label><input type="checkbox" data-direction="west" onchange="updateLegSelection(this)"> W</label></div>
+                    <div class="leg-center"><div class="intersection-preview"></div></div>
+                    <div class="leg-item"><label><input type="checkbox" data-direction="east" onchange="updateLegSelection(this)"> E</label></div>
+                    <div class="leg-item"><label><input type="checkbox" data-direction="southwest" onchange="updateLegSelection(this)"> SW</label></div>
+                    <div class="leg-item"><label><input type="checkbox" data-direction="south" onchange="updateLegSelection(this)"> S</label></div>
+                    <div class="leg-item"><label><input type="checkbox" data-direction="southeast" onchange="updateLegSelection(this)"> SE</label></div>
+                </div>
+            </div>
+
+            <button class="tool-btn" onclick="createIntersectionWithLegs()">Create Intersection</button>
+            <button class="delete-btn" onclick="cancelIntersectionCreation()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Road Connection Modal -->
+    <div class="modal" id="road-connection-modal">
+        <div class="modal-content">
+            <span class="close" onclick="cancelRoadConnection()">&times;</span>
+            <h2>Select Connection Legs</h2>
+            <p>Choose which legs to connect between the intersections:</p>
+            
+            <div class="connection-selector">
+                <div class="intersection-selector">
+                    <h3 id="start-intersection-name">Start Intersection</h3>
+                    <div class="leg-options" id="start-leg-options"></div>
+                </div>
+                
+                <div class="connection-arrow">
+                    <div class="arrow">↔</div>
+                </div>
+                
+                <div class="intersection-selector">
+                    <h3 id="end-intersection-name">End Intersection</h3>
+                    <div class="leg-options" id="end-leg-options"></div>
+                </div>
+            </div>
+
+            <button class="tool-btn" onclick="createRoadWithLegs()">Create Road Connection</button>
+            <button class="delete-btn" onclick="cancelRoadConnection()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Intersection Modal -->
+    <div class="modal" id="intersection-modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeIntersectionModal()">&times;</span>
+            <h2>Intersection Traffic Data</h2>
+            <div class="input-group">
+                <label for="intersection-name">Intersection Name:</label>
+                <input type="text" id="intersection-name" placeholder="e.g., Main St & Oak Ave">
+            </div>
+            
+            <div class="legs-container" id="legs-container"></div>
+
+            <button class="tool-btn" onclick="saveIntersectionData()">Save Traffic Data</button>
+            <button class="delete-btn" onclick="deleteCurrentIntersection()">Delete Intersection</button>
+        </div>
+    </div>
+
+    <script>
+        let currentTool = 'intersection', intersections = [], roads = [], selectedIntersection = null, connectionStart = null, intersectionCounter = 1, pendingIntersection = null, pendingRoadConnection = null;
+        const GRID_SIZE = 40, canvas = document.getElementById('canvas'), legModal = document.getElementById('leg-selection-modal'), intersectionModal = document.getElementById('intersection-modal'), roadModal = document.getElementById('road-connection-modal');
+
+        document.querySelectorAll('.tool-btn').forEach(btn => btn.addEventListener('click', (e) => {
+            if (e.target.dataset.tool) {
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentTool = e.target.dataset.tool;
+                canvas.style.cursor = currentTool === 'intersection' ? 'crosshair' : 'pointer';
+                clearSelection();
+            }
+        }));
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            let x = e.clientX - rect.left, y = e.clientY - rect.top;
+            if (document.getElementById('grid-snap').checked) { x = Math.round(x / GRID_SIZE) * GRID_SIZE; y = Math.round(y / GRID_SIZE) * GRID_SIZE; }
+            
+            switch (currentTool) {
+                case 'intersection': createIntersection(x, y); break;
+                case 'road': handleRoadConnection(x, y); break;
+                case 'select': handleSelection(x, y); break;
+                case 'delete': handleDeletion(x, y); break;
+            }
+        });
+
+        function createIntersection(x, y) {
+            if (intersections.find(int => Math.abs(int.x - x) < 20 && Math.abs(int.y - y) < 20)) return;
+            pendingIntersection = { x, y, name: `Intersection ${intersectionCounter}` };
+            document.getElementById('new-intersection-name').value = pendingIntersection.name;
+            document.querySelectorAll('#leg-selection-modal input[type="checkbox"]').forEach(cb => { cb.checked = false; cb.parentElement.parentElement.classList.remove('selected'); });
+            legModal.style.display = 'block';
+        }
+
+        function updateLegSelection(checkbox) {
+            checkbox.parentElement.parentElement.classList.toggle('selected', checkbox.checked);
+        }
+
+        function createIntersectionWithLegs() {
+            if (!pendingIntersection) return;
+            const selectedLegs = Array.from(document.querySelectorAll('#leg-selection-modal input[type="checkbox"]:checked')).map(cb => cb.dataset.direction);
+            if (selectedLegs.length === 0) { alert('Please select at least one leg for the intersection.'); return; }
+            
+            const intersection = { id: `int-${intersectionCounter++}`, x: pendingIntersection.x, y: pendingIntersection.y, name: document.getElementById('new-intersection-name').value || pendingIntersection.name, legs: selectedLegs, traffic: {} };
+            selectedLegs.forEach(direction => intersection.traffic[direction] = { left: {light: 0, heavy: 0}, straight: {light: 0, heavy: 0}, right: {light: 0, heavy: 0}, uturn: {light: 0, heavy: 0} });
+            
+            intersections.push(intersection);
+            renderIntersection(intersection);
+            updateAllConnections();
+            updateStats();
+            legModal.style.display = 'none';
+            pendingIntersection = null;
+        }
+
+        function cancelIntersectionCreation() { pendingIntersection = null; legModal.style.display = 'none'; }
+
+        function renderIntersection(intersection) {
+            const div = document.createElement('div');
+            div.className = 'intersection';
+            div.style.left = (intersection.x - 16) + 'px';
+            div.style.top = (intersection.y - 16) + 'px';
+            div.textContent = intersection.id.split('-')[1];
+            div.dataset.id = intersection.id;
+            div.addEventListener('dblclick', (e) => { e.stopPropagation(); openIntersectionModal(intersection); });
+            
+            // Add visual legs
+            intersection.legs.forEach(leg => {
+                const legElement = document.createElement('div');
+                legElement.className = `intersection-leg ${leg}`;
+                div.appendChild(legElement);
+            });
+            
+            canvas.appendChild(div);
+        }
+
+        function getAvailableLegs(intersection) {
+            const usedLegs = [];
+            roads.forEach(road => {
+                if (road.startLeg && road.start.id === intersection.id) usedLegs.push(road.startLeg);
+                if (road.endLeg && road.end.id === intersection.id) usedLegs.push(road.endLeg);
+            });
+            return intersection.legs.filter(leg => !usedLegs.includes(leg));
+        }
+
+        function handleRoadConnection(x, y) {
+            const clickedIntersection = getIntersectionAt(x, y);
+            if (!clickedIntersection) {
+                if (connectionStart) { document.querySelector(`[data-id="${connectionStart.id}"]`).style.background = 'linear-gradient(135deg, #ff6b6b, #ee5a52)'; connectionStart = null; }
+                return;
+            }
+            
+            if (!connectionStart) {
+                connectionStart = clickedIntersection;
+                document.querySelector(`[data-id="${clickedIntersection.id}"]`).style.background = 'linear-gradient(135deg, #ffd93d, #ff6b35)';
+            } else if (connectionStart.id !== clickedIntersection.id) {
+                showRoadConnectionModal(connectionStart, clickedIntersection);
+            } else {
+                document.querySelector(`[data-id="${connectionStart.id}"]`).style.background = 'linear-gradient(135deg, #ff6b6b, #ee5a52)';
+                connectionStart = null;
+            }
+        }
+
+        function showRoadConnectionModal(startIntersection, endIntersection) {
+            pendingRoadConnection = { start: startIntersection, end: endIntersection };
+            document.getElementById('start-intersection-name').textContent = startIntersection.name;
+            document.getElementById('end-intersection-name').textContent = endIntersection.name;
+
+            [startIntersection, endIntersection].forEach((intersection, i) => {
+                const container = document.getElementById(i === 0 ? 'start-leg-options' : 'end-leg-options');
+                const prefix = i === 0 ? 'start' : 'end';
+                const availableLegs = getAvailableLegs(intersection);
+                
+                // Create 3x3 grid
+                container.innerHTML = `<div class="leg-grid">
+                    ${['northwest', 'north', 'northeast', 'west', 'center', 'east', 'southwest', 'south', 'southeast'].map(direction => {
+                        if (direction === 'center') return '<div class="leg-center"><div class="intersection-preview"></div></div>';
+                        const hasLeg = intersection.legs.includes(direction);
+                        const isAvailable = hasLeg && availableLegs.includes(direction);
+                        return hasLeg ? 
+                            `<div class="leg-item ${!isAvailable ? 'unavailable' : ''}"><label><input type="radio" name="${prefix}-leg" value="${direction}" ${!isAvailable ? 'disabled' : ''} onchange="updateRadioSelection(this)"> ${direction.substring(0,2).toUpperCase()}</label></div>` :
+                            '<div class="leg-item unavailable"><span style="color: #ccc;">--</span></div>';
+                    }).join('')}
+                </div>`;
+            });
+
+            roadModal.style.display = 'block';
+        }
+
+        function createRoadWithLegs() {
+            if (!pendingRoadConnection) return;
+            const startLeg = document.querySelector('input[name="start-leg"]:checked'), endLeg = document.querySelector('input[name="end-leg"]:checked');
+            if (!startLeg || !endLeg) { alert('Please select a leg from each intersection.'); return; }
+            
+            const road = { id: `road-${roads.length + 1}`, start: pendingRoadConnection.start, end: pendingRoadConnection.end, startLeg: startLeg.value, endLeg: endLeg.value };
+            roads.push(road);
+            renderRoad(road);
+            updateAllConnections();
+            updateStats();
+            
+            document.querySelector(`[data-id="${pendingRoadConnection.start.id}"]`).style.background = 'linear-gradient(135deg, #ff6b6b, #ee5a52)';
+            roadModal.style.display = 'none';
+            pendingRoadConnection = null;
+            connectionStart = null;
+        }
+
+        function updateRadioSelection(radio) {
+            document.querySelectorAll(`input[name="${radio.name}"]`).forEach(r => r.closest('.leg-item').classList.remove('selected'));
+            radio.closest('.leg-item').classList.add('selected');
+        }
+
+        function cancelRoadConnection() {
+            if (pendingRoadConnection && connectionStart) document.querySelector(`[data-id="${connectionStart.id}"]`).style.background = 'linear-gradient(135deg, #ff6b6b, #ee5a52)';
+            roadModal.style.display = 'none';
+            pendingRoadConnection = null;
+            connectionStart = null;
+        }
+
+        function getConnectedDirections(intersection) {
+            const connected = {};
+            roads.forEach(road => {
+                if (road.start.id === intersection.id && road.startLeg) connected[road.startLeg] = road.end.id;
+                else if (road.end.id === intersection.id && road.endLeg) connected[road.endLeg] = road.end.id;
+            });
+            return connected;
+        }
+
+        function updateAllConnections() {
+            document.querySelectorAll('.connection-indicator').forEach(el => el.remove());
+            intersections.forEach(intersection => {
+                const connected = getConnectedDirections(intersection);
+                const positions = { north: {x: -8, y: -28}, northeast: {x: 12, y: -28}, east: {x: 12, y: -8}, southeast: {x: 12, y: 12}, south: {x: -8, y: 12}, southwest: {x: -28, y: 12}, west: {x: -28, y: -8}, northwest: {x: -28, y: -28} };
+                
+                Object.entries(connected).forEach(([direction, connectedId]) => {
+                    if (connectedId && intersection.legs.includes(direction)) {
+                        const indicator = document.createElement('div');
+                        indicator.className = 'connection-indicator';
+                        const connectedInt = intersections.find(i => i.id === connectedId);
+                        if (connectedInt) indicator.textContent = connectedInt.id.split('-')[1];
+                        const pos = positions[direction];
+                        if (pos) { indicator.style.left = (intersection.x + pos.x) + 'px'; indicator.style.top = (intersection.y + pos.y) + 'px'; canvas.appendChild(indicator); }
+                    }
+                });
+            });
+        }
+
+        function renderRoad(road) {
+            const dx = road.end.x - road.start.x, dy = road.end.y - road.start.y, length = Math.sqrt(dx * dx + dy * dy), angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            const roadElement = document.createElement('div');
+            roadElement.className = 'road';
+            roadElement.style.left = road.start.x + 'px';
+            roadElement.style.top = road.start.y + 'px';
+            roadElement.style.width = length + 'px';
+            roadElement.style.transform = `rotate(${angle}deg)`;
+            roadElement.dataset.id = road.id;
+            canvas.appendChild(roadElement);
+        }
+
+        function getIntersectionAt(x, y) { return intersections.find(intersection => { const dx = intersection.x - x, dy = intersection.y - y; return Math.sqrt(dx * dx + dy * dy) < 25; }); }
+
+        function handleSelection(x, y) {
+            clearSelection();
+            const intersection = getIntersectionAt(x, y);
+            if (intersection) { selectedIntersection = intersection; document.querySelector(`[data-id="${intersection.id}"]`).classList.add('selected'); openIntersectionModal(intersection); }
+        }
+
+        function handleDeletion(x, y) {
+            const intersection = getIntersectionAt(x, y);
+            if (intersection) deleteIntersection(intersection.id);
+        }
+
+        function clearSelection() {
+            selectedIntersection = null;
+            document.querySelectorAll('.intersection').forEach(el => el.classList.remove('selected'));
+            if (connectionStart) { document.querySelector(`[data-id="${connectionStart.id}"]`).style.background = 'linear-gradient(135deg, #ff6b6b, #ee5a52)'; connectionStart = null; }
+        }
+
+        function openIntersectionModal(intersection) {
+            selectedIntersection = intersection;
+            document.getElementById('intersection-name').value = intersection.name;
+            const connected = getConnectedDirections(intersection), legsContainer = document.getElementById('legs-container');
+            legsContainer.innerHTML = '';
+            
+            intersection.legs.forEach(leg => {
+                const legDiv = document.createElement('div');
+                legDiv.className = 'leg-section';
+                const isConnected = connected[leg], connectedText = isConnected ? `<span class="connected-indicator">→ Int ${intersections.find(i => i.id === isConnected)?.id.split('-')[1] || '?'}</span>` : '';
+                legDiv.innerHTML = `<div class="leg-title">${leg.charAt(0).toUpperCase() + leg.slice(1)} Leg ${connectedText}</div><table class="movement-table"><tr><th>Movement</th><th>Light</th><th>Heavy</th></tr><tr><td>Left</td><td><input type="number" data-leg="${leg}" data-movement="left" data-type="light" value="${intersection.traffic[leg].left.light}" min="0"></td><td><input type="number" data-leg="${leg}" data-movement="left" data-type="heavy" value="${intersection.traffic[leg].left.heavy}" min="0"></td></tr><tr><td>Straight</td><td><input type="number" data-leg="${leg}" data-movement="straight" data-type="light" value="${intersection.traffic[leg].straight.light}" min="0"></td><td><input type="number" data-leg="${leg}" data-movement="straight" data-type="heavy" value="${intersection.traffic[leg].straight.heavy}" min="0"></td></tr><tr><td>Right</td><td><input type="number" data-leg="${leg}" data-movement="right" data-type="light" value="${intersection.traffic[leg].right.light}" min="0"></td><td><input type="number" data-leg="${leg}" data-movement="right" data-type="heavy" value="${intersection.traffic[leg].right.heavy}" min="0"></td></tr><tr><td>U-Turn</td><td><input type="number" data-leg="${leg}" data-movement="uturn" data-type="light" value="${intersection.traffic[leg].uturn.light}" min="0"></td><td><input type="number" data-leg="${leg}" data-movement="uturn" data-type="heavy" value="${intersection.traffic[leg].uturn.heavy}" min="0"></td></tr></table>`;
+                legsContainer.appendChild(legDiv);
+            });
+            intersectionModal.style.display = 'block';
+        }
+
+        function closeIntersectionModal() { intersectionModal.style.display = 'none'; }
+
+        function saveIntersectionData() {
+            if (!selectedIntersection) return;
+            selectedIntersection.name = document.getElementById('intersection-name').value;
+            document.querySelectorAll('.movement-table input').forEach(input => {
+                const leg = input.dataset.leg, movement = input.dataset.movement, type = input.dataset.type, value = parseInt(input.value) || 0;
+                if (selectedIntersection.traffic[leg]) selectedIntersection.traffic[leg][movement][type] = value;
+            });
+            intersectionModal.style.display = 'none';
+            updateStats();
+        }
+
+        function deleteCurrentIntersection() { if (!selectedIntersection) return; deleteIntersection(selectedIntersection.id); intersectionModal.style.display = 'none'; }
+
+        function deleteIntersection(id) {
+            intersections = intersections.filter(int => int.id !== id);
+            roads = roads.filter(road => road.start.id !== id && road.end.id !== id);
+            const intElement = document.querySelector(`[data-id="${id}"]`);
+            if (intElement) intElement.remove();
+            document.querySelectorAll('.road').forEach(roadEl => { if (!roads.find(r => r.id === roadEl.dataset.id)) roadEl.remove(); });
+            updateAllConnections();
+            updateStats();
+        }
+
+        function updateStats() {
+            let totalLight = 0, totalHeavy = 0;
+            intersections.forEach(intersection => Object.values(intersection.traffic).forEach(leg => { if (leg) Object.values(leg).forEach(movement => { totalLight += movement.light; totalHeavy += movement.heavy; }); }));
+            document.getElementById('intersection-count').textContent = intersections.length;
+            document.getElementById('road-count').textContent = roads.length;
+            document.getElementById('total-light').textContent = totalLight.toLocaleString();
+            document.getElementById('total-heavy').textContent = totalHeavy.toLocaleString();
+        }
+
+        function exportNetwork() {
+            const networkData = { intersections, roads, metadata: { version: '3.0', created: new Date().toISOString(), intersectionCount: intersections.length, roadCount: roads.length } };
+            const dataStr = JSON.stringify(networkData, null, 2), dataBlob = new Blob([dataStr], {type: 'application/json'}), url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'traffic_network.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importNetwork() { document.getElementById('import-file').click(); }
+
+        window.addEventListener('click', (e) => {
+            if (e.target === legModal) cancelIntersectionCreation();
+            if (e.target === intersectionModal) closeIntersectionModal();
+            if (e.target === roadModal) cancelRoadConnection();
+        });
+
+        document.getElementById('import-file').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const networkData = JSON.parse(event.target.result);
+                    canvas.innerHTML = '';
+                    intersections = networkData.intersections || [];
+                    roads = networkData.roads || [];
+                    intersections.forEach(intersection => { if (!intersection.legs) intersection.legs = ['north', 'south', 'east', 'west']; });
+                    roads.forEach(road => { if (!road.startLeg || !road.endLeg) { road.startLeg = 'auto'; road.endLeg = 'auto'; } });
+                    intersections.forEach(intersection => renderIntersection(intersection));
+                    roads.forEach(road => renderRoad(road));
+                    updateAllConnections();
+                    updateStats();
+                    intersectionCounter = Math.max(...intersections.map(i => parseInt(i.id.split('-')[1]))) + 1 || 1;
+                } catch (error) { alert('Error importing network file: ' + error.message); }
+            };
+            reader.readAsText(file);
+        });
+    </script>
+</body>
+</html>

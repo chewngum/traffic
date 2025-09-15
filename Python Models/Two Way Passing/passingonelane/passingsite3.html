@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Queuing Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .control-column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .control-group {
+            margin-bottom: 10px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 3px;
+            font-weight: 600;
+            color: #555;
+            font-size: 13px;
+        }
+
+        .control-group input, .control-group select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: border-color 0.3s ease;
+        }
+
+        .control-group input:focus, .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .inline-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .arrival-diagram {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .diagram-arrows {
+            font-size: 20px;
+            margin: 8px 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .sample-size-section {
+            background: rgba(255, 235, 59, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #ffeb3b;
+        }
+
+        .sample-size-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 10px 0;
+        }
+
+        .buttons-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .reset-button {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .reset-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+        }
+
+        .run-button {
+            flex: 2;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .run-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .run-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .status.running {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status.complete {
+            background-color: #d1edff;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .results {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .results-section {
+            margin-bottom: 20px;
+            padding: 12px;
+            background: rgba(248, 249, 250, 0.8);
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .results-section h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            font-size: 13px;
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            font-weight: 500;
+        }
+
+        .metric-value {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .validation-check {
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid #4caf50;
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .validation-check.warning {
+            background: rgba(255, 152, 0, 0.1);
+            border-left-color: #ff9800;
+        }
+
+        .validation-check.error {
+            background: rgba(244, 67, 54, 0.1);
+            border-left-color: #f44336;
+        }
+
+        .queue-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        .queue-table th {
+            background-color: #f8f9fa;
+            padding: 5px 6px;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid #e9ecef;
+            font-size: 10px;
+        }
+
+        .queue-table td {
+            padding: 3px 6px;
+            border: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .queue-table td:first-child {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background-color: #e1e5e9;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .average-note {
+            background: rgba(255,215,0,0.2);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            border-left: 4px solid #ffd700;
+            font-weight: 600;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .inline-controls {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 Two Way Passing Simulation</h1>
+            <p>Bi-Directional Single Lane Scenario - Two Way Passing Test</p>
+        </div>
+
+        <div class="main-content">
+            <div class="controls">
+                <h3 style="margin-bottom: 15px; color: #667eea; font-size: 16px;">Simulation Parameters</h3>
+                
+                <div class="controls-grid">
+                    <div class="control-column">
+                        <h4 style="color: #667eea; margin-bottom: 8px; font-size: 14px;">📍 Traffic Flow</h4>
+                        
+                        <div class="arrival-diagram">
+                            <div style="font-size: 11px; margin-bottom: 6px; font-weight: 600;">Traffic Directions</div>
+                            <div class="diagram-arrows">Queue A → ← Queue B</div>
+                            <div style="font-size: 10px; color: #666;">Single Lane Road Segment</div>
+                        </div>
+
+                        <div class="inline-controls">
+                            <div class="control-group">
+                                <label for="arrivalRateA">Queue A Rate (cars/hr)</label>
+                                <input type="number" id="arrivalRateA" value="15" min="0" step="0.1" onchange="calculateSampleSize()">
+                            </div>
+                            <div class="control-group">
+                                <label for="arrivalRateB">Queue B Rate (cars/hr)</label>
+                                <input type="number" id="arrivalRateB" value="15" min="0" step="0.1" onchange="calculateSampleSize()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-column">
+                        <h4 style="color: #667eea; margin-bottom: 8px; font-size: 14px;">⚙️ Service Parameters</h4>
+                        
+                        <div class="control-group">
+                            <label for="serviceMode">Service Time Mode</label>
+                            <select id="serviceMode" onchange="toggleServiceMode()">
+                                <option value="fixed" selected>Fixed Service Time</option>
+                                <option value="speed">Distance + Speed</option>
+                            </select>
+                        </div>
+
+                        <div id="fixedServiceGroup">
+                            <div class="control-group">
+                                <label for="serviceTime">Service Time (seconds)</label>
+                                <input type="number" id="serviceTime" value="5.4" min="0.1" step="0.1">
+                            </div>
+                        </div>
+
+                        <div id="speedServiceGroup" style="display: none;">
+                            <div class="inline-controls">
+                                <div class="control-group">
+                                    <label for="segmentDistance">Distance (meters)</label>
+                                    <input type="number" id="segmentDistance" value="30" min="1" step="0.1" onchange="calculateServiceTime()">
+                                </div>
+                                <div class="control-group">
+                                    <label for="vehicleSpeed">Speed (km/h)</label>
+                                    <input type="number" id="vehicleSpeed" value="20" min="1" step="0.1" onchange="calculateServiceTime()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="inline-controls">
+                            <div class="control-group">
+                                <label for="minGap">Min Gap Between Arrivals (s)</label>
+                                <input type="number" id="minGap" value="0" min="0" step="0.1">
+                            </div>
+                            <div class="control-group">
+                                <label for="minFollowUp">Min Follow-up Time</label>
+                                <select id="minFollowUp" onchange="toggleCustomFollowUp()">
+                                    <option value="0">0 seconds</option>
+                                    <option value="minGap">Same as min gap</option>
+                                    <option value="serviceTime" selected>Same as service time</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="control-group" id="customFollowUpGroup" style="display: none;">
+                            <label for="customFollowUp">Custom Follow-up (seconds)</label>
+                            <input type="number" id="customFollowUp" value="2" min="0" max="60" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="control-column">
+                        <h4 style="color: #667eea; margin-bottom: 8px; font-size: 14px;">🎯 Simulation Settings</h4>
+                        
+                        <div class="control-group">
+                            <label for="simulationHours">Duration (hours)</label>
+                            <input type="number" id="simulationHours" value="1000" min="0" max="10000" step="10" onchange="calculateSampleSize()">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="priorityScheme">Priority Scheme</label>
+                            <select id="priorityScheme">
+                                <option value="A">Queue A Priority</option>
+                                <option value="B">Queue B Priority</option>
+                                <option value="FCFS" selected>First Come First Served</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sample-size-section">
+                    <h4 style="color: #667eea; margin-bottom: 8px; font-size: 14px;">📊 Sample Size Calculator</h4>
+                    <p style="margin-bottom: 8px; font-size: 12px; color: #666;">Calculate minimum seeds for statistical confidence</p>
+                    
+                    <div class="sample-size-grid">
+                        <div class="control-group">
+                            <label for="confidenceLevel">Confidence Level (%)</label>
+                            <input type="number" id="confidenceLevel" value="99.9" min="85" max="99.99" step="0.01" onchange="calculateSampleSize()">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="marginError">Margin of Error (trips/hour)</label>
+                            <input type="number" id="marginError" value="0.05" min="0.01" step="0.01" onchange="calculateSampleSize()">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="numSeeds">Number of Seeds</label>
+                            <input type="number" id="numSeeds" value="1000" min="1" max="1000" step="1">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="seedMode">Seed Mode</label>
+                            <select id="seedMode">
+                                <option value="fixed" selected>Fixed Seeds (Reproducible)</option>
+                                <option value="random">Random Seeds</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="sampleSizeResult" style="margin-top: 8px; padding: 6px; background: rgba(255,255,255,0.7); border-radius: 4px; font-weight: 500; text-align: center; font-size: 11px;">
+                        Minimum seeds will be calculated automatically
+                    </div>
+                </div>
+
+                <div class="buttons-row">
+                    <button class="reset-button" id="resetButton">
+                        🔄 Reset Inputs
+                    </button>
+                    <button class="run-button" id="runSimulation">
+                        🎯 Run Simulation
+                    </button>
+                </div>
+
+                <div class="status" id="status" style="display: none;"></div>
+                <div class="progress-bar" id="progressContainer" style="display: none;">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div class="results" id="resultsContainer">
+                <div style="text-align: center; padding: 40px; color: #999;">
+                    <h3>📊 Averaged Results will appear here</h3>
+                    <p>Configure your parameters and click "Run Simulation" to start<br>
+                    The results will be averaged across multiple simulation runs</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class QueueSimulation {
+            constructor(seed = null) {
+                this.seed = seed;
+                this.rng = this.createRNG(seed || Math.floor(Math.random() * 1000000));
+                this.events = [];
+                this.queueLengths = [0, 0];
+                this.roadOccupied = false;
+                this.roadDirection = null; // 0 for A, 1 for B, null for empty
+                this.carsOnRoad = []; // Array of {direction, departureTime}
+                this.lastEntryTime = [null, null]; // Last entry time for each direction
+                this.queueTime = [{}, {}];
+                this.serverBusyTime = 0;
+                this.lastEventTime = 0;
+                this.hourlyMaxLength = [];
+                
+                // FIXED: Track ALL arrivals, not just queued ones
+                this.totalArrivals = [0, 0]; // Total arrivals for each queue
+                this.arrivalsQueued = [0, 0]; // Arrivals that had to queue
+                this.arrivalsImmediate = [0, 0]; // Arrivals that entered immediately
+                
+                // Track queuing reasons
+                this.arrivalsNone = [0, 0];
+                this.arrivalsSame = [0, 0];
+                this.arrivalsOpposite = [0, 0];
+                
+                // Track delay/queueing times
+                this.totalDelayTime = [0, 0]; // Total delay for all vehicles
+                this.queuedDelayTime = [0, 0]; // Total delay for only queued vehicles
+                this.vehicleCount = [0, 0]; // Count of all vehicles served
+                this.queuedVehicleCount = [0, 0]; // Count of vehicles that queued
+                
+                this.fcfsQueue = []; // Stores {arrivalTime, direction, id} - don't remove until served
+                this.queuedVehicles = [[], []]; // Store arrival times of queued vehicles for each direction
+                this.nextCustomerId = 0;
+                this.roadOccupancyPeriods = []; // Track periods of road occupation for utilization
+                this.directionalOccupancy = [[], []]; // Track occupancy periods by direction [A periods, B periods]
+            }
+
+            createRNG(seed) {
+                let state = seed;
+                return function() {
+                    state = (state * 1664525 + 1013904223) % Math.pow(2, 32);
+                    return state / Math.pow(2, 32);
+                }
+            }
+
+            heapPush(heap, item) {
+                heap.push(item);
+                this.heapifyUp(heap, heap.length - 1);
+            }
+
+            heapPop(heap) {
+                if (heap.length === 0) return null;
+                if (heap.length === 1) return heap.pop();
+                
+                const result = heap[0];
+                heap[0] = heap.pop();
+                this.heapifyDown(heap, 0);
+                return result;
+            }
+
+            heapifyUp(heap, index) {
+                while (index > 0) {
+                    const parentIndex = Math.floor((index - 1) / 2);
+                    if (heap[parentIndex][0] <= heap[index][0]) break;
+                    [heap[parentIndex], heap[index]] = [heap[index], heap[parentIndex]];
+                    index = parentIndex;
+                }
+            }
+
+            heapifyDown(heap, index) {
+                while (true) {
+                    let minIndex = index;
+                    const leftChild = 2 * index + 1;
+                    const rightChild = 2 * index + 2;
+
+                    if (leftChild < heap.length && heap[leftChild][0] < heap[minIndex][0]) {
+                        minIndex = leftChild;
+                    }
+                    if (rightChild < heap.length && heap[rightChild][0] < heap[minIndex][0]) {
+                        minIndex = rightChild;
+                    }
+                    if (minIndex === index) break;
+                    [heap[index], heap[minIndex]] = [heap[minIndex], heap[index]];
+                    index = minIndex;
+                }
+            }
+
+            exponentialRandom(rate) {
+                return -Math.log(this.rng()) / rate;
+            }
+
+            adjustedInterarrival(targetRate, minGap) {
+                if (minGap === 0) {
+                    return this.exponentialRandom(targetRate);
+                }
+                
+                const targetMean = 1 / targetRate;
+                
+                if (minGap >= targetMean) {
+                    return minGap;
+                }
+                
+                const adjustedMean = targetMean - minGap;
+                const adjustedRate = 1 / adjustedMean;
+                
+                return minGap + this.exponentialRandom(adjustedRate);
+            }
+
+            canEnterRoad(direction, currentTime, minFollowUp) {
+                // If road is empty, can always enter
+                if (!this.roadOccupied) return true;
+                
+                // If opposite direction is on road, cannot enter
+                if (this.roadDirection !== null && this.roadDirection !== direction) {
+                    return false;
+                }
+                
+                // Same direction: check follow-up time constraint
+                if (minFollowUp > 0 && this.lastEntryTime[direction] !== null) {
+                    const timeSinceLastEntry = currentTime - this.lastEntryTime[direction];
+                    return timeSinceLastEntry >= minFollowUp;
+                }
+                
+                return true;
+            }
+
+            canSkipQueue(direction, priorityScheme) {
+                // For FCFS: can't skip if anyone is waiting
+                if (priorityScheme === 'FCFS') {
+                    return this.fcfsQueue.length === 0;
+                }
+                
+                // For priority schemes: can skip if no one from higher priority queues is waiting
+                if (priorityScheme === 'A') {
+                    return this.queueLengths[0] === 0; // Can skip only if Queue A is empty
+                } else if (priorityScheme === 'B') {
+                    return this.queueLengths[1] === 0; // Can skip only if Queue B is empty
+                }
+                
+                return true;
+            }
+
+            enterRoad(direction, currentTime, serviceTime, arrivalTime = null) {
+                if (!this.roadOccupied) {
+                    this.roadOccupied = true;
+                    this.roadDirection = direction;
+                    this.roadOccupancyPeriods.push({start: currentTime, end: null});
+                    // Start tracking directional occupancy
+                    this.directionalOccupancy[direction].push({start: currentTime, end: null});
+                } else if (this.roadDirection !== direction) {
+                    // Direction change - close previous direction's period and start new one
+                    this.closeDirectionalOccupancy(currentTime);
+                    this.roadDirection = direction;
+                    this.directionalOccupancy[direction].push({start: currentTime, end: null});
+                }
+                
+                const departureTime = currentTime + serviceTime;
+                this.carsOnRoad.push({direction, departureTime});
+                this.lastEntryTime[direction] = currentTime;
+                
+                // Track delay if arrival time is provided
+                if (arrivalTime !== null) {
+                    const delay = currentTime - arrivalTime;
+                    this.totalDelayTime[direction] += delay;
+                    this.vehicleCount[direction]++;
+                    
+                    if (delay > 0) {
+                        this.queuedDelayTime[direction] += delay;
+                        this.queuedVehicleCount[direction]++;
+                    }
+                }
+                
+                this.heapPush(this.events, [departureTime, 'departure', direction]);
+            }
+
+            updateRoadOccupancy(currentTime) {
+                this.carsOnRoad = this.carsOnRoad.filter(car => car.departureTime > currentTime);
+                
+                if (this.carsOnRoad.length === 0) {
+                    if (this.roadOccupied) {
+                        const lastPeriod = this.roadOccupancyPeriods[this.roadOccupancyPeriods.length - 1];
+                        if (lastPeriod && lastPeriod.end === null) {
+                            lastPeriod.end = currentTime;
+                        }
+                        // Close directional occupancy
+                        this.closeDirectionalOccupancy(currentTime);
+                    }
+                    this.roadOccupied = false;
+                    this.roadDirection = null;
+                } else {
+                    const newDirection = this.carsOnRoad[0].direction;
+                    if (this.roadDirection !== newDirection) {
+                        // Direction change
+                        this.closeDirectionalOccupancy(currentTime);
+                        this.roadDirection = newDirection;
+                        this.directionalOccupancy[newDirection].push({start: currentTime, end: null});
+                    }
+                }
+            }
+
+            closeDirectionalOccupancy(currentTime) {
+                if (this.roadDirection !== null) {
+                    const periods = this.directionalOccupancy[this.roadDirection];
+                    if (periods.length > 0) {
+                        const lastPeriod = periods[periods.length - 1];
+                        if (lastPeriod && lastPeriod.end === null) {
+                            lastPeriod.end = currentTime;
+                        }
+                    }
+                }
+            }
+
+            selectNextQueue(priorityScheme, currentTime, minFollowUp) {
+                if (priorityScheme === 'FCFS') {
+                    // Find the first customer in FCFS queue that can be served
+                    for (let i = 0; i < this.fcfsQueue.length; i++) {
+                        const customer = this.fcfsQueue[i];
+                        if (this.canEnterRoad(customer.direction, currentTime, minFollowUp)) {
+                            // Remove this customer from FCFS queue
+                            const removed = this.fcfsQueue.splice(i, 1)[0];
+                            return {direction: removed.direction, arrivalTime: removed.arrivalTime};
+                        }
+                    }
+                    return null;
+                } else if (priorityScheme === 'A') {
+                    if (this.queueLengths[0] > 0 && this.canEnterRoad(0, currentTime, minFollowUp)) {
+                        const arrivalTime = this.queuedVehicles[0].shift();
+                        return {direction: 0, arrivalTime: arrivalTime};
+                    }
+                    if (this.queueLengths[1] > 0 && this.canEnterRoad(1, currentTime, minFollowUp)) {
+                        const arrivalTime = this.queuedVehicles[1].shift();
+                        return {direction: 1, arrivalTime: arrivalTime};
+                    }
+                } else if (priorityScheme === 'B') {
+                    if (this.queueLengths[1] > 0 && this.canEnterRoad(1, currentTime, minFollowUp)) {
+                        const arrivalTime = this.queuedVehicles[1].shift();
+                        return {direction: 1, arrivalTime: arrivalTime};
+                    }
+                    if (this.queueLengths[0] > 0 && this.canEnterRoad(0, currentTime, minFollowUp)) {
+                        const arrivalTime = this.queuedVehicles[0].shift();
+                        return {direction: 0, arrivalTime: arrivalTime};
+                    }
+                }
+                return null;
+            }
+
+            recordTime(currentTime) {
+                const dt = currentTime - this.lastEventTime;
+                
+                for (let i = 0; i < 2; i++) {
+                    const qLen = this.queueLengths[i];
+                    this.queueTime[i][qLen] = (this.queueTime[i][qLen] || 0) + dt;
+                    
+                    const hourIdx = Math.min(Math.floor(currentTime / 3600), this.numHours - 1);
+                    this.hourlyMaxLength[i][hourIdx] = Math.max(
+                        this.hourlyMaxLength[i][hourIdx] || 0, 
+                        qLen
+                    );
+                }
+                
+                this.lastEventTime = currentTime;
+            }
+
+            calculateRoadUtilization(simulationTime) {
+                let totalOccupiedTime = 0;
+                
+                for (const period of this.roadOccupancyPeriods) {
+                    const endTime = period.end !== null ? period.end : simulationTime;
+                    totalOccupiedTime += endTime - period.start;
+                }
+                
+                return (totalOccupiedTime / simulationTime) * 100;
+            }
+
+            calculateDirectionalUtilization(simulationTime) {
+                const directionalTimes = [0, 0];
+                
+                for (let direction = 0; direction < 2; direction++) {
+                    for (const period of this.directionalOccupancy[direction]) {
+                        const endTime = period.end !== null ? period.end : simulationTime;
+                        directionalTimes[direction] += endTime - period.start;
+                    }
+                }
+                
+                return [
+                    (directionalTimes[0] / simulationTime) * 100,
+                    (directionalTimes[1] / simulationTime) * 100
+                ];
+            }
+
+            simulate(params) {
+                const {
+                    arrivalRateA,
+                    arrivalRateB, 
+                    serviceTime,
+                    simulationTime,
+                    minGap,
+                    minFollowUp,
+                    priorityScheme
+                } = params;
+
+                this.numHours = Math.floor(simulationTime / 3600);
+                this.hourlyMaxLength = [
+                    new Array(this.numHours).fill(0),
+                    new Array(this.numHours).fill(0)
+                ];
+
+                const arrivalRate = [
+                    arrivalRateA / 3600,
+                    arrivalRateB / 3600
+                ];
+
+                for (let i = 0; i < 2; i++) {
+                    const firstArrival = this.adjustedInterarrival(arrivalRate[i], minGap);
+                    this.heapPush(this.events, [firstArrival, 'arrival', i]);
+                }
+
+                while (this.events.length > 0) {
+                    const event = this.heapPop(this.events);
+                    const [eventTime, eventType, qIndex] = event;
+
+                    if (eventTime > simulationTime) break;
+
+                    this.recordTime(eventTime);
+                    this.updateRoadOccupancy(eventTime);
+
+                    if (eventType === 'arrival') {
+                        // FIXED: Count ALL arrivals
+                        this.totalArrivals[qIndex]++;
+
+                        // Check if car can skip queue and enter road immediately
+                        if (this.canEnterRoad(qIndex, eventTime, minFollowUp) && 
+                            this.canSkipQueue(qIndex, priorityScheme)) {
+                            // Enter road directly (greedy service) - no delay
+                            this.enterRoad(qIndex, eventTime, serviceTime, eventTime);
+                            this.arrivalsImmediate[qIndex]++;
+                        } else {
+                            // Must join queue
+                            this.queueLengths[qIndex]++;
+                            this.arrivalsQueued[qIndex]++;
+                            
+                            if (priorityScheme === 'FCFS') {
+                                this.fcfsQueue.push({
+                                    arrivalTime: eventTime, 
+                                    direction: qIndex,
+                                    id: this.nextCustomerId++
+                                });
+                            } else {
+                                // For priority schemes, store arrival time
+                                this.queuedVehicles[qIndex].push(eventTime);
+                            }
+
+                            // Track queuing reasons
+                            if (this.roadOccupied) {
+                                if (this.roadDirection === qIndex) {
+                                    this.arrivalsSame[qIndex]++;
+                                } else {
+                                    this.arrivalsOpposite[qIndex]++;
+                                }
+                            } else {
+                                this.arrivalsNone[qIndex]++;
+                            }
+                        }
+
+                        // Schedule next arrival
+                        const dt = this.adjustedInterarrival(arrivalRate[qIndex], minGap);
+                        const nextArrival = eventTime + dt;
+                        this.heapPush(this.events, [nextArrival, 'arrival', qIndex]);
+
+                    } else if (eventType === 'departure') {
+                        // Try to serve next car in queue (only one per departure event)
+                        this.processQueueAfterDeparture(eventTime, serviceTime, minFollowUp, priorityScheme);
+                    }
+                }
+
+                // Close any open occupancy period
+                if (this.roadOccupancyPeriods.length > 0) {
+                    const lastPeriod = this.roadOccupancyPeriods[this.roadOccupancyPeriods.length - 1];
+                    if (lastPeriod && lastPeriod.end === null) {
+                        lastPeriod.end = simulationTime;
+                    }
+                }
+                
+                // Close any open directional occupancy periods
+                this.closeDirectionalOccupancy(simulationTime);
+
+                return this.calculateResults(simulationTime);
+            }
+
+            processQueueAfterDeparture(currentTime, serviceTime, minFollowUp, priorityScheme) {
+                // Only serve one car per departure event to avoid simultaneous service
+                const nextCustomer = this.selectNextQueue(priorityScheme, currentTime, minFollowUp);
+                
+                if (nextCustomer !== null) {
+                    this.queueLengths[nextCustomer.direction]--;
+                    this.enterRoad(nextCustomer.direction, currentTime, serviceTime, nextCustomer.arrivalTime);
+                }
+            }
+
+            calculateResults(simulationTime) {
+                const results = {
+                    queues: [],
+                    serverUtilization: this.calculateRoadUtilization(simulationTime),
+                    directionalUtilization: this.calculateDirectionalUtilization(simulationTime),
+                    arrivalRates: [],
+                    delays: [], // Add delay metrics
+                    totalArrivals: this.totalArrivals.slice() // FIXED: Include total arrivals
+                };
+
+                for (let i = 0; i < 2; i++) {
+                    const queueName = i === 0 ? 'Queue A' : 'Queue B';
+                    const totalTime = Object.values(this.queueTime[i]).reduce((sum, time) => sum + time, 0);
+                    
+                    const lengthPercentages = {};
+                    for (const [length, time] of Object.entries(this.queueTime[i])) {
+                        lengthPercentages[length] = (time / totalTime) * 100;
+                    }
+
+                    const maxCounts = {};
+                    for (const hourMax of this.hourlyMaxLength[i]) {
+                        maxCounts[hourMax] = (maxCounts[hourMax] || 0) + 1;
+                    }
+
+                    const maxPercentages = {};
+                    for (const [length, count] of Object.entries(maxCounts)) {
+                        maxPercentages[length] = (count / this.numHours) * 100;
+                    }
+
+                    results.queues.push({
+                        name: queueName,
+                        lengthPercentages,
+                        maxPercentages
+                    });
+
+                    const rateSamePerHour = this.arrivalsSame[i] / (simulationTime / 3600);
+                    const rateOppositePerHour = this.arrivalsOpposite[i] / (simulationTime / 3600);
+                    const rateNonePerHour = this.arrivalsNone[i] / (simulationTime / 3600);
+                    
+                    results.arrivalRates.push({
+                        name: queueName,
+                        sameQueue: rateSamePerHour,
+                        oppositeQueue: rateOppositePerHour,
+                        noqueue: rateNonePerHour,
+                        totalPerHour: this.totalArrivals[i] / (simulationTime / 3600) // FIXED: Total arrival rate
+                    });
+
+                    // Calculate delay metrics
+                    const avgDelayAllVehicles = this.vehicleCount[i] > 0 ? 
+                        this.totalDelayTime[i] / this.vehicleCount[i] : 0;
+                    const avgDelayQueuedVehicles = this.queuedVehicleCount[i] > 0 ? 
+                        this.queuedDelayTime[i] / this.queuedVehicleCount[i] : 0;
+
+                    results.delays.push({
+                        name: queueName,
+                        avgDelayAll: avgDelayAllVehicles,
+                        avgDelayQueued: avgDelayQueuedVehicles,
+                        totalVehicles: this.vehicleCount[i],
+                        queuedVehicles: this.queuedVehicleCount[i]
+                    });
+                }
+
+                return results;
+            }
+        }
+
+        async function runMultipleSimulations(params, progressCallback) {
+            const numSeeds = parseInt(document.getElementById('numSeeds').value) || 100;
+            const seedMode = document.getElementById('seedMode').value;
+            const allResults = [];
+            let totalServerUtil = 0;
+            let totalDirectionalUtil = [0, 0];
+
+            const aggregateQueueTime = [{}, {}];
+            const aggregateMaxCounts = [{}, {}];
+            const aggregateArrivalRates = [
+                { same: 0, opposite: 0, noqueue: 0, total: 0 },
+                { same: 0, opposite: 0, noqueue: 0, total: 0 }
+            ];
+            
+            const aggregateDelays = [
+                { delayAll: 0, delayQueued: 0, totalVehicles: 0, queuedVehicles: 0 },
+                { delayAll: 0, delayQueued: 0, totalVehicles: 0, queuedVehicles: 0 }
+            ];
+
+            for (let i = 1; i <= numSeeds; i++) {
+                if (i % 5 === 0 && progressCallback) {
+                    await new Promise(resolve => {
+                        progressCallback(i / numSeeds * 100);
+                        setTimeout(resolve, 1);
+                    });
+                }
+
+                // Generate seed based on mode
+                let seed;
+                if (seedMode === 'fixed') {
+                    seed = i; // Use sequential seeds: 1, 2, 3, ...
+                } else {
+                    seed = Math.floor(Math.random() * 1000000); // Random seed
+                }
+
+                const simulation = new QueueSimulation(seed);
+                const result = simulation.simulate(params);
+                allResults.push(result);
+
+                totalServerUtil += result.serverUtilization;
+                totalDirectionalUtil[0] += result.directionalUtilization[0];
+                totalDirectionalUtil[1] += result.directionalUtilization[1];
+
+                for (let j = 0; j < 2; j++) {
+                    for (const [length, percent] of Object.entries(result.queues[j].lengthPercentages)) {
+                        aggregateQueueTime[j][length] = (aggregateQueueTime[j][length] || 0) + percent;
+                    }
+
+                    for (const [length, percent] of Object.entries(result.queues[j].maxPercentages)) {
+                        aggregateMaxCounts[j][length] = (aggregateMaxCounts[j][length] || 0) + percent;
+                    }
+
+                    aggregateArrivalRates[j].same += result.arrivalRates[j].sameQueue;
+                    aggregateArrivalRates[j].opposite += result.arrivalRates[j].oppositeQueue;
+                    aggregateArrivalRates[j].noqueue += result.arrivalRates[j].noqueue;
+                    aggregateArrivalRates[j].total += result.arrivalRates[j].totalPerHour; // FIXED: Aggregate total
+                    
+                    // Aggregate delay metrics
+                    aggregateDelays[j].delayAll += result.delays[j].avgDelayAll;
+                    aggregateDelays[j].delayQueued += result.delays[j].avgDelayQueued;
+                    aggregateDelays[j].totalVehicles += result.delays[j].totalVehicles;
+                    aggregateDelays[j].queuedVehicles += result.delays[j].queuedVehicles;
+                }
+            }
+
+            const avgResults = {
+                queues: [],
+                serverUtilization: totalServerUtil / numSeeds,
+                directionalUtilization: [
+                    totalDirectionalUtil[0] / numSeeds,
+                    totalDirectionalUtil[1] / numSeeds
+                ],
+                arrivalRates: [],
+                delays: [], // Add delays to averaged results
+                numSeeds: numSeeds
+            };
+
+            for (let i = 0; i < 2; i++) {
+                const queueName = i === 0 ? 'Queue A' : 'Queue B';
+                
+                const avgLengthPercentages = {};
+                for (const [length, totalPercent] of Object.entries(aggregateQueueTime[i])) {
+                    avgLengthPercentages[length] = totalPercent / numSeeds;
+                }
+
+                const avgMaxPercentages = {};
+                for (const [length, totalPercent] of Object.entries(aggregateMaxCounts[i])) {
+                    avgMaxPercentages[length] = totalPercent / numSeeds;
+                }
+
+                avgResults.queues.push({
+                    name: queueName,
+                    lengthPercentages: avgLengthPercentages,
+                    maxPercentages: avgMaxPercentages
+                });
+
+                avgResults.arrivalRates.push({
+                    name: queueName,
+                    sameQueue: aggregateArrivalRates[i].same / numSeeds,
+                    oppositeQueue: aggregateArrivalRates[i].opposite / numSeeds,
+                    noqueue: aggregateArrivalRates[i].noqueue / numSeeds,
+                    totalPerHour: aggregateArrivalRates[i].total / numSeeds // FIXED: Average total
+                });
+
+                // Calculate average delays
+                avgResults.delays.push({
+                    name: queueName,
+                    avgDelayAll: aggregateDelays[i].delayAll / numSeeds,
+                    avgDelayQueued: aggregateDelays[i].delayQueued / numSeeds,
+                    totalVehicles: aggregateDelays[i].totalVehicles / numSeeds,
+                    queuedVehicles: aggregateDelays[i].queuedVehicles / numSeeds
+                });
+            }
+
+            return avgResults;
+        }
+
+        function calculateSampleSize() {
+            const confidenceLevel = parseFloat(document.getElementById('confidenceLevel').value);
+            const marginError = parseFloat(document.getElementById('marginError').value);
+            const simHours = parseFloat(document.getElementById('simulationHours').value);
+            
+            // Z-scores for common confidence levels
+            const zScores = {
+                90: 1.645,
+                95: 1.96,
+                99: 2.576,
+                99.9: 3.291,
+                99.99: 3.891
+            };
+            
+            // Interpolate z-score if not exact match
+            let zScore;
+            if (zScores[confidenceLevel]) {
+                zScore = zScores[confidenceLevel];
+            } else {
+                // Linear interpolation between known values
+                const levels = Object.keys(zScores).map(Number).sort((a, b) => a - b);
+                for (let i = 0; i < levels.length - 1; i++) {
+                    if (confidenceLevel >= levels[i] && confidenceLevel <= levels[i + 1]) {
+                        const ratio = (confidenceLevel - levels[i]) / (levels[i + 1] - levels[i]);
+                        zScore = zScores[levels[i]] + ratio * (zScores[levels[i + 1]] - zScores[levels[i]]);
+                        break;
+                    }
+                }
+            }
+            
+            if (!zScore) zScore = 1.96; // Default to 95% if can't determine
+            
+            // Estimate population standard deviation (conservative estimate)
+            // For arrival rates, we'll use about 20% of the mean as std deviation
+            const totalArrivalRate = parseFloat(document.getElementById('arrivalRateA').value) + 
+                                   parseFloat(document.getElementById('arrivalRateB').value);
+            const estimatedStdDev = totalArrivalRate * 0.2; // Conservative estimate
+            
+            // Sample size calculation: n = (Z * σ / E)²
+            const minSampleSize = Math.ceil(Math.pow((zScore * estimatedStdDev) / marginError, 2));
+            
+            // Adjust for finite population if needed (simulation hours provide finite observations)
+            const observationsPerRun = simHours;
+            const adjustedSampleSize = Math.ceil(minSampleSize / observationsPerRun);
+            
+            document.getElementById('numSeeds').value = Math.max(adjustedSampleSize, 10); // Minimum 10 seeds
+            
+            document.getElementById('sampleSizeResult').innerHTML = 
+                `📈 Minimum ${Math.max(adjustedSampleSize, 10)} seeds required<br>
+                <small>(Z=${zScore.toFixed(3)}, Est. σ=${estimatedStdDev.toFixed(1)}, Observations/run=${observationsPerRun})</small>`;
+        }
+
+        function calculateTheoreticalResults(params) {
+            const totalArrivalRate = params.arrivalRateA + params.arrivalRateB;
+            const serviceRate = 3600 / params.serviceTime; // cars per hour
+            const utilization = totalArrivalRate / serviceRate;
+            const p0 = Math.max(0, 1 - utilization); // Probability of empty system
+            
+            return {
+                utilization: utilization * 100,
+                p0: p0 * 100,
+                applicable: utilization < 1.0
+            };
+        }
+
+        function toggleServiceMode() {
+            const mode = document.getElementById('serviceMode').value;
+            const fixedGroup = document.getElementById('fixedServiceGroup');
+            const speedGroup = document.getElementById('speedServiceGroup');
+            
+            if (mode === 'fixed') {
+                fixedGroup.style.display = 'block';
+                speedGroup.style.display = 'none';
+            } else {
+                fixedGroup.style.display = 'none';
+                speedGroup.style.display = 'block';
+                calculateServiceTime();
+            }
+        }
+
+        function calculateServiceTime() {
+            const distance = parseFloat(document.getElementById('segmentDistance').value);
+            const speed = parseFloat(document.getElementById('vehicleSpeed').value);
+            
+            if (distance && speed) {
+                const serviceTime = distance / (speed * 1000 / 3600); // Convert km/h to m/s
+                document.getElementById('serviceTime').value = serviceTime.toFixed(2);
+            }
+        }
+
+        // FIXED: Corrected validation check function
+        function generateValidationCheck(results, params) {
+            const expectedArrivalA = params.arrivalRateA || 0;
+            const expectedArrivalB = params.arrivalRateB || 0;
+            const totalExpected = expectedArrivalA + expectedArrivalB;
+            
+            // FIXED: Use correct property access for actual arrival rates
+            const actualArrivalA = results.arrivalRates[0] ? results.arrivalRates[0].totalPerHour : 0;
+            const actualArrivalB = results.arrivalRates[1] ? results.arrivalRates[1].totalPerHour : 0;
+            const totalActual = actualArrivalA + actualArrivalB;
+            
+            const marginError = parseFloat(document.getElementById('marginError').value) || 0.05;
+            const errorA = Math.abs(expectedArrivalA - actualArrivalA);
+            const errorB = Math.abs(expectedArrivalB - actualArrivalB);
+            const summedError = errorA + errorB; // Sum of individual direction errors
+            
+            let validationClass = 'validation-check';
+            let icon = '✅';
+            let message = 'Input rates validated successfully';
+            
+            // Check only individual direction errors, not their sum
+            if (errorA > marginError || errorB > marginError) {
+                const maxError = Math.max(errorA, errorB);
+                if (maxError > marginError * 2) {
+                    validationClass += ' error';
+                    icon = '❌';
+                    message = 'Significant deviation from expected rates';
+                } else {
+                    validationClass += ' warning';
+                    icon = '⚠️';
+                    message = 'Minor deviation within acceptable range';
+                }
+            }
+            
+            // Display errors to 3 decimal places and sum what is displayed
+            const displayErrorA = parseFloat(errorA.toFixed(3));
+            const displayErrorB = parseFloat(errorB.toFixed(3));
+            const displaySummedError = displayErrorA + displayErrorB;
+            
+            return `
+                <div class="${validationClass}">
+                    <strong>${icon} Arrival Rate Validation</strong><br>
+                    <small>Expected: A=${expectedArrivalA.toFixed(2)}, B=${expectedArrivalB.toFixed(2)} | Actual: A=${actualArrivalA.toFixed(2)}, B=${actualArrivalB.toFixed(2)}<br>
+                    Error: ${displaySummedError.toFixed(3)} (A=${displayErrorA.toFixed(3)} + B=${displayErrorB.toFixed(3)})<br>
+                    ${message} (Margin: ±${marginError.toFixed(2)})</small>
+                </div>
+            `;
+        }
+
+        function resetInputs() {
+            document.getElementById('arrivalRateA').value = '15';
+            document.getElementById('arrivalRateB').value = '15';
+            document.getElementById('serviceMode').value = 'fixed';
+            document.getElementById('serviceTime').value = '5.4';
+            document.getElementById('segmentDistance').value = '50';
+            document.getElementById('vehicleSpeed').value = '33.3';
+            document.getElementById('simulationHours').value = '1000';
+            document.getElementById('minGap').value = '0';
+            document.getElementById('minFollowUp').value = 'serviceTime';
+            document.getElementById('priorityScheme').value = 'FCFS';
+            document.getElementById('confidenceLevel').value = '99.9';
+            document.getElementById('marginError').value = '0.05';
+            document.getElementById('numSeeds').value = '1000';
+            document.getElementById('seedMode').value = 'fixed';
+            document.getElementById('customFollowUp').value = '2';
+            
+            toggleServiceMode();
+            toggleCustomFollowUp();
+            calculateSampleSize();
+        }
+
+        function displayResults(results, params) {
+            const container = document.getElementById('resultsContainer');
+            
+            let html = `
+                <div class="average-note">
+                    📊 Results from ${params.simulationTime/3600} hours x ${results.numSeeds} seeds analysed and averaged below
+                    ${generateValidationCheck(results, params)}
+                </div>
+            `;
+            
+            html += `
+                <div class="results-grid">
+                    <div>
+                        <div class="results-section">
+                            <h3>📈 Road Segment Utilisation</h3>
+                            <div class="metric">
+                                <span class="metric-label">Total Occupied Time</span>
+                                <span class="metric-value">${results.serverUtilization.toFixed(2)}%</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Queue A Direction</span>
+                                <span class="metric-value">${results.directionalUtilization[0].toFixed(2)}%</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Queue B Direction</span>
+                                <span class="metric-value">${results.directionalUtilization[1].toFixed(2)}%</span>
+                            </div>
+                        </div>
+            `;
+
+            // Combined queue statistics for each queue
+            for (const queue of results.queues) {
+                html += `
+                    <div class="results-section">
+                        <h3>📊 ${queue.name} - Queue Probability</h3>
+                        <table class="queue-table">
+                            <thead>
+                                <tr>
+                                    <th>Length</th>
+                                    <th>Continuous Time %</th>
+                                    <th>Max Observed Per Discrete Hour %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                // Get all unique lengths that appear in either percentage or max data
+                const allLengths = new Set([
+                    ...Object.keys(queue.lengthPercentages),
+                    ...Object.keys(queue.maxPercentages)
+                ]);
+                
+                const sortedLengths = Array.from(allLengths)
+                    .map(l => parseInt(l))
+                    .sort((a, b) => a - b)
+                    .slice(0, 20);
+                
+                for (const length of sortedLengths) {
+                    const timePercent = queue.lengthPercentages[length] || 0;
+                    const maxPercent = queue.maxPercentages[length] || 0;
+                    
+                    if (timePercent > 0.01 || maxPercent > 0.01) { // Only show if > 0.01%
+                        html += `
+                            <tr>
+                                <td>${length}</td>
+                                <td>${timePercent.toFixed(4)}%</td>
+                                <td>${maxPercent.toFixed(2)}%</td>
+                            </tr>
+                        `;
+                    }
+                }
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            html += `
+                    </div>
+                    <div>
+            `;
+
+            // Delay section
+            for (const delay of results.delays) {
+                const queuedVehiclesPerHour = delay.queuedVehicles / (params.simulationTime / 3600);
+                const totalArrivalsPerHour = results.arrivalRates.find(ar => ar.name === delay.name).totalPerHour;
+                const queuedPercentage = totalArrivalsPerHour > 0 ? (queuedVehiclesPerHour / totalArrivalsPerHour) * 100 : 0;
+                
+                html += `
+                    <div class="results-section">
+                        <h3>⏱️ ${delay.name} - Delays</h3>
+                        <div class="metric">
+                            <span class="metric-label">Avg Delay per Vehicle</span>
+                            <span class="metric-value">${delay.avgDelayAll.toFixed(2)} seconds</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Avg Delay per Queued Vehicle</span>
+                            <span class="metric-value">${delay.avgDelayQueued.toFixed(2)} seconds</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Vehicles That Queued</span>
+                            <span class="metric-value">(${queuedPercentage.toFixed(1)}%) ${queuedVehiclesPerHour.toFixed(3)} cars/hr</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // FIXED: Display all arrival rate components
+            for (const arrivalRate of results.arrivalRates) {
+                const immediateEntry = arrivalRate.totalPerHour - arrivalRate.sameQueue - arrivalRate.oppositeQueue - arrivalRate.noqueue;
+                const samePercentage = arrivalRate.totalPerHour > 0 ? (arrivalRate.sameQueue / arrivalRate.totalPerHour) * 100 : 0;
+                const oppositePercentage = arrivalRate.totalPerHour > 0 ? (arrivalRate.oppositeQueue / arrivalRate.totalPerHour) * 100 : 0;
+                const immediatePercentage = arrivalRate.totalPerHour > 0 ? (immediateEntry / arrivalRate.totalPerHour) * 100 : 0;
+                
+                html += `
+                    <div class="results-section">
+                        <h3>🚗 ${arrivalRate.name} - Arrival Breakdown</h3>
+                        <div class="metric">
+                            <span class="metric-label">Queued - Same Direction Busy</span>
+                            <span class="metric-value">(${samePercentage.toFixed(1)}%) ${arrivalRate.sameQueue.toFixed(2)} cars/hr</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Queued - Opposite Direction Busy</span>
+                            <span class="metric-value">(${oppositePercentage.toFixed(1)}%) ${arrivalRate.oppositeQueue.toFixed(2)} cars/hr</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Immediate Entry (No Queue)</span>
+                            <span class="metric-value">(${immediatePercentage.toFixed(1)}%) ${immediateEntry.toFixed(2)} cars/hr</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Total Arrivals</span>
+                            <span class="metric-value">(100.0%) ${arrivalRate.totalPerHour.toFixed(2)} cars/hr</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function getMinFollowUpValue() {
+            const selection = document.getElementById('minFollowUp').value;
+            const serviceTime = parseFloat(document.getElementById('serviceTime').value);
+            const minGap = parseFloat(document.getElementById('minGap').value);
+            
+            switch(selection) {
+                case '0': return 0;
+                case 'minGap': return minGap;
+                case 'serviceTime': return serviceTime;
+                case 'custom': return parseFloat(document.getElementById('customFollowUp').value);
+                default: return serviceTime;
+            }
+        }
+
+        function toggleCustomFollowUp() {
+            const selection = document.getElementById('minFollowUp').value;
+            const customGroup = document.getElementById('customFollowUpGroup');
+            customGroup.style.display = selection === 'custom' ? 'block' : 'none';
+        }
+
+        // Initialize sample size calculation on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            calculateSampleSize();
+        });
+
+        document.getElementById('resetButton').addEventListener('click', resetInputs);
+
+        document.getElementById('runSimulation').addEventListener('click', async () => {
+            const button = document.getElementById('runSimulation');
+            const status = document.getElementById('status');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+
+            button.disabled = true;
+            const numSeeds = parseInt(document.getElementById('numSeeds').value);
+            button.textContent = `⏳ Running ${numSeeds} Seeds...`;
+            status.style.display = 'block';
+            status.className = 'status running';
+            status.textContent = `Running simulation across ${numSeeds} seeds...`;
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '0%';
+
+            const params = {
+                arrivalRateA: parseFloat(document.getElementById('arrivalRateA').value),
+                arrivalRateB: parseFloat(document.getElementById('arrivalRateB').value),
+                serviceTime: parseFloat(document.getElementById('serviceTime').value),
+                simulationTime: parseFloat(document.getElementById('simulationHours').value) * 3600,
+                minGap: parseFloat(document.getElementById('minGap').value),
+                minFollowUp: getMinFollowUpValue(),
+                priorityScheme: document.getElementById('priorityScheme').value
+            };
+
+            try {
+                const results = await runMultipleSimulations(params, (progress) => {
+                    progressFill.style.width = progress + '%';
+                });
+
+                progressFill.style.width = '100%';
+                status.className = 'status complete';
+                status.textContent = `✅ Simulation completed successfully! (${results.numSeeds} seeds averaged)`;
+                
+                displayResults(results, params);
+
+                setTimeout(() => {
+                    status.style.display = 'none';
+                    progressContainer.style.display = 'none';
+                }, 3000);
+
+            } catch (error) {
+                status.className = 'status';
+                status.style.backgroundColor = '#f8d7da';
+                status.style.color = '#721c24';
+                status.textContent = '❌ Error: ' + error.message;
+            }
+
+            button.disabled = false;
+            button.textContent = '🎯 Run Simulation';
+        });
+    </script>
+</body>
+</html>

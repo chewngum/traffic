@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Segment Ramp Design Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            padding: 30px;
+            border-bottom: 1px solid #e9ecef;
+            overflow-y: visible;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .ramp-width-input {
+            width: 120px;
+        }
+
+        .segments-container {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background: white;
+        }
+
+        .segments-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .segments-header h3 {
+            color: #2c3e50;
+            font-size: 18px;
+        }
+
+        .add-segment-btn {
+            padding: 8px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .add-segment-btn:hover {
+            background: #218838;
+        }
+
+        .segment {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+
+        .add-segment-row {
+            display: flex;
+            justify-content: center;
+            padding: 5px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .add-segment-row:last-child {
+            border-bottom: none;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .mini-add-btn {
+            padding: 4px 8px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .mini-add-btn:hover {
+            background: #218838;
+        }
+
+        .segment-inputs {
+            display: grid;
+            grid-template-columns: 80px 80px 1fr auto;
+            gap: 12px;
+            align-items: end;
+            padding: 12px;
+            justify-items: center;
+        }
+
+        .segment-input {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .segment-input label {
+            font-size: 11px;
+            margin-bottom: 3px;
+            text-transform: none;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .segment-input input {
+            padding: 6px 8px;
+            font-size: 13px;
+            margin-bottom: 0;
+            width: 100%;
+        }
+
+        .remove-segment-btn {
+            padding: 8px 12px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            height: fit-content;
+            width: fit-content;
+        }
+
+        .remove-segment-btn:hover {
+            background: #c82333;
+        }
+
+        .grade-type {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .grade-type button {
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .grade-type button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .results {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .results h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #d1ecf1;
+            font-size: 14px;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .drawings {
+            padding: 30px;
+            background: white;
+        }
+
+        .drawing-section {
+            margin-bottom: 40px;
+        }
+
+        .drawing-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .drawing-container {
+            background: #fafafa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        svg {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .dimension-line {
+            stroke: #2c3e50;
+            stroke-width: 1;
+            fill: none;
+        }
+
+        .dimension-text {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            fill: #2c3e50;
+            text-anchor: middle;
+        }
+
+        .ramp-surface {
+            fill: #e9ecef;
+            stroke: #2c3e50;
+            stroke-width: 2;
+        }
+
+        .landing-surface {
+            fill: #f0f0f0;
+            stroke: #2c3e50;
+            stroke-width: 2;
+        }
+
+        .ground {
+            fill: #8bc34a;
+            stroke: #689f38;
+            stroke-width: 1;
+        }
+
+        .arrow {
+            fill: #dc3545;
+            stroke: #dc3545;
+            stroke-width: 1;
+        }
+
+        .arrow-text {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            fill: #dc3545;
+            text-anchor: middle;
+            font-weight: bold;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .controls {
+                border-bottom: 1px solid #e9ecef;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Multi-Segment Ramp Design Tool</h1>
+            <p>Generate plan and section schematics for complex ramp designs with multiple segments</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="controls">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                    <div class="input-group">
+                        <label>Ramp Width (m)</label>
+                        <input type="number" id="widthInput" class="ramp-width-input" placeholder="e.g., 3.6" step="0.1" value="3.6" oninput="updateRampData()">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Starting RL (m)</label>
+                        <input type="number" id="startingRLInput" class="ramp-width-input" placeholder="e.g., 0.000" step="0.001" value="0.000" oninput="updateRampData()">
+                    </div>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Grade Input Type</label>
+                    <div class="grade-type">
+                        <button type="button" id="percentBtn" class="active" onclick="setGradeType('percent')">Percentage</button>
+                        <button type="button" id="ratioBtn" onclick="setGradeType('ratio')">1:X Ratio</button>
+                    </div>
+                </div>
+
+                <div class="segments-container">
+                    <div class="segments-header">
+                        <h3>Ramp Segments</h3>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 120px 120px; gap: 8px; margin-bottom: 15px; justify-content: center;">
+                        <div>
+                            <label style="font-size: 12px; margin-bottom: 5px;">Start Label</label>
+                            <input type="text" id="startLabelInput" placeholder="e.g., Street" value="Street" style="padding: 8px 10px; font-size: 14px; min-width: 0; width: 100%;" oninput="updateRampData()">
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; margin-bottom: 5px;">End Label</label>
+                            <input type="text" id="endLabelInput" placeholder="e.g., Carpark" value="Carpark" style="padding: 8px 10px; font-size: 14px; min-width: 0; width: 100%;" oninput="updateRampData()">
+                        </div>
+                    </div>
+                    <div id="segmentsContainer">
+                        <!-- Segments will be added here -->
+                    </div>
+                </div>
+
+                <div class="results" id="results">
+                    <h3>Ramp Data</h3>
+                    <div id="resultsList"></div>
+                </div>
+
+                <button class="calculate-btn" onclick="calculateRamp()">Generate Ramp Design</button>
+                
+                <button class="calculate-btn" onclick="exportToAutoCAD()" style="margin-top: 10px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">Export Section to AutoCAD (.scr)</button>
+                
+                <button class="calculate-btn" onclick="exportPlanToAutoCAD()" style="margin-top: 10px; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">Export Plan to AutoCAD (.scr)</button>
+            </div>
+
+            <div class="drawings">
+                <div class="drawing-section">
+                    <h3>Section View</h3>
+                    <div class="drawing-container">
+                        <svg id="sectionSvg" width="100%" height="400" viewBox="0 0 1000 400">
+                            <text x="500" y="200" text-anchor="middle" fill="#999" font-size="16">Click "Generate Ramp Design" to view schematic</text>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="drawing-section">
+                    <h3>Plan View</h3>
+                    <div class="drawing-container">
+                        <svg id="planSvg" width="100%" height="400" viewBox="0 0 1000 400">
+                            <text x="500" y="200" text-anchor="middle" fill="#999" font-size="16">Click "Generate Ramp Design" to view schematic</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentGradeType = 'percent';
+        let segments = [];
+
+        function setGradeType(type) {
+            const oldType = currentGradeType;
+            currentGradeType = type;
+            const percentBtn = document.getElementById('percentBtn');
+            const ratioBtn = document.getElementById('ratioBtn');
+
+            if (type === 'percent') {
+                percentBtn.classList.add('active');
+                ratioBtn.classList.remove('active');
+            } else {
+                percentBtn.classList.remove('active');
+                ratioBtn.classList.add('active');
+            }
+            
+            // Convert existing segment values
+            if (oldType !== type) {
+                convertAllSegmentGrades(oldType, type);
+            }
+            
+            updateGradeLabels();
+        }
+
+        function convertAllSegmentGrades(fromType, toType) {
+            const gradeInputs = document.querySelectorAll('.grade-input');
+            gradeInputs.forEach(input => {
+                const currentValue = parseFloat(input.value);
+                if (!isNaN(currentValue) && currentValue !== 0) {
+                    let convertedValue;
+                    if (fromType === 'percent' && toType === 'ratio') {
+                        // Convert percentage to ratio (e.g., 5% to 20 for 1:20)
+                        convertedValue = 100 / currentValue;
+                    } else if (fromType === 'ratio' && toType === 'percent') {
+                        // Convert ratio to percentage (e.g., 20 for 1:20 to 5%)
+                        convertedValue = 100 / currentValue;
+                    }
+                    
+                    if (convertedValue) {
+                        input.value = convertedValue.toFixed(2);
+                    }
+                }
+            });
+        }
+
+        function updateGradeLabels() {
+            const gradeLabels = document.querySelectorAll('.grade-label');
+            gradeLabels.forEach(label => {
+                label.textContent = currentGradeType === 'percent' ? 'Grade (%)' : 'Grade (1:X)';
+            });
+        }
+
+        function addSegment(length = null, grade = null, insertIndex = null) {
+            const container = document.getElementById('segmentsContainer');
+            const segmentId = 'segment-' + Date.now();
+            
+            const defaultLength = length !== null ? length : 10;
+            const defaultGrade = grade !== null ? grade : 5;
+            
+            const segmentDiv = document.createElement('div');
+            segmentDiv.className = 'segment';
+            segmentDiv.id = segmentId;
+            
+            const segmentIndex = insertIndex !== null ? insertIndex : segments.length;
+            const isFirstSegment = segmentIndex === 0;
+            
+            let addButtonsHtml = '';
+            if (isFirstSegment) {
+                addButtonsHtml = `
+                    <div class="add-segment-row">
+                        <button class="mini-add-btn" onclick="insertSegmentAt(${segmentIndex})">+ Add Above</button>
+                    </div>`;
+            }
+            
+            segmentDiv.innerHTML = `
+                ${addButtonsHtml}
+                <div class="segment-inputs">
+                    <div class="segment-input">
+                        <label>Length (m)</label>
+                        <input type="number" class="length-input" placeholder="10" step="0.1" value="${defaultLength}" oninput="updateRampData()">
+                    </div>
+                    <div class="segment-input">
+                        <label class="grade-label">${currentGradeType === 'percent' ? 'Grade (%)' : 'Grade (1:X)'}</label>
+                        <input type="number" class="grade-input" placeholder="5" step="0.01" value="${defaultGrade}" oninput="updateRampData()">
+                    </div>
+                    <button class="remove-segment-btn" onclick="removeSegment('${segmentId}')">Remove</button>
+                </div>
+                <div class="add-segment-row">
+                    <button class="mini-add-btn" onclick="insertSegmentAt(${segmentIndex + 1})">+ Add Below</button>
+                </div>
+            `;
+            
+            if (insertIndex !== null && insertIndex < container.children.length) {
+                container.insertBefore(segmentDiv, container.children[insertIndex]);
+                segments.splice(insertIndex, 0, segmentId);
+            } else {
+                container.appendChild(segmentDiv);
+                segments.push(segmentId);
+            }
+            
+            updateSegmentIndices();
+        }
+
+        function insertSegmentAt(index) {
+            addSegment(null, null, index);
+        }
+
+        function removeSegment(segmentId) {
+            const segment = document.getElementById(segmentId);
+            if (segment) {
+                segment.remove();
+                segments = segments.filter(id => id !== segmentId);
+                updateSegmentIndices();
+                updateRampData();
+            }
+        }
+
+        function updateRampData() {
+            const segmentData = getSegmentData();
+            const width = parseFloat(document.getElementById('widthInput').value) || 0;
+
+            if (segmentData.length === 0) return;
+
+            let totalLength = 0;
+            let totalRLChange = 0;
+
+            segmentData.forEach(segment => {
+                totalLength += segment.length;
+                totalRLChange += segment.rise;
+            });
+
+            const averageGrade = totalLength > 0 ? (totalRLChange / totalLength) * 100 : 0;
+
+            displayResults({
+                totalLength,
+                totalRLChange,
+                averageGrade,
+                segmentCount: segmentData.length
+            });
+        }
+
+        function updateSegmentIndices() {
+            const container = document.getElementById('segmentsContainer');
+            const segmentElements = container.querySelectorAll('.segment');
+            
+            segmentElements.forEach((segment, index) => {
+                // Update the add button onclick handlers
+                const addAbove = segment.querySelector('.add-segment-row:first-child .mini-add-btn');
+                const addBelow = segment.querySelector('.add-segment-row:last-child .mini-add-btn');
+                
+                // Only first segment has "Add Above" button
+                if (addAbove && index === 0) {
+                    addAbove.setAttribute('onclick', `insertSegmentAt(${index})`);
+                }
+                if (addBelow) {
+                    addBelow.setAttribute('onclick', `insertSegmentAt(${index + 1})`);
+                }
+            });
+        }
+
+        function getSegmentData() {
+            const segmentElements = document.querySelectorAll('.segment-inputs');
+            const data = [];
+            
+            segmentElements.forEach(segment => {
+                const length = parseFloat(segment.querySelector('.length-input').value);
+                const gradeInput = parseFloat(segment.querySelector('.grade-input').value);
+                
+                let gradePercent;
+                if (currentGradeType === 'percent') {
+                    gradePercent = gradeInput;
+                } else {
+                    gradePercent = gradeInput !== 0 ? (1 / gradeInput) * 100 : 0;
+                }
+                
+                if (!isNaN(length) && !isNaN(gradeInput)) {
+                    data.push({
+                        length: length,
+                        gradePercent: gradePercent,
+                        rise: (gradePercent / 100) * length
+                    });
+                }
+            });
+            
+            return data;
+        }
+
+        function calculateRamp() {
+            const width = parseFloat(document.getElementById('widthInput').value);
+            const segmentData = getSegmentData();
+
+            if (!width || segmentData.length === 0) {
+                alert('Please fill in ramp width and add at least one segment');
+                return;
+            }
+
+            generateSectionView(segmentData, width);
+            generatePlanView(segmentData, width);
+        }
+
+        function displayResults(calc) {
+            const resultsList = document.getElementById('resultsList');
+
+            resultsList.innerHTML = `
+                <div class="result-item">
+                    <span>Total Segments:</span>
+                    <span>${calc.segmentCount}</span>
+                </div>
+                <div class="result-item">
+                    <span>Total Length:</span>
+                    <span>${calc.totalLength.toFixed(1)} m</span>
+                </div>
+                <div class="result-item">
+                    <span>Total RL Change:</span>
+                    <span>${calc.totalRLChange >= 0 ? '+' : ''}${calc.totalRLChange.toFixed(3)} m</span>
+                </div>
+                <div class="result-item">
+                    <span>Average Grade:</span>
+                    <span>${calc.averageGrade.toFixed(2)}%</span>
+                </div>
+            `;
+        }
+
+        function generateSectionView(segmentData, width) {
+            const svg = document.getElementById('sectionSvg');
+            const svgWidth = 1000;
+            const svgHeight = 400;
+            const margin = 50;
+            const startingRL = parseFloat(document.getElementById('startingRLInput').value) || 0;
+            const startLabel = document.getElementById('startLabelInput').value || 'Start';
+            const endLabel = document.getElementById('endLabelInput').value || 'End';
+            
+            const totalLength = segmentData.reduce((sum, seg) => sum + seg.length, 0);
+            const horizontalScale = (svgWidth - 2 * margin) / totalLength;
+            
+            // Calculate all RLs (elevation points) starting from the specified starting RL
+            let currentElevation = startingRL;
+            const points = [{x: 0, rl: startingRL}];
+            let cumulativeLength = 0;
+            
+            segmentData.forEach(segment => {
+                cumulativeLength += segment.length;
+                currentElevation += segment.rise;
+                points.push({x: cumulativeLength, rl: currentElevation});
+            });
+            
+            // Find elevation range for proper scaling
+            const minRL = Math.min(...points.map(p => p.rl));
+            const maxRL = Math.max(...points.map(p => p.rl));
+            const rlRange = maxRL - minRL;
+            
+            // Scale to fit within drawing area
+            const drawingHeight = svgHeight - 2 * margin - 60;
+            const verticalScale = rlRange > 0 ? drawingHeight / rlRange : 1;
+            
+            // Base Y position (for RL = 0)
+            const baseY = svgHeight - margin - 40 - (0 - minRL) * verticalScale;
+
+            svg.innerHTML = '';
+
+            // Draw road line connecting all points
+            let pathData = '';
+            points.forEach((point, index) => {
+                const x = margin + point.x * horizontalScale;
+                const y = baseY - point.rl * verticalScale;
+                
+                if (index === 0) {
+                    pathData += `M ${x} ${y}`;
+                } else {
+                    pathData += ` L ${x} ${y}`;
+                }
+            });
+            
+            svg.innerHTML += `<path d="${pathData}" stroke="#2c3e50" stroke-width="3" fill="none"/>`;
+
+            // Draw RL markers and labels at each point
+            points.forEach((point, index) => {
+                const x = margin + point.x * horizontalScale;
+                const y = baseY - point.rl * verticalScale;
+                
+                // RL marker
+                svg.innerHTML += `<circle cx="${x}" cy="${y}" r="4" fill="#dc3545" stroke="#2c3e50" stroke-width="1"/>`;
+                
+                // RL label
+                const rlText = `RL ${point.rl >= 0 ? '+' : ''}${point.rl.toFixed(3)}`;
+                svg.innerHTML += `<text x="${x}" y="${y - 15}" class="dimension-text" text-anchor="middle" font-weight="bold">${rlText}</text>`;
+                
+                // Distance from start label
+                if (index > 0) {
+                    svg.innerHTML += `<text x="${x}" y="${y + 25}" class="dimension-text" text-anchor="middle">${point.x.toFixed(1)}m</text>`;
+                }
+            });
+
+            // Add start and end labels
+            const startX = margin + points[0].x * horizontalScale;
+            const startY = baseY - points[0].rl * verticalScale;
+            const endX = margin + points[points.length - 1].x * horizontalScale;
+            const endY = baseY - points[points.length - 1].rl * verticalScale;
+            
+            // Start label (no arrow)
+            svg.innerHTML += `<text x="${startX}" y="${startY - 30}" class="dimension-text" text-anchor="middle" font-weight="bold">${startLabel}</text>`;
+            
+            // End label (no arrow)
+            svg.innerHTML += `<text x="${endX}" y="${endY - 30}" class="dimension-text" text-anchor="middle" font-weight="bold">${endLabel}</text>`;
+
+            // Add horizontal dimensions for each segment
+            let currentX = margin;
+            segmentData.forEach((segment, index) => {
+                const segmentWidth = segment.length * horizontalScale;
+                const nextX = currentX + segmentWidth;
+                
+                addDimension(svg, currentX, nextX, svgHeight - 30, `${segment.length}m`, 'horizontal');
+                
+                // Add grade label on the segment
+                const midX = (currentX + nextX) / 2;
+                const startY = baseY - points[index].rl * verticalScale;
+                const endY = baseY - points[index + 1].rl * verticalScale;
+                const midY = (startY + endY) / 2;
+                
+                let gradeText;
+                if (segment.gradePercent === 0) {
+                    gradeText = '0%';
+                } else {
+                    if (currentGradeType === 'percent') {
+                        gradeText = `${segment.gradePercent.toFixed(1)}%`;
+                    } else {
+                        const ratio = Math.abs(segment.gradePercent) > 0 ? (100 / Math.abs(segment.gradePercent)).toFixed(0) : '∞';
+                        gradeText = `1:${ratio}`;
+                    }
+                }
+                svg.innerHTML += `<text x="${midX}" y="${midY - 8}" class="dimension-text" text-anchor="middle" fill="#667eea" font-weight="bold">${gradeText}</text>`;
+                
+                currentX = nextX;
+            });
+
+            // Add datum line reference
+            const datumY = baseY;
+            svg.innerHTML += `<line x1="${margin - 20}" y1="${datumY}" x2="${svgWidth - margin + 20}" y2="${datumY}" stroke="#689f38" stroke-width="1" stroke-dasharray="5,5"/>`;
+            svg.innerHTML += `<text x="${margin - 25}" y="${datumY + 4}" class="dimension-text" text-anchor="end" fill="#689f38">RL ${startingRL.toFixed(3)}</text>`;
+        }
+
+        function generatePlanView(segmentData, width) {
+            const svg = document.getElementById('planSvg');
+            const svgWidth = 1000;
+            const svgHeight = 400;
+            const margin = 50;
+            
+            const totalLength = segmentData.reduce((sum, seg) => sum + seg.length, 0);
+            const scale = (svgWidth - 2 * margin) / totalLength;
+            const widthScale = width * scale;
+
+            svg.innerHTML = '';
+
+            const centerY = svgHeight / 2;
+            let currentX = margin;
+
+            segmentData.forEach((segment, index) => {
+                const segmentWidth = segment.length * scale;
+                const nextX = currentX + segmentWidth;
+
+                // Draw segment
+                if (segment.gradePercent === 0) {
+                    svg.innerHTML += `<rect x="${currentX}" y="${centerY - widthScale/2}" width="${segmentWidth}" height="${widthScale}" class="landing-surface"/>`;
+                } else {
+                    svg.innerHTML += `<rect x="${currentX}" y="${centerY - widthScale/2}" width="${segmentWidth}" height="${widthScale}" class="ramp-surface"/>`;
+                    
+                    // Add horizontal arrow pointing to higher end for sloped segments
+                    const arrowY = centerY; // Vertically centered on the ramp
+                    const arrowLength = 25;
+                    
+                    if (segment.gradePercent > 0) {
+                        // Positive grade: arrow points right with point aligned to right edge
+                        const arrowEndX = nextX - 5; // Point aligned to right edge
+                        const arrowStartX = arrowEndX - arrowLength;
+                        
+                        // Arrow line
+                        svg.innerHTML += `<line x1="${arrowStartX}" y1="${arrowY}" x2="${arrowEndX}" y2="${arrowY}" stroke="#667eea" stroke-width="2"/>`;
+                        // Arrow head pointing right
+                        svg.innerHTML += `<line x1="${arrowEndX}" y1="${arrowY}" x2="${arrowEndX - 8}" y2="${arrowY - 4}" stroke="#667eea" stroke-width="2"/>`;
+                        svg.innerHTML += `<line x1="${arrowEndX}" y1="${arrowY}" x2="${arrowEndX - 8}" y2="${arrowY + 4}" stroke="#667eea" stroke-width="2"/>`;
+                        
+                    } else if (segment.gradePercent < 0) {
+                        // Negative grade: arrow points left with point aligned to left edge
+                        const arrowEndX = currentX + 5; // Point aligned to left edge
+                        const arrowStartX = arrowEndX + arrowLength;
+                        
+                        // Arrow line
+                        svg.innerHTML += `<line x1="${arrowStartX}" y1="${arrowY}" x2="${arrowEndX}" y2="${arrowY}" stroke="#667eea" stroke-width="2"/>`;
+                        // Arrow head pointing left
+                        svg.innerHTML += `<line x1="${arrowEndX}" y1="${arrowY}" x2="${arrowEndX + 8}" y2="${arrowY - 4}" stroke="#667eea" stroke-width="2"/>`;
+                        svg.innerHTML += `<line x1="${arrowEndX}" y1="${arrowY}" x2="${arrowEndX + 8}" y2="${arrowY + 4}" stroke="#667eea" stroke-width="2"/>`;
+                    }
+                }
+
+                // Add dimensions with grade information and arrows for sloped segments
+                let dimensionText;
+                if (segment.gradePercent === 0) {
+                    dimensionText = `${segment.length}m @ 0%`;
+                } else {
+                    if (currentGradeType === 'percent') {
+                        dimensionText = `${segment.length}m @ ${segment.gradePercent.toFixed(1)}%`;
+                    } else {
+                        const ratio = Math.abs(segment.gradePercent) > 0 ? (100 / Math.abs(segment.gradePercent)).toFixed(0) : '∞';
+                        dimensionText = `${segment.length}m @ 1:${ratio}`;
+                    }
+                    
+                    // Add horizontal arrow pointing to higher end for sloped segments
+                    const arrowY = centerY; // Vertically centered on the ramp
+                    const arrowLength = 25;
+                    
+                    if (segment.gradePercent > 0) {
+                        // Positive grade: arrow points right with point aligned to right edge
+                        const arrowEndX = nextX - 5; // Point aligned to right edge
+                        const arrowStartX = arrowEndX - arrowLength;
+                        
+                        // Arrow line
+                        svg.innerHTML += `<line x1="${arrowStartX}" y1="${arrowY}" x2="${arrowEndX}" y2="${arrowY}" stroke="#667eea" stroke-width="2"/>`;
+                        // Arrow head pointing right
+                        svg.innerHTML += `<line x1="${arrowEndX}" y1="${arrowY}" x2="${arrowEndX - 8}" y2="${arrowY - 4}" stroke="#667eea" stroke-width="2"/>`;
+                        svg.innerHTML += `<line x1="${arrowEndX}" y1="${arrowY}" x2="${arrowEndX - 8}" y2="${arrowY + 4}" stroke="#667eea" stroke-width="2"/>`;
+                        
+                    } else if (segment.gradePercent < 0) {
+                        // Negative grade: arrow points left with point aligned to left edge
+                        const arrowEndX = currentX + 5; // Point aligned to left edge
+                        const arrowStartX = arrowEndX + arrowLength;
+                        
+                        // Arrow line
+                        svg.innerHTML += `<line x1="${arrowStartX}" y1="${arrowY}" x2="${arrowEndX}" y2="${arrowY}" stroke="#667eea" stroke-width="2"/>`;
+                        // Arrow head pointing left
+                        svg.innerHTML += `<line x1="${arrowEndX}" y1="${arrowY}" x2="${arrowEndX + 8}" y2="${arrowY - 4}" stroke="#667eea" stroke-width="2"/>`;
+                        svg.innerHTML += `<line x1="${arrowEndX}" y1="${arrowY}" x2="${arrowEndX + 8}" y2="${arrowY + 4}" stroke="#667eea" stroke-width="2"/>`;
+                    }
+                }
+                
+                addDimension(svg, currentX, nextX, centerY + widthScale/2 + 30, dimensionText, 'horizontal');
+
+                currentX = nextX;
+            });
+
+            // Add width dimension (positioned properly with text to the right)
+            addDimension(svg, margin - 40, centerY - widthScale/2, centerY + widthScale/2, `${width}m`, 'vertical');
+        }
+
+        function addDimension(svg, x1, x2, y, label, orientation) {
+            if (orientation === 'horizontal') {
+                svg.innerHTML += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" class="dimension-line"/>`;
+                svg.innerHTML += `<line x1="${x1}" y1="${y-5}" x2="${x1}" y2="${y+5}" class="dimension-line"/>`;
+                svg.innerHTML += `<line x1="${x2}" y1="${y-5}" x2="${x2}" y2="${y+5}" class="dimension-line"/>`;
+                svg.innerHTML += `<text x="${(x1+x2)/2}" y="${y-8}" class="dimension-text">${label}</text>`;
+            } else {
+                // For vertical dimensions: x1=x coordinate, x2=y1, y=y2, label=label
+                const x = x1;
+                const y1 = x2;
+                const y2 = y;
+                svg.innerHTML += `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" class="dimension-line"/>`;
+                svg.innerHTML += `<line x1="${x-5}" y1="${y1}" x2="${x+5}" y2="${y1}" class="dimension-line"/>`;
+                svg.innerHTML += `<line x1="${x-5}" y1="${y2}" x2="${x+5}" y2="${y2}" class="dimension-line"/>`;
+                svg.innerHTML += `<text x="${x+15}" y="${(y1+y2)/2+3}" class="dimension-text" text-anchor="start">${label}</text>`;
+            }
+        }
+
+        function exportPlanToAutoCAD() {
+            const segmentData = getSegmentData();
+            const width = parseFloat(document.getElementById('widthInput').value);
+
+            if (!width || segmentData.length === 0) {
+                alert('Please generate ramp design first');
+                return;
+            }
+
+            const totalLength = segmentData.reduce((sum, seg) => sum + seg.length, 0);
+
+            // Convert all measurements to mm for AutoCAD
+            const totalLengthMM = totalLength * 1000;
+            const widthMM = width * 1000;
+            const segmentsMM = segmentData.map(s => ({
+                ...s,
+                length: s.length * 1000 // Convert meters to mm
+            }));
+
+            // Generate AutoCAD script
+            let script = '; AutoCAD Script File - Ramp Plan View\n';
+            script += '; Generated by Multi-Segment Ramp Design Tool\n';
+            script += '; All measurements in millimeters\n';
+            script += '\n';
+            
+            // Set units and precision
+            script += 'UNITS 2 1 1 2 0 N\n'; // Decimal units, 1 decimal place for mm
+            script += 'ZOOM E\n'; // Zoom extents
+            script += '\n';
+
+            // Create layers
+            script += 'LAYER N RAMP-OUTLINE C 7 RAMP-OUTLINE\n'; // White for ramp outline
+            script += 'LAYER N RAMP-DIMENSIONS C 3 RAMP-DIMENSIONS\n'; // Green for dimensions
+            script += 'LAYER N RAMP-TEXT C 1 RAMP-TEXT\n'; // Red for text
+            script += 'LAYER N RAMP-ARROWS C 4 RAMP-ARROWS\n'; // Cyan for gradient arrows
+            script += 'LAYER N RAMP-LANDING C 6 RAMP-LANDING\n'; // Magenta for landing areas
+            script += '\n';
+
+            // Draw each segment
+            let currentX = 0;
+            const centerY = 0; // Center the ramp at Y = 0
+
+            segmentsMM.forEach((segment, index) => {
+                const segmentWidthMM = segment.length;
+                const nextX = currentX + segmentWidthMM;
+
+                // Draw segment rectangle
+                if (segment.gradePercent === 0) {
+                    // Landing area
+                    script += 'LAYER S RAMP-LANDING\n';
+                } else {
+                    // Ramp area
+                    script += 'LAYER S RAMP-OUTLINE\n';
+                }
+
+                // Rectangle outline
+                script += `RECTANG ${currentX.toFixed(1)},${(centerY - widthMM/2).toFixed(1)} ${nextX.toFixed(1)},${(centerY + widthMM/2).toFixed(1)}\n`;
+
+                // Add arrows for sloped segments
+                if (segment.gradePercent !== 0) {
+                    script += 'LAYER S RAMP-ARROWS\n';
+                    const arrowLength = 250; // 250mm arrow length
+                    
+                    if (segment.gradePercent > 0) {
+                        // Positive grade: arrow points right with point aligned to right edge
+                        const arrowEndX = nextX - 50; // Point aligned to right edge
+                        const arrowStartX = arrowEndX - arrowLength;
+                        
+                        // Arrow line
+                        script += `LINE ${arrowStartX.toFixed(1)},${centerY.toFixed(1)} ${arrowEndX.toFixed(1)},${centerY.toFixed(1)}\n`;
+                        // Arrow head pointing right
+                        script += `LINE ${arrowEndX.toFixed(1)},${centerY.toFixed(1)} ${(arrowEndX - 80).toFixed(1)},${(centerY - 40).toFixed(1)}\n`;
+                        script += `LINE ${arrowEndX.toFixed(1)},${centerY.toFixed(1)} ${(arrowEndX - 80).toFixed(1)},${(centerY + 40).toFixed(1)}\n`;
+                        
+                    } else if (segment.gradePercent < 0) {
+                        // Negative grade: arrow points left with point aligned to left edge
+                        const arrowEndX = currentX + 50; // Point aligned to left edge
+                        const arrowStartX = arrowEndX + arrowLength;
+                        
+                        // Arrow line
+                        script += `LINE ${arrowStartX.toFixed(1)},${centerY.toFixed(1)} ${arrowEndX.toFixed(1)},${centerY.toFixed(1)}\n`;
+                        // Arrow head pointing left
+                        script += `LINE ${arrowEndX.toFixed(1)},${centerY.toFixed(1)} ${(arrowEndX + 80).toFixed(1)},${(centerY - 40).toFixed(1)}\n`;
+                        script += `LINE ${arrowEndX.toFixed(1)},${centerY.toFixed(1)} ${(arrowEndX + 80).toFixed(1)},${(centerY + 40).toFixed(1)}\n`;
+                    }
+                }
+
+                currentX = nextX;
+            });
+            script += '\n';
+
+            // Add longitudinal dimension lines and text
+            script += 'LAYER S RAMP-DIMENSIONS\n';
+            const dimY = centerY + widthMM/2 + 300; // Position dimensions 300mm below ramp
+            
+            currentX = 0;
+            segmentsMM.forEach((segment, index) => {
+                const nextX = currentX + segment.length;
+                
+                // Dimension line
+                script += `LINE ${currentX.toFixed(1)},${dimY.toFixed(1)} ${nextX.toFixed(1)},${dimY.toFixed(1)}\n`;
+                // Dimension end marks
+                script += `LINE ${currentX.toFixed(1)},${(dimY - 50).toFixed(1)} ${currentX.toFixed(1)},${(dimY + 50).toFixed(1)}\n`;
+                script += `LINE ${nextX.toFixed(1)},${(dimY - 50).toFixed(1)} ${nextX.toFixed(1)},${(dimY + 50).toFixed(1)}\n`;
+                
+                // Dimension text with grade information
+                const midX = (currentX + nextX) / 2;
+                let dimensionText;
+                if (segment.gradePercent === 0) {
+                    dimensionText = `${segment.length.toFixed(0)}mm @ 0%`;
+                } else {
+                    if (currentGradeType === 'percent') {
+                        dimensionText = `${segment.length.toFixed(0)}mm @ ${segment.gradePercent.toFixed(1)}%`;
+                    } else {
+                        const ratio = Math.abs(segment.gradePercent) > 0 ? (100 / Math.abs(segment.gradePercent)).toFixed(0) : '∞';
+                        dimensionText = `${segment.length.toFixed(0)}mm @ 1:${ratio}`;
+                    }
+                }
+                
+                script += `TEXT ${midX.toFixed(1)},${(dimY + 150).toFixed(1)} 120 0 ${dimensionText}\n`; // 120mm text height
+                
+                currentX = nextX;
+            });
+            script += '\n';
+
+            // Add width dimension (vertical dimension on the left)
+            script += 'LAYER S RAMP-DIMENSIONS\n';
+            const widthDimX = -400; // Position 400mm to the left of ramp
+            
+            // Width dimension line
+            script += `LINE ${widthDimX.toFixed(1)},${(centerY - widthMM/2).toFixed(1)} ${widthDimX.toFixed(1)},${(centerY + widthMM/2).toFixed(1)}\n`;
+            // Width dimension end marks
+            script += `LINE ${(widthDimX - 50).toFixed(1)},${(centerY - widthMM/2).toFixed(1)} ${(widthDimX + 50).toFixed(1)},${(centerY - widthMM/2).toFixed(1)}\n`;
+            script += `LINE ${(widthDimX - 50).toFixed(1)},${(centerY + widthMM/2).toFixed(1)} ${(widthDimX + 50).toFixed(1)},${(centerY + widthMM/2).toFixed(1)}\n`;
+            
+            // Width dimension text
+            script += `TEXT ${(widthDimX + 150).toFixed(1)},${centerY.toFixed(1)} 120 0 ${widthMM.toFixed(0)}mm\n`; // 120mm text height
+            script += '\n';
+
+            // Add title and labels
+            script += 'LAYER S RAMP-TEXT\n';
+            script += `TEXT ${(totalLengthMM/2).toFixed(1)},${(centerY + widthMM/2 + 800).toFixed(1)} 200 0 RAMP PLAN VIEW\n`; // 200mm text height
+            script += `TEXT ${(totalLengthMM/2).toFixed(1)},${(centerY + widthMM/2 + 1100).toFixed(1)} 150 0 Total Length: ${totalLengthMM.toFixed(0)}mm\n`; // 150mm text height
+            script += '\n';
+
+            // Final zoom and layer settings
+            script += 'ZOOM E\n';
+            script += 'LAYER S RAMP-OUTLINE\n';
+            script += '\n';
+
+            // Create and download the file
+            const blob = new Blob([script], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ramp_plan.scr';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        function exportToAutoCAD() {
+            const segmentData = getSegmentData();
+            const width = parseFloat(document.getElementById('widthInput').value);
+            const startingRL = parseFloat(document.getElementById('startingRLInput').value) || 0;
+            const startLabel = document.getElementById('startLabelInput').value || 'Start';
+            const endLabel = document.getElementById('endLabelInput').value || 'End';
+
+            if (!width || segmentData.length === 0) {
+                alert('Please generate ramp design first');
+                return;
+            }
+
+            // Calculate points and scaling (same as section view)
+            const totalLength = segmentData.reduce((sum, seg) => sum + seg.length, 0);
+            
+            let currentElevation = startingRL;
+            const points = [{x: 0, rl: startingRL}];
+            let cumulativeLength = 0;
+            
+            segmentData.forEach(segment => {
+                cumulativeLength += segment.length;
+                currentElevation += segment.rise;
+                points.push({x: cumulativeLength, rl: currentElevation});
+            });
+
+            // Convert all measurements to mm for AutoCAD
+            const pointsMM = points.map(p => ({
+                x: p.x * 1000, // Convert meters to mm
+                rl: p.rl * 1000 // Convert meters to mm
+            }));
+            const segmentsMM = segmentData.map(s => ({
+                ...s,
+                length: s.length * 1000, // Convert meters to mm
+                rise: s.rise * 1000 // Convert meters to mm
+            }));
+
+            // Generate AutoCAD script
+            let script = '; AutoCAD Script File - Ramp Section View\n';
+            script += '; Generated by Multi-Segment Ramp Design Tool\n';
+            script += '; All measurements in millimeters\n';
+            script += '\n';
+            
+            // Set units and precision
+            script += 'UNITS 2 1 1 2 0 N\n'; // Decimal units, 1 decimal place for mm
+            script += 'ZOOM E\n'; // Zoom extents
+            script += '\n';
+
+            // Create layers
+            script += 'LAYER N RAMP-PROFILE C 7 RAMP-PROFILE\n'; // White for ramp profile
+            script += 'LAYER N RAMP-DIMENSIONS C 3 RAMP-DIMENSIONS\n'; // Green for dimensions
+            script += 'LAYER N RAMP-TEXT C 1 RAMP-TEXT\n'; // Red for text
+            script += 'LAYER N RAMP-REFERENCE C 2 RAMP-REFERENCE\n'; // Yellow for reference lines
+            script += '\n';
+
+            // Draw the main ramp profile line
+            script += 'LAYER S RAMP-PROFILE\n';
+            script += 'PLINE\n';
+            pointsMM.forEach((point, index) => {
+                script += `${point.x.toFixed(1)},${point.rl.toFixed(1)}\n`;
+            });
+            script += '\n'; // End polyline
+            script += '\n';
+
+            // Add RL markers (circles) at each point
+            pointsMM.forEach((point, index) => {
+                script += `CIRCLE ${point.x.toFixed(1)},${point.rl.toFixed(1)} 100\n`; // 100mm radius circle
+            });
+            script += '\n';
+
+            // Add RL text labels
+            script += 'LAYER S RAMP-TEXT\n';
+            pointsMM.forEach((point, index) => {
+                const rlText = `RL ${point.rl >= 0 ? '+' : ''}${point.rl.toFixed(1)}`;
+                script += `TEXT ${point.x.toFixed(1)},${(point.rl + 300).toFixed(1)} 150 0 ${rlText}\n`; // 150mm text height
+                
+                // Distance labels (except for first point)
+                if (index > 0) {
+                    script += `TEXT ${point.x.toFixed(1)},${(point.rl - 400).toFixed(1)} 120 0 ${point.x.toFixed(0)}mm\n`; // 120mm text height
+                }
+            });
+            script += '\n';
+
+            // Add start and end labels
+            const startPoint = pointsMM[0];
+            const endPoint = pointsMM[pointsMM.length - 1];
+            script += `TEXT ${startPoint.x.toFixed(1)},${(startPoint.rl + 600).toFixed(1)} 180 0 ${startLabel}\n`; // 180mm text height
+            script += `TEXT ${endPoint.x.toFixed(1)},${(endPoint.rl + 600).toFixed(1)} 180 0 ${endLabel}\n`;
+            script += '\n';
+
+            // Add grade labels on segments
+            segmentsMM.forEach((segment, index) => {
+                const startPoint = pointsMM[index];
+                const endPoint = pointsMM[index + 1];
+                const midX = (startPoint.x + endPoint.x) / 2;
+                const midRL = (startPoint.rl + endPoint.rl) / 2;
+                
+                let gradeText;
+                if (segment.gradePercent === 0) {
+                    gradeText = '0%';
+                } else {
+                    if (currentGradeType === 'percent') {
+                        gradeText = `${segment.gradePercent.toFixed(1)}%`;
+                    } else {
+                        const ratio = Math.abs(segment.gradePercent) > 0 ? (100 / Math.abs(segment.gradePercent)).toFixed(0) : '∞';
+                        gradeText = `1:${ratio}`;
+                    }
+                }
+                script += `TEXT ${midX.toFixed(1)},${(midRL + 150).toFixed(1)} 120 0 ${gradeText}\n`; // 120mm text height
+            });
+            script += '\n';
+
+            // Add horizontal dimension lines
+            script += 'LAYER S RAMP-DIMENSIONS\n';
+            const dimY = Math.min(...pointsMM.map(p => p.rl)) - 1000; // Place dimensions 1000mm below lowest point
+            
+            segmentsMM.forEach((segment, index) => {
+                const startX = pointsMM[index].x;
+                const endX = pointsMM[index + 1].x;
+                
+                // Dimension line
+                script += `LINE ${startX.toFixed(1)},${dimY.toFixed(1)} ${endX.toFixed(1)},${dimY.toFixed(1)}\n`;
+                // Dimension end marks
+                script += `LINE ${startX.toFixed(1)},${(dimY - 100).toFixed(1)} ${startX.toFixed(1)},${(dimY + 100).toFixed(1)}\n`;
+                script += `LINE ${endX.toFixed(1)},${(dimY - 100).toFixed(1)} ${endX.toFixed(1)},${(dimY + 100).toFixed(1)}\n`;
+                
+                // Dimension text
+                const midX = (startX + endX) / 2;
+                script += `TEXT ${midX.toFixed(1)},${(dimY - 300).toFixed(1)} 120 0 ${segment.length.toFixed(0)}mm\n`; // 120mm text height
+            });
+            script += '\n';
+
+            // Add datum reference line
+            script += 'LAYER S RAMP-REFERENCE\n';
+            const datumY = startingRL * 1000; // Convert to mm
+            const totalLengthMM = totalLength * 1000;
+            const lineStart = -totalLengthMM * 0.1;
+            const lineEnd = totalLengthMM * 1.1;
+            script += `LINE ${lineStart.toFixed(1)},${datumY.toFixed(1)} ${lineEnd.toFixed(1)},${datumY.toFixed(1)}\n`;
+            script += 'LINETYPE S DASHED\n';
+            script += `LINE ${lineStart.toFixed(1)},${datumY.toFixed(1)} ${lineEnd.toFixed(1)},${datumY.toFixed(1)}\n`;
+            script += 'LINETYPE S CONTINUOUS\n';
+            script += `TEXT ${lineStart.toFixed(1)},${(datumY + 150).toFixed(1)} 120 0 RL ${datumY.toFixed(1)}\n`; // 120mm text height
+            script += '\n';
+
+            // Final zoom and layer settings
+            script += 'ZOOM E\n';
+            script += 'LAYER S RAMP-PROFILE\n';
+            script += '\n';
+
+            // Create and download the file
+            const blob = new Blob([script], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ramp_section.scr';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        // Initialize with default segments
+        function initializeDefaultSegments() {
+            // Default segments: 2m at 12.5%, 8m at 25%, 2m at 17.5%, 6m at 5%
+            addSegment(2, 12.5);
+            addSegment(8, 25);
+            addSegment(2, 17.5);
+            addSegment(6, 5);
+            
+            // Initial calculation
+            updateRampData();
+        }
+
+        // Initialize on page load
+        initializeDefaultSegments();
+        calculateRamp();
+    </script>
+</body>
+</html>

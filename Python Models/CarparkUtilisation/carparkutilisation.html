@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Park Simulation</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px; background: #C3BABA; }
+        .header { text-align: center; margin-bottom: 30px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 2px solid #8380FF; }
+        .header h1 { color: #8380FF; margin: 0 0 10px 0; }
+        .header p { color: #444554; margin: 0; }
+        .controls { background: white; padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 1px solid #C3BABA; }
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .input-group { display: flex; flex-direction: column; }
+        label { font-weight: 600; margin-bottom: 4px; color: #444554; font-size: 13px; }
+        input, select { padding: 8px; border: 2px solid #C3BABA; border-radius: 4px; font-size: 13px; transition: border-color 0.2s; }
+        input:focus, select:focus { outline: none; border-color: #8380FF; }
+        .button-group { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+        button { padding: 12px 24px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .btn-primary { background: #8380FF; color: white; } .btn-primary:hover { background: #7066FF; }
+        .btn-secondary { background: #00A8FF; color: white; } .btn-secondary:hover { background: #0088CC; }
+        .btn-warning { background: #F4E04D; color: #444554; font-weight: 700; } .btn-warning:hover { background: #F0D000; }
+        .input-warning { border-color: #F4E04D !important; background: #FFFBEB !important; }
+        .theoretical-calc { background: #F8F9FF; border: 1px solid #8380FF; border-radius: 6px; padding: 12px; margin: 15px 0; font-size: 13px; color: #444554; }
+        .warning-message { background: #FFFBEB; border: 1px solid #F4E04D; color: #444554; padding: 8px 12px; border-radius: 6px; margin: 10px 0; font-size: 13px; font-weight: 600; }
+        .results { background: white; padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 1px solid #C3BABA; }
+        .model-results { margin-bottom: 30px; background: #F8F9FF; border-radius: 8px; padding: 20px; border: 1px solid #8380FF; }
+        .model-title { font-size: 18px; font-weight: 700; color: #8380FF; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #C3BABA; }
+        .model-content { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .percentile-section, .metrics-section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #C3BABA; }
+        .section-title { font-size: 16px; font-weight: 600; color: #444554; margin-bottom: 15px; border-bottom: 1px solid #C3BABA; padding-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #C3BABA; }
+        th { background: #F8F9FF; font-weight: 600; color: #444554; }
+        tr:hover { background: #F8F9FF; }
+        .loading { text-align: center; padding: 40px; color: #444554; font-style: italic; }
+        .toggle { display: flex; align-items: center; gap: 10px; } .toggle input[type="checkbox"] { width: auto; }
+        .status { text-align: center; padding: 10px; margin: 10px 0; border-radius: 6px; font-weight: 600; }
+        .status.running { background: #E6F3FF; color: #00A8FF; border: 1px solid #00A8FF; } .status.complete { background: #F0F8FF; color: #8380FF; border: 1px solid #8380FF; }
+        .progress-container { margin-top: 10px; }
+        .progress-bar { width: 100%; height: 20px; background: #C3BABA; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #8380FF, #00A8FF); border-radius: 10px; transition: width 0.3s ease; position: relative; }
+        .progress-text { position: absolute; width: 100%; text-align: center; line-height: 20px; font-size: 12px; font-weight: 600; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .sample-size-calculator { background: #E6F3FF; border: 1px solid #00A8FF; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .sample-size-calculator h3 { margin: 0 0 5px 0; color: #00A8FF; }
+        .sample-size-calculator p { margin: 0 0 15px 0; color: #444554; font-size: 14px; }
+        .calculator-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 15px; }
+        .seed-mode-buttons { display: flex; gap: 5px; }
+        .seed-mode-btn { flex: 1; padding: 6px 8px; border: 1px solid #C3BABA; background: white; border-radius: 4px; font-size: 11px; cursor: pointer; transition: all 0.2s; color: #444554; }
+        .seed-mode-btn.active { background: #8380FF; color: white; border-color: #8380FF; } .seed-mode-btn:hover:not(.active) { background: #F8F9FF; }
+        .validation-section { background: #E6F3FF; border: 1px solid #00A8FF; border-radius: 8px; padding: 20px; margin-bottom: 25px; }
+        .validation-title { font-size: 16px; font-weight: 600; color: #00A8FF; margin-bottom: 15px; }
+        .validation-good { color: #8380FF; font-weight: 700; } .validation-error { color: #F4E04D; font-weight: 700; text-shadow: 1px 1px 1px #444554; }
+        .sample-size-result { background: white; border: 1px solid #C3BABA; border-radius: 6px; padding: 10px; font-family: 'Courier New', monospace; font-size: 13px; color: #444554; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Car Park Simulation</h1>
+        <p>Discrete event simulation comparing three car park management strategies</p>
+    </div>
+
+    <div class="controls">
+        <div class="input-grid">
+            <div class="input-group"><label for="arrivalRate">Arrival Rate (cars/hour)</label><input type="number" id="arrivalRate" value="35" min="0.1" step="0.1" oninput="updateSampleSize(); updateWarnings();"></div>
+            <div class="input-group"><label for="serviceTime">Service Time (seconds)</label><input type="number" id="serviceTime" value="300" min="1" step="1" oninput="updateWarnings();"></div>
+            <div class="input-group"><label for="spaces">Number of Spaces</label><input type="number" id="spaces" value="10" min="1" oninput="updateWarnings();"></div>
+            <div class="input-group"><label for="queueLength">Available Queue Length</label><input type="number" id="queueLength" value="1000" min="0"></div>
+            <div class="input-group"><label for="minHeadway">Min Headway (seconds)</label><input type="number" id="minHeadway" value="3" min="0" step="0.1"></div>
+            <div class="input-group"><label for="simulationHours">Simulation Hours</label><input type="number" id="simulationHours" value="1000" min="1" oninput="updateSampleSize();"></div>
+            <div class="input-group"><label for="numSeeds">Number of Seeds</label><input type="number" id="numSeeds" value="100" min="1" max="1000" oninput="updateSeedMode();"></div>
+            <div class="input-group"><label class="toggle"><input type="checkbox" id="reproducibleSeed">Reproducible Seed</label><button class="btn-secondary" onclick="applySampleSize()" style="margin-top: 8px; padding: 6px 12px; font-size: 12px;">Apply Calculated Seeds</button></div>
+        </div>
+        
+        <div class="theoretical-calc">
+            <strong>⚙️ Theoretical Minimum Spaces:</strong> <span id="theoreticalSpaces">2.9</span> spaces required (Rate × Service Time ÷ 3600)
+        </div>
+        
+        <div id="warningMessage" class="warning-message" style="display: none;">
+            ⚠️ Current spaces below theoretical minimum - system will be overloaded!
+        </div>
+        
+        <div class="sample-size-calculator">
+            <h3>📊 Sample Size Calculator</h3>
+            <p>Calculate minimum seeds for statistical confidence</p>
+            <div class="calculator-grid">
+                <div class="input-group"><label for="confidenceLevel">Confidence Level (%)</label><select id="confidenceLevel" onchange="updateSampleSize()"><option value="90">90</option><option value="95">95</option><option value="99">99</option><option value="99.9" selected>99.9</option><option value="99.99">99.99</option></select></div>
+                <div class="input-group"><label for="marginOfError">Margin of Error (cars/hour)</label><input type="number" id="marginOfError" value="0.05" min="0.001" step="0.001" oninput="updateSampleSize()"></div>
+                <div class="input-group"><label for="calculatedSeeds">Number of Seeds</label><input type="number" id="calculatedSeeds" value="7" min="1" readonly style="background: #F8F9FF;"></div>
+                <div class="input-group"><label>Seed Mode</label><div class="seed-mode-buttons"><button type="button" class="seed-mode-btn active" onclick="setSeedMode('fixed')">Fixed Seeds</button><button type="button" class="seed-mode-btn" onclick="setSeedMode('random')">Random Seeds</button></div></div>
+            </div>
+            <div class="sample-size-result"><span id="sampleSizeMessage">📈 Minimum 7 seeds required (Z=3.291, Est. σ=0.187, Observations/run=35000)</span></div>
+        </div>
+        
+        <div class="button-group">
+            <button id="runButton" class="btn-primary" onclick="runSimulation()">Run Simulation</button>
+            <button class="btn-secondary" onclick="clearResults()">Clear Results</button>
+        </div>
+        <div id="status"></div>
+    </div>
+
+    <div id="results" class="results" style="display: none;"></div>
+
+    <script>
+        class SeededRandom {
+            constructor(seed = Date.now()) { this.seed = seed; this.current = seed; }
+            next() { this.current = (this.current * 9301 + 49297) % 233280; return this.current / 233280; }
+            exponential(rate) { return -Math.log(1 - this.next()) / rate; }
+        }
+        class Event { constructor(time, type, data = {}) { this.time = time; this.type = type; this.data = data; } }
+        class EventQueue {
+            constructor() { this.events = []; }
+            add(event) { let i = 0; while (i < this.events.length && this.events[i].time <= event.time) i++; this.events.splice(i, 0, event); }
+            next() { return this.events.shift(); }
+            isEmpty() { return this.events.length === 0; }
+        }
+        class CarParkSimulation {
+            constructor(params, modelType) { this.params = params; this.modelType = modelType; this.reset(); }
+            reset() {
+                this.eventQueue = new EventQueue(); this.currentTime = 0; this.parkedCars = 0; this.queuedCars = 0;
+                this.totalArrivals = 0; this.totalQueued = 0; this.totalBlocked = 0; this.totalQueueTime = 0; this.queueTimeForQueued = 0;
+                this.occupancyHistory = []; this.lastRecordTime = 0; this.random = new SeededRandom(this.params.seed); this.nextArrivalTime = 0;
+                this.scheduleNextArrival();
+            }
+            scheduleNextArrival() {
+                const interArrival = this.random.exponential(this.params.arrivalRate);
+                const adjustedTime = Math.max(interArrival, this.params.minHeadway);
+                this.nextArrivalTime += adjustedTime;
+                if (this.nextArrivalTime < this.params.simulationHours) this.eventQueue.add(new Event(this.nextArrivalTime, 'arrival'));
+            }
+            recordOccupancy() {
+                const timeDiff = this.currentTime - this.lastRecordTime;
+                if (timeDiff > 0) this.occupancyHistory.push({ time: timeDiff, parked: this.parkedCars, queued: this.queuedCars, total: this.parkedCars + this.queuedCars });
+                this.lastRecordTime = this.currentTime;
+            }
+            handleArrival() {
+                this.totalArrivals++; this.scheduleNextArrival();
+                if (this.modelType === 'infinite') {
+                    this.parkedCars++; this.eventQueue.add(new Event(this.currentTime + this.params.serviceTime, 'departure'));
+                } else if (this.modelType === 'blocking') {
+                    if (this.parkedCars < this.params.spaces) { this.parkedCars++; this.eventQueue.add(new Event(this.currentTime + this.params.serviceTime, 'departure')); }
+                    else this.totalBlocked++;
+                } else if (this.modelType === 'queuing') {
+                    if (this.parkedCars < this.params.spaces) { this.parkedCars++; this.eventQueue.add(new Event(this.currentTime + this.params.serviceTime, 'departure')); }
+                    else if (this.queuedCars < this.params.queueLength) { this.queuedCars++; this.totalQueued++; this.eventQueue.add(new Event(this.currentTime, 'join_queue', {arrivalTime: this.currentTime})); }
+                    else this.totalBlocked++;
+                }
+            }
+            handleDeparture() {
+                this.parkedCars--;
+                if (this.modelType === 'queuing' && this.queuedCars > 0) {
+                    this.queuedCars--; this.parkedCars++; const queueTime = this.params.serviceTime; this.totalQueueTime += queueTime; this.queueTimeForQueued += queueTime;
+                    this.eventQueue.add(new Event(this.currentTime + this.params.serviceTime, 'departure'));
+                }
+            }
+            run() {
+                while (!this.eventQueue.isEmpty() && this.currentTime < this.params.simulationHours) {
+                    const event = this.eventQueue.next(); this.recordOccupancy(); this.currentTime = event.time;
+                    if (event.type === 'arrival') this.handleArrival(); else if (event.type === 'departure') this.handleDeparture();
+                }
+                this.recordOccupancy(); return this.getResults();
+            }
+            getResults() {
+                const totalTime = this.params.simulationHours; const actualArrivalRate = this.totalArrivals / totalTime;
+                const percentiles = this.calculatePercentiles(); const queuedPercentage = this.totalQueued > 0 ? (this.totalQueued / this.totalArrivals) * 100 : 0;
+                const blockedPercentage = this.totalBlocked > 0 ? (this.totalBlocked / this.totalArrivals) * 100 : 0;
+                const avgQueueTimePerArrival = this.totalArrivals > 0 ? this.totalQueueTime / this.totalArrivals : 0;
+                const avgQueueTimePerQueued = this.totalQueued > 0 ? this.queueTimeForQueued / this.totalQueued : 0;
+                return { percentiles, expectedArrivalRate: this.params.arrivalRate, actualArrivalRate, queuedPercentage, blockedPercentage, avgQueueTimePerArrival, avgQueueTimePerQueued, totalArrivals: this.totalArrivals, totalQueued: this.totalQueued, totalBlocked: this.totalBlocked };
+            }
+            calculatePercentiles() {
+                if (this.occupancyHistory.length === 0) return {};
+                const totalTime = this.occupancyHistory.reduce((sum, h) => sum + h.time, 0);
+                const levels = [10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99];
+                const parkedFreq = new Map(), queuedFreq = new Map(), totalFreq = new Map();
+                for (const history of this.occupancyHistory) {
+                    const time = history.time;
+                    parkedFreq.set(history.parked, (parkedFreq.get(history.parked) || 0) + time);
+                    queuedFreq.set(history.queued, (queuedFreq.get(history.queued) || 0) + time);
+                    totalFreq.set(history.total, (totalFreq.get(history.total) || 0) + time);
+                }
+                const results = { parked: {}, queued: {}, total: {} };
+                for (const level of levels) {
+                    const targetTime = (level / 100) * totalTime;
+                    results.parked[level] = this.findPercentileValue(parkedFreq, targetTime);
+                    results.queued[level] = this.findPercentileValue(queuedFreq, targetTime);
+                    results.total[level] = this.findPercentileValue(totalFreq, targetTime);
+                }
+                return results;
+            }
+            findPercentileValue(frequencyMap, targetTime) {
+                const sortedLevels = Array.from(frequencyMap.keys()).sort((a, b) => a - b);
+                let cumulativeTime = 0;
+                for (const level of sortedLevels) { cumulativeTime += frequencyMap.get(level); if (cumulativeTime >= targetTime) return level; }
+                return sortedLevels[sortedLevels.length - 1] || 0;
+            }
+        }
+
+        async function runSimulation() {
+            const params = getInputParameters(); const statusDiv = document.getElementById('status'); const resultsDiv = document.getElementById('results');
+            statusDiv.innerHTML = `<div class="status running"><div>Running simulation...</div><div class="progress-container"><div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"><div class="progress-text" id="progressText">0%</div></div></div></div></div>`;
+            resultsDiv.style.display = 'none'; await new Promise(resolve => setTimeout(resolve, 100));
+            try {
+                const models = ['infinite', 'blocking', 'queuing']; const allResults = {}; const totalSeeds = params.numSeeds * models.length; let completedSeeds = 0;
+                for (const model of models) {
+                    const modelResults = [];
+                    for (let seed = 0; seed < params.numSeeds; seed++) {
+                        const seedValue = params.reproducibleSeed ? seed + 1 : Math.random() * 1000000;
+                        const simParams = { ...params, seed: seedValue }; const simulation = new CarParkSimulation(simParams, model);
+                        const result = simulation.run(); modelResults.push(result); completedSeeds++;
+                        const progressPercent = Math.round((completedSeeds / totalSeeds) * 100);
+                        document.getElementById('progressFill').style.width = progressPercent + '%';
+                        document.getElementById('progressText').textContent = progressPercent + '%';
+                        if (seed % 10 === 0) await new Promise(resolve => setTimeout(resolve, 1));
+                    }
+                    allResults[model] = aggregateResults(modelResults);
+                }
+                displayResults(allResults, params); statusDiv.innerHTML = '<div class="status complete">Simulation completed successfully!</div>'; resultsDiv.style.display = 'block';
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status" style="background: #FFFBEB; color: #F4E04D; border: 1px solid #F4E04D;">Error: ${error.message}</div>`;
+                console.error('Simulation error:', error);
+            }
+        }
+        
+        function getInputParameters() {
+            return {
+                arrivalRate: parseFloat(document.getElementById('arrivalRate').value),
+                serviceTime: parseFloat(document.getElementById('serviceTime').value) / 3600,
+                spaces: parseInt(document.getElementById('spaces').value),
+                queueLength: parseInt(document.getElementById('queueLength').value),
+                simulationHours: parseFloat(document.getElementById('simulationHours').value),
+                numSeeds: parseInt(document.getElementById('numSeeds').value),
+                minHeadway: parseFloat(document.getElementById('minHeadway').value) / 3600,
+                reproducibleSeed: document.getElementById('reproducibleSeed').checked
+            };
+        }
+        
+        function aggregateResults(results) {
+            const n = results.length; if (n === 0) return null;
+            const aggregated = { percentiles: { parked: {}, queued: {}, total: {} }, expectedArrivalRate: results[0].expectedArrivalRate, actualArrivalRate: 0, queuedPercentage: 0, blockedPercentage: 0, avgQueueTimePerArrival: 0, avgQueueTimePerQueued: 0 };
+            for (const result of results) {
+                aggregated.actualArrivalRate += result.actualArrivalRate / n; aggregated.queuedPercentage += result.queuedPercentage / n;
+                aggregated.blockedPercentage += result.blockedPercentage / n; aggregated.avgQueueTimePerArrival += result.avgQueueTimePerArrival / n;
+                aggregated.avgQueueTimePerQueued += result.avgQueueTimePerQueued / n;
+            }
+            const levels = [10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99];
+            for (const level of levels) {
+                aggregated.percentiles.parked[level] = 0; aggregated.percentiles.queued[level] = 0; aggregated.percentiles.total[level] = 0;
+                for (const result of results) {
+                    aggregated.percentiles.parked[level] += result.percentiles.parked[level] / n;
+                    aggregated.percentiles.queued[level] += result.percentiles.queued[level] / n;
+                    aggregated.percentiles.total[level] += result.percentiles.total[level] / n;
+                }
+            }
+            return aggregated;
+        }
+        
+        function displayResults(results, params) {
+            const resultsDiv = document.getElementById('results');
+            const models = [{ key: 'infinite', name: 'Infinite Capacity Model' }, { key: 'blocking', name: 'Blocking Model' }, { key: 'queuing', name: 'Queuing Model' }];
+            
+            // Get margin of error from sample size calculator
+            const marginOfError = parseFloat(document.getElementById('marginOfError').value) || 0.05;
+            
+            // Check if any validation fails
+            let anyValidationFailed = false;
+            
+            // Validation section
+            let validationHtml = '';
+            let validationRows = '';
+            for (const model of models) {
+                const result = results[model.key]; if (!result) continue;
+                const expectedRate = result.expectedArrivalRate; const actualRate = result.actualArrivalRate;
+                const absoluteDiff = Math.abs(expectedRate - actualRate);
+                const withinMargin = absoluteDiff <= marginOfError;
+                if (!withinMargin) anyValidationFailed = true;
+                const statusIcon = withinMargin ? '<span class="validation-good">✓</span>' : '<span class="validation-error">✗</span>';
+                validationRows += `<tr><td>${model.name}</td><td>${actualRate.toFixed(3)}</td><td>${absoluteDiff.toFixed(3)}</td><td>${statusIcon}</td></tr>`;
+            }
+            
+            const validationClass = anyValidationFailed ? 'validation-section failed' : 'validation-section';
+            const titleClass = anyValidationFailed ? 'validation-title failed' : 'validation-title';
+            validationHtml = `<div class="${validationClass}"><div class="${titleClass}">📋 Simulation Validation</div><table><thead><tr><th>Model</th><th>Actual Rate (cars/hr)</th><th>Difference (cars/hr)</th><th>Within Margin</th></tr></thead><tbody>${validationRows}</tbody></table></div>`;
+            
+            let html = validationHtml;
+            for (const model of models) {
+                const result = results[model.key]; if (!result) continue;
+                html += `<div class="model-results"><div class="model-title">${model.name}</div><div class="model-content"><div class="percentile-section"><div class="section-title">Occupancy & Queue Percentiles</div><table><thead><tr><th>%ile</th><th>Parked</th><th>Queued</th><th>Total</th></tr></thead><tbody>${Object.keys(result.percentiles.parked).map(p => `<tr><td>${p}%</td><td>${result.percentiles.parked[p].toFixed(1)}</td><td>${result.percentiles.queued[p].toFixed(1)}</td><td>${result.percentiles.total[p].toFixed(1)}</td></tr>`).join('')}</tbody></table></div><div class="metrics-section"><div class="section-title">Performance Metrics</div><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td>Expected Arrival Rate (cars/hour)</td><td>${result.expectedArrivalRate.toFixed(3)}</td></tr><tr><td>Actual Arrival Rate (cars/hour)</td><td>${result.actualArrivalRate.toFixed(3)}</td></tr><tr><td>Cars That Queued (%)</td><td>${result.queuedPercentage.toFixed(2)}%</td></tr><tr><td>Cars Blocked (%)</td><td>${result.blockedPercentage.toFixed(2)}%</td></tr><tr><td>Avg Queue Time per Arrival (seconds)</td><td>${(result.avgQueueTimePerArrival * 3600).toFixed(1)}</td></tr><tr><td>Avg Queue Time per Queued Car (seconds)</td><td>${(result.avgQueueTimePerQueued * 3600).toFixed(1)}</td></tr></tbody></table></div></div></div>`;
+            }
+            resultsDiv.innerHTML = html;
+        }
+        
+        function clearResults() { document.getElementById('results').style.display = 'none'; document.getElementById('status').innerHTML = ''; }
+        
+        function updateSampleSize() {
+            const arrivalRate = parseFloat(document.getElementById('arrivalRate').value) || 35;
+            const simulationHours = parseFloat(document.getElementById('simulationHours').value) || 1000;
+            const confidenceLevel = parseFloat(document.getElementById('confidenceLevel').value) || 99.9;
+            const marginOfError = parseFloat(document.getElementById('marginOfError').value) || 0.05;
+            const zScores = { 90: 1.645, 95: 1.96, 99: 2.576, 99.9: 3.291, 99.99: 3.891 };
+            const z = zScores[confidenceLevel] || 3.291; const estimatedSigma = Math.sqrt(arrivalRate / simulationHours);
+            const requiredSeeds = Math.ceil(Math.pow((z * estimatedSigma) / marginOfError, 2));
+            document.getElementById('calculatedSeeds').value = requiredSeeds;
+            const observations = Math.round(arrivalRate * simulationHours);
+            document.getElementById('sampleSizeMessage').textContent = `📈 Minimum ${requiredSeeds} seeds required (Z=${z}, Est. σ=${estimatedSigma.toFixed(3)}, Observations/run=${observations})`;
+        }
+        
+        function setSeedMode(mode) {
+            const buttons = document.querySelectorAll('.seed-mode-btn'); buttons.forEach(btn => btn.classList.remove('active'));
+            if (mode === 'fixed') { buttons[0].classList.add('active'); document.getElementById('reproducibleSeed').checked = true; }
+            else { buttons[1].classList.add('active'); document.getElementById('reproducibleSeed').checked = false; }
+        }
+        
+        function updateSeedMode() {
+            const calculatedSeeds = parseInt(document.getElementById('calculatedSeeds').value);
+            const actualSeeds = parseInt(document.getElementById('numSeeds').value);
+            if (actualSeeds !== calculatedSeeds) document.querySelectorAll('.seed-mode-btn').forEach(btn => btn.classList.remove('active'));
+        }
+        
+        function applySampleSize() {
+            document.getElementById('numSeeds').value = document.getElementById('calculatedSeeds').value; setSeedMode('fixed');
+        }
+        
+        function updateWarnings() {
+            const arrivalRate = parseFloat(document.getElementById('arrivalRate').value) || 35;
+            const serviceTime = parseFloat(document.getElementById('serviceTime').value) || 300;
+            const currentSpaces = parseInt(document.getElementById('spaces').value) || 10;
+            const theoreticalMin = arrivalRate * serviceTime / 3600;
+            
+            document.getElementById('theoreticalSpaces').textContent = theoreticalMin.toFixed(1);
+            
+            const spacesInput = document.getElementById('spaces');
+            const runButton = document.getElementById('runButton');
+            const warningMessage = document.getElementById('warningMessage');
+            
+            if (currentSpaces < theoreticalMin) {
+                spacesInput.classList.add('input-warning');
+                runButton.className = 'btn-warning';
+                warningMessage.style.display = 'block';
+                warningMessage.innerHTML = `⚠️ Current spaces (${currentSpaces}) below theoretical minimum (${theoreticalMin.toFixed(1)}) - system will be overloaded!`;
+            } else {
+                spacesInput.classList.remove('input-warning');
+                runButton.className = 'btn-primary';
+                warningMessage.style.display = 'none';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() { updateSampleSize(); updateWarnings(); });
+    </script>
+</body>
+</html>
