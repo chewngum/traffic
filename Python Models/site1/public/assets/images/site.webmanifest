@@ -1,0 +1,19 @@
+{
+    "name": "Traffic Labb",
+    "short_name": "Traffic Labb",
+    "icons": [
+        {
+            "src": "/assets/images/favicon-32x32.png",
+            "sizes": "32x32",
+            "type": "image/png"
+        },
+        {
+            "src": "/assets/images/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        }
+    ],
+    "theme_color": "#354e8d",
+    "background_color": "#ffffff",
+    "display": "standalone"
+}

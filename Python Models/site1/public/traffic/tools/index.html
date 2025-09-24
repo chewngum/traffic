@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Labb - Design & Analysis Tools</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="/common.js"></script>
+    <style>
+        .category-section {
+            margin-bottom: 40px;
+        }
+        
+        .category-title {
+            color: #354e8d;
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding: 20px 25px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e3f1f7 100%);
+            border-radius: 12px;
+            border: 1px solid #a3c9e0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .category-icon {
+            font-size: 1.4rem;
+        }
+        
+        .compact-simulation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+        
+        .compact-simulation-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+        
+        .compact-simulation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(53, 78, 141, 0.2);
+            border-color: #6b99c2;
+        }
+        
+        .compact-card-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .compact-simulation-card h3 {
+            color: #354e8d;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        
+        .compact-simulation-card p {
+            color: #6c757d;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin: 0;
+        }
+        
+        .access-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .level-1 { background: #6c757d; }
+        .level-2 { background: #6b99c2; }
+        .level-3 { background: #354e8d; }
+        
+        .card-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .card-disabled:hover {
+            transform: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-color: transparent;
+        }
+
+        .page-description {
+            background: linear-gradient(135deg, #e3f1f7 0%, #f8fbff 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 1px solid #a3c9e0;
+            text-align: center;
+        }
+
+        .page-description h2 {
+            color: #354e8d;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+
+        .page-description p {
+            color: #6c757d;
+            font-size: 1rem;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .coming-soon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .coming-soon-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px dashed #a3c9e0;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            opacity: 0.7;
+        }
+
+        .coming-soon-card h4 {
+            color: #6c757d;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .coming-soon-card p {
+            color: #6c757d;
+            font-size: 0.85rem;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading">
+        <h2>Verifying access...</h2>
+    </div>
+
+    <div id="app" class="container hidden">
+        <div class="dashboard-header">
+            <div class="header-left">
+                <div class="header-title">
+                    <h1>Design & Analysis Tools</h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="page-description">
+                <h2>Traffic Engineering Utilities</h2>
+                <p>Professional tools for traffic engineering design and analysis. From CAD drawing automation to network modeling, these utilities streamline your workflow and enhance productivity.</p>
+            </div>
+
+            <!-- Current Tools Section -->
+            <div class="category-section">
+                <h2 class="category-title">
+                    <span class="category-icon">🛠️</span>
+                    Available Tools
+                </h2>
+                <div class="compact-simulation-grid">
+                    <div class="compact-simulation-card" onclick="openTool('rampdrawer')" data-access-level="1">
+                        <div class="access-badge level-1" id="badge-rampdrawer">L1</div>
+                        <div class="compact-card-icon">📐</div>
+                        <h3>Ramp Design</h3>
+                        <p>Draw compliant car ramps in seconds with perfect annotation and automatic calculation of gradients</p>
+                    </div>
+                    
+                    <div class="compact-simulation-card" onclick="openTool('network')" data-access-level="3">
+                        <div class="access-badge level-3" id="badge-network">L3</div>
+                        <div class="compact-card-icon">🗺️</div>
+                        <h3>Traffic Network Database</h3>
+                        <p>Trip distribution creation for multiple traffic periods and generations with advanced modeling</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coming Soon Section -->
+            <div class="category-section">
+                <h2 class="category-title">
+                    <span class="category-icon">🚀</span>
+                    Coming Soon
+                </h2>
+                <div class="coming-soon-grid">
+                    <div class="coming-soon-card">
+                        <h4>🚦 Signal Timing Optimizer</h4>
+                        <p>Automated signal timing optimization based on traffic patterns</p>
+                    </div>
+                    
+                    <div class="coming-soon-card">
+                        <h4>📊 LOS Calculator</h4>
+                        <p>Level of Service calculations for intersections and road segments</p>
+                    </div>
+                    
+                    <div class="coming-soon-card">
+                        <h4>🛣️ Capacity Analysis</h4>
+                        <p>Highway and arterial capacity analysis tools</p>
+                    </div>
+                    
+                    <div class="coming-soon-card">
+                        <h4>📈 Warrant Analysis</h4>
+                        <p>Traffic signal and stop sign warrant analysis automation</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Page access configuration
+        const PAGE_ACCESS = {
+            'rampdrawer': 1,
+            'network': 3
+        };
+
+        // Authentication check on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Give common.js time to load manifest and handle authentication
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Check authentication using common.js functions
+            const token = localStorage.getItem('authToken');
+            if (!token || !isValidToken(token)) {
+                window.location.href = '/';
+                return;
+            }
+            
+            // Update card accessibility based on user level
+            updateCardAccessibility();
+            
+            // Show the app
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('app').classList.remove('hidden');
+        });
+
+        function isValidToken(token) {
+            try {
+                const decoded = atob(token);
+                const [timestamp, username, accessLevel] = decoded.split(':');
+                const tokenAge = Date.now() - parseInt(timestamp);
+                return tokenAge < 24 * 60 * 60 * 1000; // 24 hours
+            } catch {
+                return false;
+            }
+        }
+
+        function getUserAccessLevel() {
+            try {
+                const token = localStorage.getItem('authToken');
+                if (!token) return 0;
+                
+                const decoded = atob(token);
+                const [timestamp, username, accessLevel] = decoded.split(':');
+                return parseInt(accessLevel) || 0;
+            } catch {
+                return 0;
+            }
+        }
+
+        function updateCardAccessibility() {
+            const userLevel = getUserAccessLevel();
+            
+            // Update each card based on access level
+            Object.keys(PAGE_ACCESS).forEach(pageKey => {
+                const requiredLevel = PAGE_ACCESS[pageKey];
+                const card = document.querySelector(`[onclick="openTool('${pageKey}')"]`);
+                const badge = document.getElementById(`badge-${pageKey}`);
+                
+                if (card) {
+                    if (userLevel < requiredLevel) {
+                        card.classList.add('card-disabled');
+                        card.style.pointerEvents = 'none';
+                        if (badge) {
+                            badge.style.background = '#dc3545';
+                            badge.textContent = `L${requiredLevel}`;
+                            badge.title = `Requires Level ${requiredLevel} access`;
+                        }
+                    } else {
+                        card.classList.remove('card-disabled');
+                        card.style.pointerEvents = 'auto';
+                        if (badge) {
+                            badge.title = `Available with your Level ${userLevel} access`;
+                        }
+                    }
+                }
+            });
+        }
+
+        function openTool(type) {
+            const token = localStorage.getItem('authToken');
+            const userLevel = getUserAccessLevel();
+            const requiredLevel = PAGE_ACCESS[type];
+            
+            if (!token || !isValidToken(token)) {
+                window.location.href = '/';
+                return;
+            }
+            
+            // Check access level
+            if (userLevel < requiredLevel) {
+                alert(`This feature requires Level ${requiredLevel} access. You currently have Level ${userLevel} access.`);
+                return;
+            }
+            
+            // Navigate to the specific tool page
+            switch(type) {
+                case 'rampdrawer':
+                    window.location.href = '/traffic/tools/rampdrawer/';
+                    break;
+                case 'network':
+                    window.location.href = '/traffic/tools/network/';
+                    break;
+                default:
+                    alert('Tool not found');
+            }
+        }
+    </script>
+</body>
+</html>

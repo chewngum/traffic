@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Labb - Technical Glossary</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/common.js"></script>
+    <style>
+        .glossary-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .search-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 1px solid #e3f1f7;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #a3c9e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            background: white;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #6b99c2;
+        }
+        
+        .category-navigation {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .nav-button {
+            background: #e3f1f7;
+            color: #354e8d;
+            border: 1px solid #a3c9e0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-button:hover, .nav-button.active {
+            background: #6b99c2;
+            color: white;
+            border-color: #6b99c2;
+        }
+        
+        .glossary-category {
+            margin-bottom: 40px;
+        }
+        
+        .category-header {
+            color: #354e8d;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e3f1f7 100%);
+            border-radius: 8px;
+            border: 1px solid #a3c9e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .category-icon {
+            font-size: 1.3rem;
+        }
+        
+        .terms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .term-card {
+            background: white;
+            border: 1px solid #e3f1f7;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .term-card:hover {
+            border-color: #6b99c2;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .term-name {
+            color: #354e8d;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .term-type {
+            background: #6b99c2;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        
+        .term-definition {
+            color: #6c757d;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+        
+        .term-units {
+            background: #f8f9fa;
+            color: #354e8d;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid #e3f1f7;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+        
+        .term-examples {
+            background: #f8fbff;
+            border-left: 3px solid #6b99c2;
+            padding: 8px 12px;
+            margin-top: 10px;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .term-examples strong {
+            color: #354e8d;
+            font-size: 0.85rem;
+        }
+        
+        .term-examples span {
+            color: #5a6c7d;
+            font-size: 0.85rem;
+        }
+        
+        .related-terms {
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+        
+        .related-terms strong {
+            color: #354e8d;
+        }
+        
+        .related-terms .related-link {
+            color: #6b99c2;
+            text-decoration: none;
+            margin-right: 8px;
+        }
+        
+        .related-terms .related-link:hover {
+            text-decoration: underline;
+        }
+        
+        .intro-section {
+            background: linear-gradient(135deg, #e3f1f7 0%, #f8fbff 100%);
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 1px solid #a3c9e0;
+            text-align: center;
+        }
+        
+        .intro-section h2 {
+            color: #354e8d;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+        
+        .intro-section p {
+            color: #6c757d;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading">
+        <h2>Loading glossary...</h2>
+    </div>
+
+    <div id="app" class="container hidden">
+        <div class="dashboard-header">
+            <div class="header-left">
+                <div class="header-title">
+                    <h1>Technical Glossary</h1>
+                </div>
+            </div>
+            <div class="header-center">
+            </div>
+            <div class="header-right">
+                <span class="username" id="welcomeUser">Welcome, User</span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="glossary-container">
+                <div class="intro-section">
+                    <h2>Traffic Engineering Technical Terms</h2>
+                    <p>Comprehensive definitions of technical terms, parameters, and metrics used throughout our simulation and design tools.</p>
+                </div>
+
+                <div class="search-section">
+                    <input type="text" class="search-box" id="searchBox" placeholder="Search for terms, definitions, or units..." onkeyup="filterTerms()">
+                    <div class="category-navigation">
+                        <button class="nav-button active" onclick="filterByCategory('all')">All Terms</button>
+                        <button class="nav-button" onclick="filterByCategory('input')">Input Parameters</button>
+                        <button class="nav-button" onclick="filterByCategory('output')">Output Metrics</button>
+                        <button class="nav-button" onclick="filterByCategory('analysis')">Analysis Methods</button>
+                        <button class="nav-button" onclick="filterByCategory('design')">Design Elements</button>
+                    </div>
+                </div>
+
+                <!-- Traffic Flow Parameters -->
+                <div class="glossary-category" id="traffic-flow">
+                    <div class="category-header">
+                        <span class="category-icon">🚗</span>
+                        Traffic Flow Parameters
+                    </div>
+                    <div class="terms-grid">
+                        <div class="term-card" data-category="input" data-search="arrival rate traffic flow vehicles per hour">
+                            <div class="term-name">
+                                Arrival Rate
+                                <span class="term-type">Input</span>
+                            </div>
+                            <div class="term-units">Units: vehicles/hour</div>
+                            <div class="term-definition">
+                                The rate at which vehicles arrive at a facility or system, typically measured as the number of vehicles per hour. This is a fundamental input parameter for most traffic simulations.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>Shopping center: 200 cars/hr peak, Boom gate: 30 cars/hr average</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Service Rate</a>
+                                <a href="#" class="related-link">Utilization</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="input" data-search="service time processing duration seconds">
+                            <div class="term-name">
+                                Service Time
+                                <span class="term-type">Input</span>
+                            </div>
+                            <div class="term-units">Units: seconds</div>
+                            <div class="term-definition">
+                                The time required to process or serve one vehicle at a control point. Can be fixed or follow a statistical distribution (e.g., exponential).
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>Boom gate: 15s, Parking validation: 30s, Toll booth: 20s</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Arrival Rate</a>
+                                <a href="#" class="related-link">Exponential Distribution</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="input" data-search="headway minimum gap spacing seconds">
+                            <div class="term-name">
+                                Minimum Headway
+                                <span class="term-type">Input</span>
+                            </div>
+                            <div class="term-units">Units: seconds</div>
+                            <div class="term-definition">
+                                The minimum time interval between consecutive vehicle arrivals or departures. Used to model realistic traffic constraints and safety requirements.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>Highway: 1.5s following distance, Parking entrance: 3s safety gap</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Follow-up Time</a>
+                                <a href="#" class="related-link">Safety Buffer</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="analysis" data-search="utilization rate percentage busy time">
+                            <div class="term-name">
+                                Utilization Rate
+                                <span class="term-type">Output</span>
+                            </div>
+                            <div class="term-units">Units: percentage (%)</div>
+                            <div class="term-definition">
+                                The percentage of time that a system or facility is actively serving vehicles. A key performance indicator for system efficiency and capacity planning.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>85% = busy 85% of time, 60% = moderate usage, >95% = approaching capacity</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Service Rate</a>
+                                <a href="#" class="related-link">Arrival Rate</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Queue Analysis Terms -->
+                <div class="glossary-category" id="queue-analysis">
+                    <div class="category-header">
+                        <span class="category-icon">📊</span>
+                        Queue Analysis & Statistics
+                    </div>
+                    <div class="terms-grid">
+                        <div class="term-card" data-category="output" data-search="queue length waiting line vehicles">
+                            <div class="term-name">
+                                Queue Length
+                                <span class="term-type">Output</span>
+                            </div>
+                            <div class="term-units">Units: vehicles</div>
+                            <div class="term-definition">
+                                The number of vehicles waiting in line at any given time. Often analyzed as percentiles to understand distribution patterns and peak demands.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>90th percentile = 5 cars means queue exceeds 5 cars only 10% of time</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Wait Time</a>
+                                <a href="#" class="related-link">Percentiles</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="output" data-search="wait time delay seconds queue">
+                            <div class="term-name">
+                                Average Wait Time
+                                <span class="term-type">Output</span>
+                            </div>
+                            <div class="term-units">Units: seconds</div>
+                            <div class="term-definition">
+                                The average time a vehicle spends waiting in queue before being served. Can be calculated per arrival (including those who don't wait) or per queued vehicle only.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>Per arrival: 45s average, Per queued: 120s average (only counting those who waited)</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Queue Length</a>
+                                <a href="#" class="related-link">Delay Probability</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="output" data-search="delay probability queuing percentage chance">
+                            <div class="term-name">
+                                Delay Probability
+                                <span class="term-type">Output</span>
+                            </div>
+                            <div class="term-units">Units: percentage (%)</div>
+                            <div class="term-definition">
+                                The probability that an arriving vehicle will have to wait in queue rather than being served immediately. Indicates system congestion level.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>25% = 1 in 4 vehicles wait, 75% = 3 in 4 vehicles wait</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Queue Length</a>
+                                <a href="#" class="related-link">Utilization Rate</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="analysis" data-search="percentiles distribution statistics 90th 95th">
+                            <div class="term-name">
+                                Percentiles
+                                <span class="term-type">Analysis</span>
+                            </div>
+                            <div class="term-units">Units: various</div>
+                            <div class="term-definition">
+                                Statistical measures showing the value below which a certain percentage of observations fall. The 90th percentile means 90% of values are below this threshold.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>90th percentile queue = 8 cars, 95th percentile wait = 180 seconds</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Distribution Analysis</a>
+                                <a href="#" class="related-link">Peak Demand</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="analysis" data-search="blocking blocked system full capacity">
+                            <div class="term-name">
+                                Blocking Rate
+                                <span class="term-type">Output</span>
+                            </div>
+                            <div class="term-units">Units: percentage (%)</div>
+                            <div class="term-definition">
+                                The percentage of arriving vehicles that are turned away because the system is at full capacity. Occurs in finite capacity systems without queuing.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>5% blocking = 1 in 20 vehicles turned away, 15% = system frequently full</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Capacity</a>
+                                <a href="#" class="related-link">Queue Length</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Configuration -->
+                <div class="glossary-category" id="system-config">
+                    <div class="category-header">
+                        <span class="category-icon">⚙️</span>
+                        System Configuration
+                    </div>
+                    <div class="terms-grid">
+                        <div class="term-card" data-category="analysis" data-search="fcfs first come first served priority">
+                            <div class="term-name">
+                                FCFS (First Come First Served)
+                                <span class="term-type">Method</span>
+                            </div>
+                            <div class="term-units">Units: N/A</div>
+                            <div class="term-definition">
+                                A queue discipline where vehicles are served in the order they arrive, regardless of their origin or destination. The most common and fair queuing method.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>Toll booths, most parking gates, drive-through services</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Priority Schemes</a>
+                                <a href="#" class="related-link">Queue Discipline</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="input" data-search="capacity spaces maximum limit">
+                            <div class="term-name">
+                                System Capacity
+                                <span class="term-type">Input</span>
+                            </div>
+                            <div class="term-units">Units: vehicles</div>
+                            <div class="term-definition">
+                                The maximum number of vehicles that can be accommodated in the system simultaneously. May refer to parking spaces, service bays, or road segments.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>Parking garage: 500 spaces, Single lane: 10 vehicles, Service area: 3 bays</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Queue Length</a>
+                                <a href="#" class="related-link">Utilization Rate</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="input" data-search="seeds random simulation reproducible">
+                            <div class="term-name">
+                                Number of Seeds
+                                <span class="term-type">Input</span>
+                            </div>
+                            <div class="term-units">Units: integer count</div>
+                            <div class="term-definition">
+                                The number of independent simulation runs performed to ensure statistical reliability. More seeds provide more accurate results but require longer computation time.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>100 seeds for quick analysis, 500+ seeds for high precision, 1000+ for critical studies</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Confidence Level</a>
+                                <a href="#" class="related-link">Statistical Reliability</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="analysis" data-search="confidence level statistical significance z-score">
+                            <div class="term-name">
+                                Confidence Level
+                                <span class="term-type">Analysis</span>
+                            </div>
+                            <div class="term-units">Units: percentage (%)</div>
+                            <div class="term-definition">
+                                The statistical confidence that simulation results fall within the specified margin of error. Higher confidence levels require more simulation runs.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>95% confidence (Z=1.96), 99% confidence (Z=2.576), 99.9% confidence (Z=3.291)</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Margin of Error</a>
+                                <a href="#" class="related-link">Number of Seeds</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Design Parameters -->
+                <div class="glossary-category" id="design-params">
+                    <div class="category-header">
+                        <span class="category-icon">📐</span>
+                        Design Parameters
+                    </div>
+                    <div class="terms-grid">
+                        <div class="term-card" data-category="design" data-search="gradient grade slope percentage ratio">
+                            <div class="term-name">
+                                Grade/Gradient
+                                <span class="term-type">Design</span>
+                            </div>
+                            <div class="term-units">Units: % or ratio (1:X)</div>
+                            <div class="term-definition">
+                                The slope of a ramp or roadway, expressed as either a percentage (rise/run × 100) or a ratio (1:X where X is horizontal distance per unit rise).
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>8% grade = 8m rise per 100m, 1:12 ratio = 1m rise per 12m run</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">RL (Reduced Level)</a>
+                                <a href="#" class="related-link">Chainage</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="design" data-search="rl reduced level elevation height datum">
+                            <div class="term-name">
+                                RL (Reduced Level)
+                                <span class="term-type">Design</span>
+                            </div>
+                            <div class="term-units">Units: meters (m)</div>
+                            <div class="term-definition">
+                                The elevation or height of a point relative to a reference datum (typically sea level). Used to define vertical positions in road and ramp design.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>RL 125.500 = 125.5m above datum, RL difference = vertical rise/fall</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Grade/Gradient</a>
+                                <a href="#" class="related-link">Chainage</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="design" data-search="chainage distance horizontal run length">
+                            <div class="term-name">
+                                Chainage
+                                <span class="term-type">Design</span>
+                            </div>
+                            <div class="term-units">Units: meters (m)</div>
+                            <div class="term-definition">
+                                The cumulative horizontal distance along a roadway or ramp from a reference starting point. Used to locate specific points along the alignment.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>Chainage 0+050 = 50m from start, Chainage 1+200 = 1200m from start</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">RL (Reduced Level)</a>
+                                <a href="#" class="related-link">Segment Length</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="design" data-search="transition curve vertical alignment smooth change">
+                            <div class="term-name">
+                                Transition Length
+                                <span class="term-type">Design</span>
+                            </div>
+                            <div class="term-units">Units: meters (m)</div>
+                            <div class="term-definition">
+                                The horizontal distance over which a change in gradient occurs, providing a smooth transition between different slope segments for vehicle comfort and safety.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>Grade change from 5% to 15% over 3m transition length</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Grade/Gradient</a>
+                                <a href="#" class="related-link">Vertical Curve</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specialized Equipment -->
+                <div class="glossary-category" id="equipment">
+                    <div class="category-header">
+                        <span class="category-icon">🏗️</span>
+                        Specialized Equipment Terms
+                    </div>
+                    <div class="terms-grid">
+                        <div class="term-card" data-category="input" data-search="door opening closing time mechanical lift">
+                            <div class="term-name">
+                                Door Opening/Closing Time
+                                <span class="term-type">Input</span>
+                            </div>
+                            <div class="term-units">Units: seconds</div>
+                            <div class="term-definition">
+                                The time required for elevator or mechanical system doors to fully open or close. Critical for calculating total service time in vertical transportation systems.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>Car lift doors: 5-8 seconds, Parking elevator: 3-6 seconds</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Service Time</a>
+                                <a href="#" class="related-link">Loading/Unloading Time</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="input" data-search="floor to floor vertical speed travel time">
+                            <div class="term-name">
+                                Floor-to-Floor Time
+                                <span class="term-type">Input</span>
+                            </div>
+                            <div class="term-units">Units: seconds</div>
+                            <div class="term-definition">
+                                The time required to travel between adjacent floors in an elevator or lift system, including acceleration, travel, and deceleration phases.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>Standard car lift: 20-30 seconds, High-speed elevator: 10-15 seconds</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Vertical Speed</a>
+                                <a href="#" class="related-link">Leveling Buffer</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="input" data-search="leveling buffer positioning accuracy time">
+                            <div class="term-name">
+                                Leveling Buffer
+                                <span class="term-type">Input</span>
+                            </div>
+                            <div class="term-units">Units: seconds</div>
+                            <div class="term-definition">
+                                Additional time allocated for precise positioning of elevator platforms at floor levels, ensuring safe and accurate alignment for vehicle loading/unloading.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>Precision parking lift: 2-3 seconds, Standard elevator: 1-2 seconds</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Floor-to-Floor Time</a>
+                                <a href="#" class="related-link">Loading Time</a>
+                            </div>
+                        </div>
+
+                        <div class="term-card" data-category="analysis" data-search="state breakdown system status idle loading moving">
+                            <div class="term-name">
+                                State Breakdown
+                                <span class="term-type">Output</span>
+                            </div>
+                            <div class="term-units">Units: percentage (%) of time</div>
+                            <div class="term-definition">
+                                Analysis showing the percentage of time a system spends in different operational states (idle, loading, moving, etc.). Helps identify bottlenecks and optimization opportunities.
+                            </div>
+                            <div class="term-examples">
+                                <strong>Examples:</strong> <span>Idle: 25%, Loading: 30%, Moving: 35%, Other: 10%</span>
+                            </div>
+                            <div class="related-terms">
+                                <strong>Related:</strong> 
+                                <a href="#" class="related-link">Utilization Rate</a>
+                                <a href="#" class="related-link">System Efficiency</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentCategory = 'all';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('authToken');
+            
+            if (!token || !isValidToken(token)) {
+                window.location.href = '/';
+                return;
+            }
+            
+            updateWelcomeMessage();
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('app').classList.remove('hidden');
+        });
+
+        function isValidToken(token) {
+            try {
+                const decoded = atob(token);
+                const [timestamp, username] = decoded.split(':');
+                const tokenAge = Date.now() - parseInt(timestamp);
+                return tokenAge < 24 * 60 * 60 * 1000;
+            } catch {
+                return false;
+            }
+        }
+
+        function getUsernameFromToken() {
+            try {
+                const token = localStorage.getItem('authToken');
+                if (!token) return 'User';
+                
+                const decoded = atob(token);
+                const [timestamp, username] = decoded.split(':');
+                return username || 'User';
+            } catch {
+                return 'User';
+            }
+        }
+
+        function updateWelcomeMessage() {
+            const username = getUsernameFromToken();
+            document.getElementById('welcomeUser').textContent = `Welcome, ${username}`;
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            window.location.href = '/';
+        }
+
+        function filterByCategory(category) {
+            currentCategory = category;
+            
+            // Update active button
+            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Filter terms
+            filterTerms();
+        }
+
+        function filterTerms() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            const termCards = document.querySelectorAll('.term-card');
+            const categories = document.querySelectorAll('.glossary-category');
+            
+            // First hide all categories
+            categories.forEach(cat => cat.style.display = 'none');
+            
+            let visibleTerms = 0;
+            
+            termCards.forEach(card => {
+                const cardCategory = card.getAttribute('data-category');
+                const searchData = card.getAttribute('data-search');
+                const termName = card.querySelector('.term-name').textContent.toLowerCase();
+                const termDefinition = card.querySelector('.term-definition').textContent.toLowerCase();
+                
+                let categoryMatch = currentCategory === 'all' || cardCategory === currentCategory;
+                let searchMatch = searchTerm === '' || 
+                                searchData.includes(searchTerm) || 
+                                termName.includes(searchTerm) || 
+                                termDefinition.includes(searchTerm);
+                
+                if (categoryMatch && searchMatch) {
+                    card.style.display = 'block';
+                    card.closest('.glossary-category').style.display = 'block';
+                    visibleTerms++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Hide categories that have no visible terms
+            categories.forEach(cat => {
+                const visibleCards = cat.querySelectorAll('.term-card[style*="block"]').length;
+                if (visibleCards === 0) {
+                    cat.style.display = 'none';
+                }
+            });
+        }
+
+        // Add click handlers for related term links
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('related-link')) {
+                e.preventDefault();
+                const termName = e.target.textContent.toLowerCase();
+                document.getElementById('searchBox').value = termName;
+                currentCategory = 'all';
+                document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelector('.nav-button').classList.add('active');
+                filterTerms();
+                
+                // Scroll to first visible result
+                setTimeout(() => {
+                    const firstVisible = document.querySelector('.term-card[style*="block"]');
+                    if (firstVisible) {
+                        firstVisible.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>

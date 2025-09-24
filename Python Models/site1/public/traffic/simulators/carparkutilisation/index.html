@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Labb - Car Park Simulation</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="/common.js"></script>
+</head>
+<body>
+    <div id="loading" class="loading">
+        <h2>Verifying access...</h2>
+    </div>
+
+    <div id="app" class="container hidden">
+        <div class="dashboard-header">
+            <div class="header-left">
+                <div class="header-title">
+                    <h1>Car Park Simulation</h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="glass-card">
+                <h3 class="section-title">Configuration</h3>
+                
+                <div class="cards-container">
+                    <div class="card">
+                        <div class="card-title">Traffic Parameters</div>
+                        <div style="background: #e3f1f7; padding: 12px; border-radius: 6px; margin-bottom: 12px; text-align: center; border: 1px solid #a3c9e0;">
+                            <div style="font-size: 0.9rem; margin-bottom: 6px; font-weight: 600;">System Analysis</div>
+                            <div style="font-size: 1.2rem; margin: 8px 0; color: #354e8d; font-weight: bold;">Arrivals → Car Park System</div>
+                            <div style="font-size: 0.8rem; color: #666;">Discrete Event Simulation</div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="arrivalRate">Arrival Rate (cars/hour):</label>
+                                <input type="number" id="arrivalRate" value="30" min="0.1" step="0.01" onchange="updateWarnings(); calculateSampleSize(); updateRuntimeDisplay(); updateAnalyticalCalculations();">
+                            </div>
+                            <div class="form-group">
+                                <label for="minHeadway">Min Headway (seconds):</label>
+                                <input type="number" id="minHeadway" value="3" min="0" step="0.1" onchange="updateAnalyticalCalculations();">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="serviceTime">Mean Service Time (seconds):</label>
+                                <input type="number" id="serviceTime" value="300" min="1" step="0.1" onchange="updateWarnings(); updateAnalyticalCalculations();">
+                            </div>
+                            <div class="form-group">
+                                <label for="serviceTimeDistribution">Service Time Distribution:</label>
+                                <select id="serviceTimeDistribution" onchange="updateServiceTimeLabel(); updateAnalyticalCalculations();">
+                                    <option value="constant">Constant (Fixed Duration)</option>
+                                    <option value="exponential" selected>Exponential (Variable Duration)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="spaces">Number of Spaces:</label>
+                                <input type="number" id="spaces" value="10" min="1" onchange="updateWarnings(); updateRuntimeDisplay(); updateAnalyticalCalculations();">
+                            </div>
+                            <div class="form-group">
+                                <label for="queueLength">Available Queue Length:</label>
+                                <input type="number" id="queueLength" value="1000" min="0" onchange="updateAnalyticalCalculations();">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Theoretical Analysis</div>
+                        <div style="background: #e3f1f7; padding: 12px; border-radius: 6px; margin-bottom: 12px; text-align: center; border: 1px solid #a3c9e0;">
+                            <div style="font-size: 0.9rem; margin-bottom: 6px; font-weight: 600;">Minimum Spaces Required</div>
+                            <div style="font-size: 1.4rem; margin: 8px 0; color: #354e8d; font-weight: bold;" id="theoreticalSpaces">2.9</div>
+                            <div style="font-size: 0.8rem; color: #666;">Rate × Mean Service Time ÷ 3600</div>
+                        </div>
+                        
+                        <div id="warningMessage" class="alert-warning" style="display: none;">
+                            <strong>⚠️ System Overload Warning</strong><br>
+                            Current spaces below theoretical minimum - system will be overloaded!
+                        </div>
+                        
+                        <div style="margin: 12px 0;">
+                            <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; color: #354e8d;">(0s Headway Analytical Queuing Theory)</div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label for="analyticalPercentile" style="font-size: 0.9rem; font-weight: 600; color: #354e8d;">Analysis Percentile:</label>
+                                <input type="number" id="analyticalPercentile" value="98" min="1" max="99.9" step="0.1" 
+                                       style="margin-left: 8px; width: 80px; padding: 4px; border: 1px solid #ddd; border-radius: 4px;" 
+                                       onchange="updateAnalyticalCalculations();">
+                                <span style="font-size: 0.85rem; color: #666; margin-left: 4px;">%</span>
+                            </div>
+                            
+                            <table id="analyticalTable" style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #f8f9fa;">
+                                        <th style="padding: 6px 8px; border: 1px solid #ddd; text-align: left;">Model</th>
+                                        <th style="padding: 6px 8px; border: 1px solid #ddd; text-align: center;">Parked</th>
+                                        <th style="padding: 6px 8px; border: 1px solid #ddd; text-align: center;">Queueing</th>
+                                        <th style="padding: 6px 8px; border: 1px solid #ddd; text-align: center;">Blocked</th>
+                                        <th style="padding: 6px 8px; border: 1px solid #ddd; text-align: center;">Pass/Fail</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding: 6px 8px; border: 1px solid #ddd;" id="erlangBModelName">Erlang-B (Blocking)</td>
+                                        <td style="padding: 6px 8px; border: 1px solid #ddd; text-align: center;" id="erlangBParked">-</td>
+                                        <td style="padding: 6px 8px; border: 1px solid #ddd; text-align: center;" id="erlangBQueueing">-</td>
+                                        <td style="padding: 6px 8px; border: 1px solid #ddd; text-align: center;" id="erlangBBlocked">-</td>
+                                        <td style="padding: 6px 8px; border: 1px solid #ddd; text-align: center; font-weight: bold;" id="erlangBPass">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 8px; border: 1px solid #ddd;" id="mmcModelName">M/M/c (Queueing)</td>
+                                        <td style="padding: 6px 8px; border: 1px solid #ddd; text-align: center;" id="erlangCParked">-</td>
+                                        <td style="padding: 6px 8px; border: 1px solid #ddd; text-align: center;" id="erlangCQueueing">-</td>
+                                        <td style="padding: 6px 8px; border: 1px solid #ddd; text-align: center;" id="erlangCBlocked">-</td>
+                                        <td style="padding: 6px 8px; border: 1px solid #ddd; text-align: center; font-weight: bold;" id="erlangCPass">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div id="serviceTimeInfo" class="help-text" style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid #6b99c2;">
+                            <strong>Constant Service Time:</strong> All cars park for exactly the specified duration.
+                        </div>
+                    </div>
+                    
+                    <div class="form row">
+                            <div class="form-group">
+                            <div class="card sample-calculator">
+                                <div class="card-title">Simulation Settings</div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="confidenceLevel">Confidence Level (%):</label>
+                                        <select id="confidenceLevel" onchange="calculateSampleSize()">
+                                            <option value="90">90</option>
+                                            <option value="95">95</option>
+                                            <option value="99">99</option>
+                                            <option value="99.9" selected>99.9</option>
+                                            <option value="99.99">99.99</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="marginOfError">Margin of Error (cars/hour):</label>
+                                        <input type="number" id="marginOfError" value="0.05" min="0.001" step="0.001" onchange="calculateSampleSize()">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="numSeeds">Number of Seeds:</label>
+                                        <input type="number" id="numSeeds" value="130" min="1" max="10000" step="1" onchange="updateRuntimeDisplay()">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="seedMode">Seed Mode:</label>
+                                        <select id="seedMode">
+                                            <option value="fixed" selected>Fixed (Reproducible)</option>
+                                            <option value="random">Random</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="simulationHours">Simulation Hours:</label>
+                                        <input type="number" id="simulationHours" value="1000" min="1" onchange="calculateSampleSize(); updateRuntimeDisplay();">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Estimated Runtime:</label>
+                                        <div id="runtimeEstimate" class="help-text" style="font-weight: 600;">Calculating...</div>
+                                    </div>
+                                </div>
+                                <div id="sampleSizeResult" class="sample-result">
+                                    Calculating minimum seeds...
+                                </div>
+                                
+                                <div style="text-align: center; margin-top: 10px;">
+                                    <button class="btn btn-secondary" onclick="applySampleSize()" style="padding: 6px 12px; font-size: 0.85rem;">Apply Calculated Seeds</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="buttons-row">
+                    <button class="btn btn-reset" id="resetButton">Reset</button>
+                    <button class="btn btn-run" id="runSimulation">Run Simulation</button>
+                </div>
+                
+                <div class="status" id="status" style="display: none;"></div>
+                <div class="progress-bar" id="progressContainer" style="display: none;">
+                    <div class="progress-fill" id="progressFill"></div>
+                    <div class="progress-text">
+                        <div id="progressPercentage">0%</div>
+                        <div id="progressDetails">Initializing...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="results-container" id="resultsSection">
+                <h3 class="section-title">Results</h3>
+                
+                <div id="resultsContent">
+                    <div class="no-results">
+                        <h4>Results will appear here</h4>
+                        <p>Configure parameters and run simulation to see results comparing three car park management strategies</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Authentication check on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Give common.js time to load manifest and handle authentication
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Check authentication using common.js functions
+            const token = localStorage.getItem('authToken');
+            if (!token || !isValidToken(token)) {
+                window.location.href = '/login/';
+                return;
+            }
+            
+            // Show the app
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('app').classList.remove('hidden');
+            
+            resetInputs()
+            calculateSampleSize();
+            updateWarnings();
+            updateRuntimeDisplay();
+            updateServiceTimeLabel();
+            updateAnalyticalCalculations();
+            updateAnalyticalCalculations();
+        });
+
+        function isValidToken(token) {
+            try {
+                const decoded = atob(token);
+                const [timestamp, username] = decoded.split(':');
+                const tokenAge = Date.now() - parseInt(timestamp);
+                return tokenAge < 24 * 60 * 60 * 1000; // 24 hours
+            } catch {
+                return false;
+            }
+        }
+
+        function updateServiceTimeLabel() {
+            const distribution = document.getElementById('serviceTimeDistribution').value;
+            const serviceTimeLabel = document.querySelector('label[for="serviceTime"]');
+            const infoDiv = document.getElementById('serviceTimeInfo');
+            
+            if (distribution === 'exponential') {
+                serviceTimeLabel.textContent = 'Mean Service Time (seconds):';
+                infoDiv.innerHTML = '<strong>Exponential Service Time:</strong> Service times vary randomly around the mean, with some cars staying much longer or shorter than average.';
+            } else {
+                serviceTimeLabel.textContent = 'Service Time (seconds):';
+                infoDiv.innerHTML = '<strong>Constant Service Time:</strong> All cars park for exactly the specified duration.';
+            }
+            updateAnalyticalCalculations();
+        }
+
+        // Factorial function for analytical calculations with overflow protection
+        function factorial(n) {
+            if (n <= 1) return 1;
+            if (n > 170) return Infinity; // Prevent overflow for large numbers
+            let result = 1;
+            for (let i = 2; i <= n; i++) {
+                result *= i;
+            }
+            return result;
+        }
+
+        // Calculate Erlang-B blocking probability with improved numerical stability
+        function calculateErlangB(rho, c) {
+            if (rho <= 0 || c <= 0) return 0;
+            if (rho >= c * 10) return 1; // System heavily overloaded
+            
+            // Use logarithmic calculation for numerical stability
+            let logNumerator = c * Math.log(rho) - logFactorial(c);
+            let logDenominator = -Infinity;
+            
+            for (let k = 0; k <= c; k++) {
+                let logTerm = k * Math.log(rho) - logFactorial(k);
+                logDenominator = logSum(logDenominator, logTerm);
+            }
+            
+            let result = Math.exp(logNumerator - logDenominator);
+            return Math.min(1, Math.max(0, result)); // Clamp between 0 and 1
+        }
+
+        // Helper function for log of factorial
+        function logFactorial(n) {
+            if (n <= 1) return 0;
+            let result = 0;
+            for (let i = 2; i <= n; i++) {
+                result += Math.log(i);
+            }
+            return result;
+        }
+
+        // Helper function to add numbers in log space
+        function logSum(logA, logB) {
+            if (logA === -Infinity) return logB;
+            if (logB === -Infinity) return logA;
+            let max = Math.max(logA, logB);
+            let min = Math.min(logA, logB);
+            return max + Math.log(1 + Math.exp(min - max));
+        }
+
+        // Calculate M/D/c queue probability (constant service time)
+        function calculateMDcQueueProb(rho, c) {
+            if (rho <= 0 || c <= 0) return 0;
+            if (rho >= c) return 1; // System overloaded
+            
+            // M/D/c has lower queueing probability than M/M/c due to reduced variability
+            const mmcProb = calculateMMcQueueProb(rho, c);
+            const utilization = rho / c;
+            
+            // Variance reduction factor for deterministic service times
+            const varianceReduction = 0.5 + 0.5 * (1 - utilization);
+            return Math.min(1, mmcProb * varianceReduction);
+        }
+
+        // Calculate precise percentile-based occupancy using actual queuing theory distributions with interpolation
+        function calculatePercentileOccupancy(rho, c, percentile, modelType) {
+            if (rho <= 0 || c <= 0 || percentile <= 0 || percentile >= 100) {
+                return { parked: 0, queueing: 0, blocked: 0 };
+            }
+            
+            const targetProb = percentile / 100;
+            
+            if (modelType === 'erlangB') {
+                // M/M/c/c system (equivalent to Erlang-B) - calculate exact state probabilities
+                const blockingProb = calculateErlangB(rho, c);
+                
+                // Calculate state probabilities for n = 0, 1, 2, ..., c
+                let stateProbs = [];
+                let sum = 0;
+                
+                // Calculate unnormalized probabilities
+                for (let k = 0; k <= c; k++) {
+                    const prob = Math.pow(rho, k) / factorial(k);
+                    stateProbs[k] = prob;
+                    sum += prob;
+                }
+                
+                // Normalize probabilities
+                for (let k = 0; k <= c; k++) {
+                    stateProbs[k] /= sum;
+                }
+                
+                // Find percentile by cumulative probability with interpolation
+                let cumProb = 0;
+                let percentileOccupancy = 0;
+                
+                for (let k = 0; k <= c; k++) {
+                    const prevCumProb = cumProb;
+                    cumProb += stateProbs[k];
+                    
+                    if (cumProb >= targetProb) {
+                        // Interpolate between states k-1 and k
+                        if (k > 0 && prevCumProb < targetProb && stateProbs[k] > 0) {
+                            const fraction = (targetProb - prevCumProb) / stateProbs[k];
+                            percentileOccupancy = (k - 1) + fraction;
+                        } else {
+                            percentileOccupancy = k;
+                        }
+                        break;
+                    }
+                }
+                
+                return {
+                    parked: percentileOccupancy,
+                    queueing: 0, // No queue in M/M/c/c system
+                    blocked: blockingProb * 100
+                };
+                
+            } else if (modelType === 'mmc') {
+                // M/M/c: Calculate exact steady-state probabilities
+                if (rho >= c) {
+                    return { parked: c, queueing: 1000, blocked: 0 };
+                }
+                
+                // Calculate P0 (probability of empty system)
+                let sum = 0;
+                for (let k = 0; k < c; k++) {
+                    sum += Math.pow(rho, k) / factorial(k);
+                }
+                sum += Math.pow(rho, c) / factorial(c) * c / (c - rho);
+                
+                const P0 = 1 / sum;
+                
+                // Find percentile occupancy by iterating through possible states with interpolation
+                let cumProb = 0;
+                let percentileTotal = 0;
+                
+                // States 0 to c-1 (no queue)
+                for (let k = 0; k < c; k++) {
+                    const prevCumProb = cumProb;
+                    const prob = Math.pow(rho, k) / factorial(k) * P0;
+                    cumProb += prob;
+                    
+                    if (cumProb >= targetProb) {
+                        // Interpolate between states
+                        if (k > 0 && prevCumProb < targetProb && prob > 0) {
+                            const fraction = (targetProb - prevCumProb) / prob;
+                            percentileTotal = (k - 1) + fraction;
+                        } else {
+                            percentileTotal = k;
+                        }
+                        break;
+                    }
+                }
+                
+                // States c and above (with queue) if not found yet
+                if (cumProb < targetProb) {
+                    const probBase = Math.pow(rho, c) / factorial(c) * P0;
+                    
+                    for (let n = c; n <= c + 200; n++) { // Extended search range
+                        const prevCumProb = cumProb;
+                        const prob = probBase * Math.pow(rho / c, n - c);
+                        cumProb += prob;
+                        
+                        if (cumProb >= targetProb || prob < 1e-10) { // Stop if probability becomes negligible
+                            // Interpolate between states
+                            if (prevCumProb < targetProb && prob > 1e-10) {
+                                const fraction = (targetProb - prevCumProb) / prob;
+                                percentileTotal = (n - 1) + fraction;
+                            } else {
+                                percentileTotal = n;
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                const parked = Math.min(c, percentileTotal);
+                const queueing = Math.max(0, percentileTotal - c);
+                
+                return {
+                    parked: parked,
+                    queueing: queueing,
+                    blocked: 0
+                };
+            }
+            
+            return { parked: 0, queueing: 0, blocked: 0 };
+        }
+        
+        // Helper function to get Z-score for given percentile using precise inverse normal approximation
+        function getZScore(percentile) {
+            if (percentile <= 0.5) return 0;
+            if (percentile >= 0.9999) return 3.719;
+            if (percentile <= 0.0001) return -3.719;
+            
+            // Beasley-Springer-Moro algorithm for inverse normal distribution
+            const p = percentile;
+            const q = p - 0.5;
+            
+            if (Math.abs(q) <= 0.425) {
+                // Central region
+                const r = 0.180625 - q * q;
+                return q * (((((((2.5090809287301226727e3 * r +
+                               3.3430575583588128105e4) * r +
+                               6.7265770927008700853e4) * r +
+                               4.5921953931549871457e4) * r +
+                               1.3731693765509461125e4) * r +
+                               1.9715909503065514427e3) * r +
+                               1.3314166789178437745e2) * r +
+                               3.3871328727963666080e0) /
+                        (((((((5.2264952788528545610e3 * r +
+                              2.8729085735721942674e4) * r +
+                              3.9307895800092710610e4) * r +
+                              2.1213794301586595867e4) * r +
+                              5.3941960214247511077e3) * r +
+                              6.8718700749205790830e2) * r +
+                              4.2313330701600911252e1) * r +
+                              1.0);
+            } else {
+                // Tail region
+                let r = (q < 0) ? p : 1 - p;
+                r = Math.sqrt(-Math.log(r));
+                
+                let result;
+                if (r <= 5.0) {
+                    r -= 1.6;
+                    result = (((((((7.7454501427834140764e-4 * r +
+                                  2.2723844989269184100e-1) * r +
+                                  2.4178072517745061177e0) * r +
+                                  1.2704582524523684364e1) * r +
+                                  3.6478483247632045567e1) * r +
+                                  5.7694972214606914055e1) * r +
+                                  4.6303378461565452959e1) * r +
+                                  1.4234371107496835004e1) /
+                            (((((((1.0507500716444169243e-3 * r +
+                                  5.4759380849953455332e-1) * r +
+                                  8.5695615115104490732e0) * r +
+                                  5.0525913025030978701e1) * r +
+                                  1.5515166077732535027e2) * r +
+                                  2.2665361586140086901e2) * r +
+                                  1.6106633437731094242e2) * r +
+                                  4.2749997341015905215e1);
+                } else {
+                    r -= 5.0;
+                    result = (((((((2.0103343992922881800e-7 * r +
+                                  2.7115555687434876647e-5) * r +
+                                  1.2426609473880784386e-3) * r +
+                                  2.6532189526576123093e-2) * r +
+                                  2.9656057182850489123e-1) * r +
+                                  1.7848265399172913358e0) * r +
+                                  5.4637849111641143699e0) * r +
+                                  6.6579046435011037772e0) /
+                            (((((((2.0442631033899397133e-15 * r +
+                                  1.4215117583164458887e-7) * r +
+                                  1.8463183175100546818e-5) * r +
+                                  7.8686913114561329013e-4) * r +
+                                  1.4891311865907089128e-2) * r +
+                                  1.2677894823432674581e-1) * r +
+                                  4.5679150314459825313e-1) * r +
+                                  1.0);
+                }
+                
+                return (q < 0) ? -result : result;
+            }
+        }
+
+        // Calculate M/M/c queue probability of queueing with improved stability
+        function calculateMMcQueueProb(rho, c) {
+            if (rho <= 0 || c <= 0) return 0;
+            if (rho >= c) return 1; // System unstable
+            
+            try {
+                // Use logarithmic calculation for numerical stability
+                let logRhoCOverCFactorial = c * Math.log(rho) - logFactorial(c);
+                let logCOverCMinusRho = Math.log(c) - Math.log(c - rho);
+                
+                let logNumerator = logRhoCOverCFactorial + logCOverCMinusRho;
+                
+                let logDenominator = -Infinity;
+                for (let k = 0; k < c; k++) {
+                    let logTerm = k * Math.log(rho) - logFactorial(k);
+                    logDenominator = logSum(logDenominator, logTerm);
+                }
+                logDenominator = logSum(logDenominator, logRhoCOverCFactorial + logCOverCMinusRho);
+                
+                let result = Math.exp(logNumerator - logDenominator);
+                return Math.min(1, Math.max(0, result)); // Clamp between 0 and 1
+            } catch (error) {
+                return rho >= c ? 1 : 0; // Fallback
+            }
+        }
+
+        // Calculate expected queue length for M/M/c
+        function calculateMMcExpectedQueueLength(rho, c) {
+            if (rho <= 0 || c <= 0) return 0;
+            if (rho >= c) return Infinity; // System unstable
+            
+            const queueProb = calculateMMcQueueProb(rho, c);
+            return queueProb * rho / (c - rho);
+        }
+
+        // Calculate 98th percentile queue length for M/M/c
+        function calculate98thPercentileQueueLength(rho, c) {
+            if (rho <= 0 || c <= 0) return 0;
+            if (rho >= c) return Infinity;
+            
+            const expectedQueue = calculateMMcExpectedQueueLength(rho, c);
+            if (expectedQueue === 0) return 0;
+            
+            // For exponential-like distributions, use approximation
+            const variance = expectedQueue; // Approximation for queue length variance
+            const percentile98 = expectedQueue + 2 * Math.sqrt(variance); // Approximate 98th percentile
+            
+            return Math.ceil(percentile98);
+        }
+
+        // Find percentile demand (spaces needed for specified blocking probability)
+        function calculatePercentileDemand(rho, targetPercentile) {
+            if (rho <= 0) return 0;
+            
+            // Convert percentile to blocking probability (100 - percentile)
+            const targetBlockingProb = (100 - targetPercentile) / 100;
+            
+            // Start with traffic intensity and search upward
+            let spaces = Math.max(1, Math.floor(rho));
+            let maxSpaces = Math.max(100, rho * 5); // Reasonable upper bound
+            
+            for (let c = spaces; c <= maxSpaces; c++) {
+                const blockingProb = calculateErlangB(rho, c);
+                if (blockingProb <= targetBlockingProb) {
+                    return c; // Return the exact calculated value
+                }
+            }
+            
+            return maxSpaces; // Return max if not found
+        }
+
+        // Calculate percentile occupancy for M/M/c using precise Z-score
+        function calculateMMcPercentileOccupancy(rho, c, percentile) {
+            if (rho <= 0 || c <= 0) return 0;
+            if (rho >= c) return c; // System at capacity
+            
+            // For M/M/c, calculate expected number in system
+            const queueProb = calculateMMcQueueProb(rho, c);
+            const expectedInQueue = rho >= c ? 0 : queueProb * rho / (c - rho);
+            const expectedInSystem = rho + expectedInQueue;
+            
+            // Use precise Z-score for the specified percentile
+            const percentileFraction = percentile / 100;
+            const zScore = getZScore(percentileFraction);
+            
+            // Approximate percentile using normal distribution
+            const variance = expectedInSystem; // Approximation
+            const percentileOccupancy = expectedInSystem + zScore * Math.sqrt(variance);
+            
+            return Math.max(0, Math.min(c + 50, percentileOccupancy)); // Cap at reasonable value
+        }
+
+        // Calculate percentile occupancy for M/D/c using precise Z-score
+        function calculateMDcPercentileOccupancy(rho, c, percentile) {
+            if (rho <= 0 || c <= 0) return 0;
+            if (rho >= c) return c;
+            
+            // M/D/c has lower variance than M/M/c
+            const queueProb = calculateMDcQueueProb(rho, c);
+            const expectedInQueue = rho >= c ? 0 : queueProb * rho / (c - rho) * 0.5; // Reduced variance
+            const expectedInSystem = rho + expectedInQueue;
+            
+            // Use precise Z-score for the specified percentile
+            const percentileFraction = percentile / 100;
+            const zScore = getZScore(percentileFraction);
+            
+            // Lower variance for deterministic service times
+            const variance = expectedInSystem * 0.5; // Approximate variance reduction
+            const percentileOccupancy = expectedInSystem + zScore * Math.sqrt(variance);
+            
+            return Math.max(0, Math.min(c + 50, percentileOccupancy)); // Return exact value
+        }
+
+        // Update analytical calculations with precise percentile calculations
+        function updateAnalyticalCalculations() {
+            try {
+                const arrivalRate = parseFloat(document.getElementById('arrivalRate').value);
+                const serviceTime = parseFloat(document.getElementById('serviceTime').value);
+                const spaces = parseInt(document.getElementById('spaces').value);
+                const queueLength = parseInt(document.getElementById('queueLength').value);
+                const serviceDistribution = document.getElementById('serviceTimeDistribution').value;
+                const percentile = parseFloat(document.getElementById('analyticalPercentile').value);
+                
+                // Calculate traffic intensity (rho) - arrival rate * service time in hours
+                const rho = arrivalRate * (serviceTime / 3600);
+                
+                // Calculate occupancy breakdown for each model at the specified percentile
+                const erlangBResults = calculatePercentileOccupancy(rho, spaces, percentile, 'erlangB');
+                const mmcResults = calculatePercentileOccupancy(rho, spaces, percentile, 'mmc');
+                
+                // Update model names based on service distribution
+                const isConstant = serviceDistribution === 'constant';
+                const erlangBModelName = document.getElementById('erlangBModelName');
+                const mmcModelName = document.getElementById('mmcModelName');
+                
+                if (isConstant) {
+                    erlangBModelName.innerHTML = 'Erlang-B (Blocking) <span style="color: #d4691e; font-size: 0.75rem;">*approx</span>';
+                    mmcModelName.innerHTML = 'M/M/c (Queueing) <span style="color: #d4691e; font-size: 0.75rem;">*approx</span>';
+                } else {
+                    erlangBModelName.textContent = 'Erlang-B (Blocking)';
+                    mmcModelName.textContent = 'M/M/c (Queueing)';
+                }
+                
+                // Update Erlang-B display
+                document.getElementById('erlangBParked').textContent = erlangBResults.parked.toFixed(1);
+                document.getElementById('erlangBQueueing').textContent = erlangBResults.queueing.toFixed(2);
+                document.getElementById('erlangBBlocked').textContent = erlangBResults.blocked.toFixed(1) + '%';
+                
+                // Update M/M/c display (formerly Erlang-C)
+                document.getElementById('erlangCParked').textContent = mmcResults.parked.toFixed(1);
+                document.getElementById('erlangCQueueing').textContent = mmcResults.queueing.toFixed(2);
+                document.getElementById('erlangCBlocked').textContent = mmcResults.blocked.toFixed(1) + '%';
+                
+                // Pass/Fail calculations
+                // Erlang-B: Fail if blocking probability > (100 - analysis percentage)
+                const blockingThreshold = 100 - percentile;
+                const erlangBPass = erlangBResults.blocked <= blockingThreshold;
+                
+                // M/M/c: check if total demand (parked + queueing) fits within capacity
+                const mmcTotalDemand = mmcResults.parked + mmcResults.queueing;
+                const mmcPass = mmcTotalDemand <= spaces;
+                
+                // Update pass/fail display
+                document.getElementById('erlangBPass').innerHTML = erlangBPass ? 
+                    '<span style="color: #28a745;">✓</span>' : '<span style="color: #dc3545;">✗</span>';
+                document.getElementById('erlangCPass').innerHTML = mmcPass ? 
+                    '<span style="color: #28a745;">✓</span>' : '<span style="color: #dc3545;">✗</span>';
+                
+            } catch (error) {
+                console.error('Error in analytical calculations:', error);
+                // Reset to default values on error
+                document.getElementById('erlangBParked').textContent = '-';
+                document.getElementById('erlangBQueueing').textContent = '-';
+                document.getElementById('erlangBBlocked').textContent = '-';
+                document.getElementById('erlangBPass').textContent = '-';
+                document.getElementById('erlangCParked').textContent = '-';
+                document.getElementById('erlangCQueueing').textContent = '-';
+                document.getElementById('erlangCBlocked').textContent = '-';
+                document.getElementById('erlangCPass').textContent = '-';
+            }
+        }
+
+        // Collect parameters for runtime estimation and simulation
+        function collectParameters() {
+            return {
+                arrivalRate: parseFloat(document.getElementById('arrivalRate').value),
+                serviceTime: parseFloat(document.getElementById('serviceTime').value) / 3600,
+                serviceTimeDistribution: document.getElementById('serviceTimeDistribution').value,
+                totalSpaces: parseInt(document.getElementById('spaces').value),
+                spaces: parseInt(document.getElementById('spaces').value),
+                queueLength: parseInt(document.getElementById('queueLength').value),
+                simulationHours: parseFloat(document.getElementById('simulationHours').value),
+                simHours: parseFloat(document.getElementById('simulationHours').value),
+                numSeeds: parseInt(document.getElementById('numSeeds').value),
+                minHeadway: parseFloat(document.getElementById('minHeadway').value) / 3600,
+                seedMode: document.getElementById('seedMode').value
+            };
+        }
+
+        // Update runtime display when parameters change
+        function updateRuntimeDisplay() {
+            try {
+                const parameters = collectParameters();
+                // Local override for carpark-specific estimation
+                const estimatedMs = estimateCarParkRuntime(parameters);
+                updateRuntimeEstimateDisplay(parameters, estimatedMs);
+            } catch (error) {
+                console.warn('Could not update runtime display:', error);
+            }
+        }
+
+        // Local estimation function for carpark simulation
+        function estimateCarParkRuntime(parameters) {
+            const arrivalRate = parameters.arrivalRate;
+            const simHours = parameters.simHours || parameters.simulationHours;
+            const numSeeds = parameters.numSeeds;
+            
+            // Exponential service time adds slight computational overhead
+            const distributionMultiplier = parameters.serviceTimeDistribution === 'exponential' ? 1.1 : 1.0;
+            
+            // Formula based on arrival rate (drives computational complexity): rate * hours * seeds * coefficient + base
+            const estimatedSeconds = arrivalRate * simHours * numSeeds * 0.00000224 * distributionMultiplier + 0.6;
+            return Math.max(0.6, estimatedSeconds * 1000); // Convert to milliseconds
+        }
+
+        // Enhanced runtime estimate display function
+        function updateRuntimeEstimateDisplay(parameters, estimatedMs = null) {
+            const runtimeEstimateDiv = document.getElementById('runtimeEstimate');
+            if (!runtimeEstimateDiv) return;
+            
+            try {
+                const timeMs = estimatedMs || estimateSimulationRuntime(parameters);
+                const timeStr = formatEstimatedTime(timeMs);
+                runtimeEstimateDiv.textContent = timeStr;
+                runtimeEstimateDiv.style.color = timeMs > 30000 ? '#d4691e' : '#6b99c2';
+            } catch (error) {
+                runtimeEstimateDiv.textContent = 'Unable to estimate';
+                runtimeEstimateDiv.style.color = '#999';
+            }
+        }
+
+        function calculateSampleSize() {
+            const confidenceLevel = parseFloat(document.getElementById('confidenceLevel').value);
+            const marginOfError = parseFloat(document.getElementById('marginOfError').value);
+            const arrivalRate = parseFloat(document.getElementById('arrivalRate').value);
+            const simulationHours = parseFloat(document.getElementById('simulationHours').value);
+            
+            const zScores = { 90: 1.645, 95: 1.96, 99: 2.576, 99.9: 3.291, 99.99: 3.891 };
+            const z = zScores[confidenceLevel];
+            const estimatedSigma = Math.sqrt(arrivalRate / simulationHours);
+            const requiredSeeds = Math.ceil(Math.pow((z * estimatedSigma) / marginOfError, 2));
+            
+            const observations = Math.round(arrivalRate * simulationHours);
+            const resultDiv = document.getElementById('sampleSizeResult');
+            const currentSeeds = parseInt(document.getElementById('numSeeds').value);
+            
+            resultDiv.innerHTML = `
+                <strong>Minimum ${requiredSeeds} seeds required</strong><br>
+                <small>(Z=${z}, Est. σ=${estimatedSigma.toFixed(3)})</small>
+            `;
+            
+            if (currentSeeds < requiredSeeds) {
+                resultDiv.style.borderColor = '#a3c9e0';
+                resultDiv.style.background = 'rgba(163, 201, 224, 0.1)';
+            } else {
+                resultDiv.style.borderColor = '#6b99c2';
+                resultDiv.style.background = 'rgba(107, 153, 194, 0.1)';
+                resultDiv.innerHTML += '<br><small style="color: #6b99c2;">✅ Current seeds adequate</small>';
+            }
+        }
+
+        function applySampleSize() {
+            const confidenceLevel = parseFloat(document.getElementById('confidenceLevel').value);
+            const marginOfError = parseFloat(document.getElementById('marginOfError').value);
+            const arrivalRate = parseFloat(document.getElementById('arrivalRate').value);
+            const simulationHours = parseFloat(document.getElementById('simulationHours').value);
+            
+            const zScores = { 90: 1.645, 95: 1.96, 99: 2.576, 99.9: 3.291, 99.99: 3.891 };
+            const z = zScores[confidenceLevel];
+            const estimatedSigma = Math.sqrt(arrivalRate / simulationHours);
+            const requiredSeeds = Math.ceil(Math.pow((z * estimatedSigma) / marginOfError, 2));
+            
+            document.getElementById('numSeeds').value = requiredSeeds;
+            document.getElementById('seedMode').value = 'fixed';
+            calculateSampleSize();
+            updateRuntimeDisplay();
+        }
+
+        function updateWarnings() {
+            const arrivalRate = parseFloat(document.getElementById('arrivalRate').value);
+            const serviceTime = parseFloat(document.getElementById('serviceTime').value);
+            const currentSpaces = parseInt(document.getElementById('spaces').value);
+            
+            // Use mean service time for theoretical calculations regardless of distribution
+            const theoreticalMin = arrivalRate * serviceTime / 3600;
+            
+            document.getElementById('theoreticalSpaces').textContent = `${theoreticalMin.toFixed(2)} (${Math.ceil(theoreticalMin)})`;
+
+            
+            const spacesInput = document.getElementById('spaces');
+            const runButton = document.getElementById('runSimulation');
+            const warningMessage = document.getElementById('warningMessage');
+            
+            if (currentSpaces < theoreticalMin) {
+                spacesInput.style.borderColor = '#dc3545';
+                runButton.className = 'btn btn-warning';
+                warningMessage.style.display = 'block';
+            } else {
+                spacesInput.style.borderColor = '';
+                runButton.className = 'btn btn-run';
+                warningMessage.style.display = 'none';
+            }
+        }
+
+        function resetInputs() {
+            document.getElementById('arrivalRate').value = '30';
+            document.getElementById('serviceTime').value = '300';
+            document.getElementById('serviceTimeDistribution').value = 'constant';
+            document.getElementById('spaces').value = '10';
+            document.getElementById('queueLength').value = '1000';
+            document.getElementById('minHeadway').value = '3';
+            document.getElementById('simulationHours').value = '1000';
+            document.getElementById('numSeeds').value = '130';
+            document.getElementById('confidenceLevel').value = '99.9';
+            document.getElementById('marginOfError').value = '0.05';
+            document.getElementById('seedMode').value = 'fixed';
+            
+            calculateSampleSize();
+            updateWarnings();
+            updateRuntimeDisplay();
+            updateServiceTimeLabel();
+        }
+
+        function generateValidationCheck(results, params) {
+            const expectedRate = params.arrivalRate;
+            const marginError = parseFloat(document.getElementById('marginOfError').value);
+            
+            let validationHtml = '<div class="validation-section">';
+            validationHtml += '<h4>📋 Simulation Validation</h4>';
+            validationHtml += '<table class="validation-table"><thead><tr><th>Model</th><th>Expected Rate</th><th>Actual Rate</th><th>Difference</th><th>Status</th></tr></thead><tbody>';
+            
+            const models = [
+                { key: 'infinite', name: 'Infinite Capacity' },
+                { key: 'blocking', name: 'Blocking Model' }, 
+                { key: 'queuing', name: 'Queuing Model' }
+            ];
+            
+            let anyValidationFailed = false;
+            
+            for (const model of models) {
+                const result = results[model.key];
+                if (!result) continue;
+                
+                const actualRate = result.actualArrivalRate;
+                const difference = Math.abs(expectedRate - actualRate);
+                const withinMargin = difference <= marginError;
+                
+                if (!withinMargin) anyValidationFailed = true;
+                
+                const statusIcon = withinMargin ? '<span style="color: #6b99c2; font-weight: bold;">✓</span>' : '<span style="color: #dc3545; font-weight: bold;">✗</span>';
+                
+                validationHtml += `<tr>
+                    <td>${model.name}</td>
+                    <td>${expectedRate.toFixed(3)}</td>
+                    <td>${actualRate.toFixed(3)}</td>
+                    <td>${difference.toFixed(3)}</td>
+                    <td>${statusIcon}</td>
+                </tr>`;
+            }
+            
+            validationHtml += '</tbody></table></div>';
+            return validationHtml;
+        }
+
+        function displayResults(results, params) {
+            const container = document.getElementById('resultsContent');
+            
+            const distributionText = params.serviceTimeDistribution === 'exponential' ? 
+                '(exponential service time)' : '(constant service time)';
+            
+            let html = `
+                <div class="summary-note">
+                    Results from ${params.simulationHours} hours × ${params.numSeeds} seeds analysed and averaged below ${distributionText}
+                </div>
+                
+                ${generateValidationCheck(results, params)}
+                
+                <div class="models-container">
+            `;
+            
+            const models = [
+                { key: 'infinite', name: 'Infinite Capacity', desc: 'Unlimited parking spaces' },
+                { key: 'blocking', name: 'Blocking Model', desc: 'Cars blocked when full' },
+                { key: 'queuing', name: 'Queuing Model', desc: 'Cars queue when full' }
+            ];
+            
+            // Create combined occupancy table
+            html += `
+                <div class="combined-results-section">
+                    <h4 style="color: #354e8d; margin-bottom: 10px; font-size: 1.1rem; font-weight: 600;">Occupancy Percentiles (Parked|Queued)</h4>
+                    
+                    <table style="width: 100%; font-size: 0.75rem; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background: #f8f9fa;">
+                                <th style="padding: 4px 6px; border: 1px solid #ddd; width: 12%;">%ile</th>
+                                <th style="padding: 4px 6px; border: 1px solid #ddd; width: 29%;">Infinite Capacity</th>
+                                <th style="padding: 4px 6px; border: 1px solid #ddd; width: 29%;">Blocking Model</th>
+                                <th style="padding: 4px 6px; border: 1px solid #ddd; width: 30%;">Queuing Model</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            const percentiles = [10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99];
+            for (const p of percentiles) {
+                html += `<tr><td style="padding: 3px 4px; border: 1px solid #ddd; text-align: center; font-weight: 600;">${p}%</td>`;
+                
+                for (const model of models) {
+                    const result = results[model.key];
+                    if (result && result.percentiles.parked[p] !== undefined) {
+                        const parked = result.percentiles.parked[p];
+                        const queued = result.percentiles.queued[p];
+                        
+                        html += `<td style="padding: 3px 4px; border: 1px solid #ddd; text-align: center;">
+                            ${parked.toFixed(0)}|${queued.toFixed(0)}
+                        </td>`;
+                    } else {
+                        html += `<td style="padding: 3px 4px; border: 1px solid #ddd; text-align: center;">-</td>`;
+                    }
+                }
+                html += `</tr>`;
+            }
+            
+            html += `
+                        </tbody>
+                    </table>
+                    
+                    <h4 style="color: #354e8d; margin-bottom: 10px; font-size: 1.1rem; font-weight: 600;">Performance Metrics Comparison</h4>
+                    
+                    <table style="width: 100%; font-size: 0.75rem; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f8f9fa;">
+                                <th style="padding: 4px 6px; border: 1px solid #ddd; width: 35%;">Metric</th>
+                                <th style="padding: 4px 6px; border: 1px solid #ddd; width: 22%;">Infinite Capacity</th>
+                                <th style="padding: 4px 6px; border: 1px solid #ddd; width: 22%;">Blocking Model</th>
+                                <th style="padding: 4px 6px; border: 1px solid #ddd; width: 21%;">Queuing Model</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            // Performance metrics rows with logic for "-" values
+            const metrics = [
+                { 
+                    key: 'expectedArrivalRate', 
+                    label: 'Expected Arrival Rate (cars/hour)', 
+                    format: (v) => v.toFixed(2),
+                    show: { infinite: true, blocking: true, queuing: true }
+                },
+                { 
+                    key: 'actualArrivalRate', 
+                    label: 'Actual Arrival Rate (cars/hour)', 
+                    format: (v) => v.toFixed(2),
+                    show: { infinite: true, blocking: true, queuing: true }
+                },
+                { 
+                    key: 'blockedPercentage', 
+                    label: 'Cars Blocked (%)', 
+                    format: (v) => v.toFixed(2) + '%',
+                    show: { infinite: false, blocking: true, queuing: true }
+                },
+                { 
+                    key: 'queuedPercentage', 
+                    label: 'Cars That Queued (%)', 
+                    format: (v) => v.toFixed(2) + '%',
+                    show: { infinite: false, blocking: false, queuing: true }
+                },
+                { 
+                    key: 'avgQueueTimePerArrival', 
+                    label: 'Avg Queue Time per Arrival (sec)', 
+                    format: (v) => (v * 3600).toFixed(2),
+                    show: { infinite: false, blocking: false, queuing: true }
+                },
+                { 
+                    key: 'avgQueueTimePerQueued', 
+                    label: 'Avg Queue Time per Queued Car (sec)', 
+                    format: (v) => (v * 3600).toFixed(2),
+                    show: { infinite: false, blocking: false, queuing: true }
+                }
+            ];
+            
+            const modelKeys = ['infinite', 'blocking', 'queuing'];
+            
+            for (const metric of metrics) {
+                html += `<tr><td style="padding: 3px 6px; border: 1px solid #ddd; font-weight: 500;">${metric.label}</td>`;
+                
+                for (const modelKey of modelKeys) {
+                    const result = results[models.find(m => m.key === modelKey).key];
+                    
+                    if (!metric.show[modelKey]) {
+                        html += `<td style="padding: 3px 4px; border: 1px solid #ddd; text-align: center;">-</td>`;
+                    } else if (result && result[metric.key] !== undefined) {
+                        html += `<td style="padding: 3px 4px; border: 1px solid #ddd; text-align: center;">${metric.format(result[metric.key])}</td>`;
+                    } else {
+                        html += `<td style="padding: 3px 4px; border: 1px solid #ddd; text-align: center;">-</td>`;
+                    }
+                }
+                html += `</tr>`;
+            }
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Event listeners 
+        document.getElementById('resetButton').addEventListener('click', resetInputs);
+
+        document.getElementById('runSimulation').addEventListener('click', async () => {
+            const token = localStorage.getItem('authToken');
+            if (!token || !isValidToken(token)) {
+                window.location.href = '/login/';
+                return;
+            }
+
+            const runButton = document.getElementById('runSimulation');
+            if (runButton.disabled) return;
+
+            const parameters = collectParameters();
+            const estimatedMs = estimateCarParkRuntime(parameters); // Use local estimation
+            const estimatedTimeStr = formatEstimatedTime(estimatedMs);
+            const numSeeds = parameters.numSeeds;
+
+            // UI Elements
+            const elements = {
+                status: document.getElementById('status'),
+                progressContainer: document.getElementById('progressContainer'),
+                progressFill: document.getElementById('progressFill'),
+                progressPercentage: document.getElementById('progressPercentage'),
+                progressDetails: document.getElementById('progressDetails'),
+                resultsContent: document.getElementById('resultsContent')
+            };
+
+            // Show loading state
+            runButton.disabled = true;
+            runButton.textContent = `Running simulation...`;
+            elements.status.style.display = 'block';
+            elements.status.className = 'status running';
+            elements.status.textContent = `Running simulation...`;
+            elements.progressContainer.style.display = 'block';
+            elements.resultsContent.innerHTML = `<div class="no-results"><h4>Running simulation...</h4><p>Processing ${numSeeds} seeds</p></div>`;
+
+            // Scroll to progress bar using common.js function
+            scrollToProgress();
+
+            // Start progress tracking from common.js
+            const progressInterval = createRealisticProgress(estimatedMs, elements.progressFill, elements.progressPercentage, elements.progressDetails);
+            const startTime = Date.now();
+
+            try {
+                const response = await fetch('/api/carparkutilisation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ action: 'runSimulation', parameters })
+                });
+
+                clearInterval(progressInterval);
+
+                if (response.status === 401) {
+                    localStorage.removeItem('authToken');
+                    window.location.href = '/login/';
+                    return;
+                }
+
+                if (!response.headers.get('content-type')?.includes('application/json')) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Simulation failed');
+
+                // Complete progress and show results
+                const actualTime = Date.now() - startTime;
+                
+                elements.progressFill.style.width = '100%';
+                elements.progressPercentage.textContent = '100%';
+                elements.progressDetails.textContent = 'Complete!';
+                elements.status.className = 'status complete';
+                elements.status.textContent = `Completed!`;
+                
+                displayResults(data.results, parameters);
+
+                // Scroll to results using common.js function after a brief delay to allow for DOM updates
+                setTimeout(() => {
+                    scrollToResults();
+                }, 300);
+
+                setTimeout(() => {
+                    elements.status.style.display = 'none';
+                    elements.progressContainer.style.display = 'none';
+                }, 4000);
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                elements.status.className = 'status error';
+                elements.status.textContent = 'Error: ' + error.message;
+                elements.resultsContent.innerHTML = `<div class="no-results"><h4>Error</h4><p>${error.message}</p></div>`;
+                
+                // Still scroll to results section even on error so user can see the error message
+                setTimeout(() => {
+                    scrollToResults();
+                }, 300);
+            }
+
+            runButton.disabled = false;
+            runButton.textContent = 'Run Simulation';
+        });
+    </script>
+</body>
+</html>

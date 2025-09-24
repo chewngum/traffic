@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Labb - Queueing Simulations</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="/common.js"></script>
+    <style>
+        .category-section {
+            margin-bottom: 40px;
+        }
+        
+        .category-title {
+            color: #354e8d;
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding: 20px 25px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e3f1f7 100%);
+            border-radius: 12px;
+            border: 1px solid #a3c9e0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .category-icon {
+            font-size: 1.4rem;
+        }
+        
+        .compact-simulation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+        
+        .compact-simulation-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+        
+        .compact-simulation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(53, 78, 141, 0.2);
+            border-color: #6b99c2;
+        }
+        
+        .compact-card-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .compact-simulation-card h3 {
+            color: #354e8d;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        
+        .compact-simulation-card p {
+            color: #6c757d;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin: 0;
+        }
+        
+        .access-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .level-1 { background: #6c757d; }
+        .level-2 { background: #6b99c2; }
+        .level-3 { background: #354e8d; }
+        
+        .card-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .card-disabled:hover {
+            transform: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-color: transparent;
+        }
+
+        .page-description {
+            background: linear-gradient(135deg, #e3f1f7 0%, #f8fbff 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 1px solid #a3c9e0;
+            text-align: center;
+        }
+
+        .page-description h2 {
+            color: #354e8d;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+
+        .page-description p {
+            color: #6c757d;
+            font-size: 1rem;
+            margin: 0;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading">
+        <h2>Verifying access...</h2>
+    </div>
+
+    <div id="app" class="container hidden">
+        <div class="dashboard-header">
+            <div class="header-left">
+                <div class="header-title">
+                    <h1>Traffic Simulations</h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="page-description">
+                <h2>Configurable, Fast and Precise Traffic Simulations</h2>
+                <p>Advanced queueing theory simulations for traffic engineering analysis. These tools use Monte Carlo methods to model complex traffic scenarios and provide statistical confidence in results.</p>
+            </div>
+
+            <!-- Simulations Section -->
+            <div class="category-section">
+                <h2 class="category-title">
+                    <span class="category-icon">🔬</span>
+                    Available Simulations
+                </h2>
+                <div class="compact-simulation-grid">
+                    <div class="compact-simulation-card" onclick="openSimulation('boomgate')" data-access-level="1">
+                        <div class="access-badge level-1" id="badge-boomgate">L1</div>
+                        <div class="compact-card-icon">🚙</div>
+                        <h3>Boom Gate Queueing</h3>
+                        <p>Queueing analysis of moving vehicles capacity restricted by device processing time</p>
+                    </div>
+                    
+                    <div class="compact-simulation-card" onclick="openSimulation('two-way-passing')" data-access-level="1">
+                        <div class="access-badge level-1" id="badge-two-way-passing">L1</div>
+                        <div class="compact-card-icon">↔️</div>
+                        <h3>Two-Way Passing</h3>
+                        <p>Bi-directional single lane scenario with advanced queuing theory analysis</p>
+                    </div>
+
+                    <div class="compact-simulation-card" onclick="openSimulation('carparkutilisation')" data-access-level="2">
+                        <div class="access-badge level-2" id="badge-carparkutilisation">L2</div>
+                        <div class="compact-card-icon">🅿️</div>
+                        <h3>Car Park Utilisation</h3>
+                        <p>Carpark analysis to find demand rates based on random arrivals and service distributions</p>
+                    </div>
+                    
+                    <div class="compact-simulation-card" onclick="openSimulation('carlift')" data-access-level="2">
+                        <div class="access-badge level-2" id="badge-carlift">L2</div>
+                        <div class="compact-card-icon">🛗</div>
+                        <h3>Car Lift Simulation</h3>
+                        <p>Multi-floor lift operations with bi-directional traffic patterns and complex dispatching</p>
+                    </div>
+                    
+                    <div class="compact-simulation-card" onclick="openSimulation('mechanical')" data-access-level="2">
+                        <div class="access-badge level-2" id="badge-mechanical">L2</div>
+                        <div class="compact-card-icon">🏢</div>
+                        <h3>Mechanical Parking</h3>
+                        <p>Mechanical parking structure analysis based on average service times and utilization rates</p>
+                    </div>
+                    <div class="compact-simulation-card" onclick="openSimulation('schoolpickup')" data-access-level="3">
+                        <div class="access-badge level-3" id="badge-schoolpickup">L3</div>
+                        <div class="compact-card-icon">🎒</div>
+                        <h3>School Pickup Queue</h3>
+                        <p>Finite period bunching analysis for First-In-First-Out platooning</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Page access configuration
+        const PAGE_ACCESS = {
+            'boomgate': 1,
+            'two-way-passing': 1,
+            'carparkutilisation': 2,
+            'carlift': 2,
+            'mechanical': 2,
+            'schoolpickup': 3
+        };
+
+        // Authentication check on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Give common.js time to load manifest and handle authentication
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Check authentication using common.js functions
+            const token = localStorage.getItem('authToken');
+            if (!token || !isValidToken(token)) {
+                window.location.href = '/';
+                return;
+            }
+            
+            // Update card accessibility based on user level
+            updateCardAccessibility();
+            
+            // Show the app
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('app').classList.remove('hidden');
+        });
+
+        function isValidToken(token) {
+            try {
+                const decoded = atob(token);
+                const [timestamp, username, accessLevel] = decoded.split(':');
+                const tokenAge = Date.now() - parseInt(timestamp);
+                return tokenAge < 24 * 60 * 60 * 1000; // 24 hours
+            } catch {
+                return false;
+            }
+        }
+
+        function getUserAccessLevel() {
+            try {
+                const token = localStorage.getItem('authToken');
+                if (!token) return 0;
+                
+                const decoded = atob(token);
+                const [timestamp, username, accessLevel] = decoded.split(':');
+                return parseInt(accessLevel) || 0;
+            } catch {
+                return 0;
+            }
+        }
+
+        function updateCardAccessibility() {
+            const userLevel = getUserAccessLevel();
+            
+            // Update each card based on access level
+            Object.keys(PAGE_ACCESS).forEach(pageKey => {
+                const requiredLevel = PAGE_ACCESS[pageKey];
+                const card = document.querySelector(`[onclick="openSimulation('${pageKey}')"]`);
+                const badge = document.getElementById(`badge-${pageKey}`);
+                
+                if (card) {
+                    if (userLevel < requiredLevel) {
+                        card.classList.add('card-disabled');
+                        card.style.pointerEvents = 'none';
+                        if (badge) {
+                            badge.style.background = '#dc3545';
+                            badge.textContent = `L${requiredLevel}`;
+                            badge.title = `Requires Level ${requiredLevel} access`;
+                        }
+                    } else {
+                        card.classList.remove('card-disabled');
+                        card.style.pointerEvents = 'auto';
+                        if (badge) {
+                            badge.title = `Available with your Level ${userLevel} access`;
+                        }
+                    }
+                }
+            });
+        }
+
+        function openSimulation(type) {
+            const token = localStorage.getItem('authToken');
+            const userLevel = getUserAccessLevel();
+            const requiredLevel = PAGE_ACCESS[type];
+            
+            if (!token || !isValidToken(token)) {
+                window.location.href = '/';
+                return;
+            }
+            
+            // Check access level
+            if (userLevel < requiredLevel) {
+                alert(`This feature requires Level ${requiredLevel} access. You currently have Level ${userLevel} access.`);
+                return;
+            }
+            
+            // Navigate to the specific simulation page with new nested structure
+            switch(type) {
+                case 'boomgate':
+                    window.location.href = '/traffic/simulators/boomgate/';
+                    break;
+                case 'two-way-passing':
+                    window.location.href = '/traffic/simulators/two-way-passing/';
+                    break;
+                case 'carparkutilisation':
+                    window.location.href = '/traffic/simulators/carparkutilisation/';
+                    break;
+                case 'carlift':
+                    window.location.href = '/traffic/simulators/carlift/';
+                    break;
+                case 'mechanical':
+                    window.location.href = '/traffic/simulators/mechanical/';
+                    break;
+                case 'schoolpickup':
+                    window.location.href = '/traffic/simulators/schoolpickup/';
+                    break;
+                case 'rampdrawer':
+                    window.location.href = '/traffic/tools/rampdrawer/';
+                    break;
+                case 'network':
+                    window.location.href = '/traffic/tools/network/';
+                    break;
+                default:
+                    alert('Simulation not found');
+            }
+        }
+    </script>
+</body>
+</html>

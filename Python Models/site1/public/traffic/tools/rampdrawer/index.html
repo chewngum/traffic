@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Labb - Ramp Design Tool</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="/common.js"></script>
+</head>
+<body>
+    <div id="loading" class="loading">
+        <h2>Verifying access...</h2>
+    </div>
+
+    <div id="app" class="container hidden">
+        <div class="dashboard-header">
+            <div class="header-left">
+                <div class="header-title">
+                    <h1>Ramp Design Tool</h1>
+                </div>
+            </div>
+            <div class="header-center">
+            </div>
+            <div class="header-right">
+                <span class="username" id="welcomeUser">Welcome, User</span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="glass-card">
+                <h3 class="section-title">Configuration</h3>
+                
+                <div class="cards-container">
+                    <div class="card">
+                        <div class="card-title">Basic Parameters</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="widthInput">Ramp Width (m):</label>
+                                <input type="number" id="widthInput" value="3.6" min="0.001" onchange="updateSegmentOutputs()">
+                            </div>
+                            <div class="form-group">
+                                <label for="startingRLInput">Starting RL (m):</label>
+                                <input type="number" id="startingRLInput" value="0.000" onchange="updateSegmentOutputs()">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="startLabelInput">Left Label:</label>
+                                <input type="text" id="startLabelInput" value="Carpark" onchange="updateSegmentOutputs()">
+                            </div>
+                            <div class="form-group">
+                                <label for="endLabelInput">Right Label:</label>
+                                <input type="text" id="endLabelInput" value="Property Boundary" onchange="updateSegmentOutputs()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Ramp Segments</div>
+                    <div style="margin-bottom: 15px;">
+                        <button class="btn btn-reset" onclick="resetSegments()">Reset</button>
+                    </div>
+                    
+                    <div class="table-section">
+                        <table class="table" id="segmentsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th class="narrow-column">
+                                        <select id="lengthInputType" onchange="setLengthInputType(this.value)" class="header-dropdown">
+                                            <option value="length">Length (m)</option>
+                                            <option value="chainage">Chainage (m)</option>
+                                        </select>
+                                    </th>
+                                    <th class="narrow-column">
+                                        <select id="gradeInputType" onchange="setGradeInputType(this.value)" class="header-dropdown">
+                                            <option value="rl">RL (m)</option>
+                                            <option value="percent" selected>Grade (%)</option>
+                                            <option value="ratio">Grade (1:X)</option>
+                                        </select>
+                                    </th>
+                                    <th>Chainage at End (m)</th>
+                                    <th>RL at End (m)</th>
+                                    <th>Add Below</th>
+                                </tr>
+                            </thead>
+                            <tbody id="segmentsTableBody">
+                                <!-- Segments will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="buttons-row">
+                    <button class="btn btn-reset" id="resetButton" onclick="resetInputs()">Reset Inputs</button>
+                    <button class="btn btn-run" id="generateButton" onclick="generateRampDesign()">Generate Ramp Design</button>
+                </div>
+                
+                <div class="status" id="status" style="display: none;"></div>
+            </div>
+
+            <div class="results-container">
+                <h3 class="section-title">Technical Drawings</h3>
+                
+                <div id="drawingsContent">
+                    <div class="no-results">
+                        <h4>Drawings will appear here</h4>
+                        <p>Generate ramp design to view section and plan views</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Additional styles for ramp-specific elements */
+        #segmentsTable {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border: 1px solid #a3c9e0;
+            border-radius: 6px;
+            overflow: hidden;
+            table-layout: fixed;
+        }
+
+        #segmentsTable th {
+            background: #e3f1f7;
+            color: #354e8d;
+            padding: 10px 8px;
+            text-align: center;
+            font-weight: 600;
+            border-bottom: 1px solid #a3c9e0;
+            font-size: 0.9rem;
+        }
+
+        #segmentsTable td {
+            padding: 8px;
+            border-bottom: 1px solid #e3f1f7;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        #segmentsTable tr:hover {
+            background: #f8f9fa;
+        }
+
+        .narrow-column {
+            width: 120px;
+            min-width: 120px;
+            max-width: 120px;
+        }
+
+        #segmentsTable input[type="number"] {
+            width: 60px !important;
+            padding: 3px 4px !important;
+            border: 1px solid #a3c9e0 !important;
+            border-radius: 3px !important;
+            text-align: center !important;
+            font-size: 0.8rem !important;
+            box-sizing: border-box !important;
+        }
+
+        #segmentsTable input[type="number"]:focus {
+            outline: none !important;
+            border-color: #6b99c2 !important;
+        }
+
+        #segmentsTable input[type="number"]:disabled {
+            background: #f8f9fa !important;
+            color: #6c757d !important;
+            cursor: not-allowed !important;
+        }
+
+        .output-cell {
+            background: #f0f7ff;
+            color: #6c757d;
+            font-weight: 400;
+            font-size: 0.8rem;
+        }
+
+        .starting-row {
+            background: #e3f1f7;
+            font-weight: 600;
+        }
+
+        .starting-row td {
+            background: #e3f1f7;
+        }
+
+        .btn-remove {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .btn-remove:hover {
+            background: #c82333;
+        }
+
+        .btn-add {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .btn-add:hover {
+            background: #218838;
+        }
+
+        .header-dropdown {
+            background: white;
+            border: 1px solid #a3c9e0;
+            border-radius: 4px;
+            color: #354e8d;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            text-align: center;
+            width: 100%;
+            max-width: 110px;
+            padding: 3px 2px;
+            box-sizing: border-box;
+        }
+
+        .header-dropdown:focus {
+            outline: 1px solid #6b99c2;
+        }
+
+        .header-dropdown option {
+            font-size: 0.75rem;
+        }
+
+        .drawing-section {
+            margin-bottom: 20px;
+            background: #f8f9fa;
+            border: 1px solid #e3f1f7;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .drawing-header {
+            background: linear-gradient(135deg, #354e8d 0%, #496f9c 100%);
+            color: white;
+            padding: 12px 16px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1rem;
+        }
+        
+        .drawing-content {
+            padding: 15px;
+            background: #fafafa;
+            text-align: center;
+        }
+        
+        .drawing-content svg {
+            max-width: 100%;
+            height: auto;
+            background: white;
+            border: 1px solid #a3c9e0;
+            border-radius: 4px;
+        }
+        
+        /* Enhanced Export Buttons - Traffic Labb Style */
+        .export-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .btn-export {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            min-width: 80px;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Primary Export Buttons (SVG, CAD) */
+        .btn-export {
+            background: rgba(255, 255, 255, 0.9);
+            color: #354e8d;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-export:hover {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* SVG Button - Blue Theme */
+        .btn-export.svg {
+            background: #87ceeb;
+            color: #2c2c2c;
+            border: 1px solid #7bb8d9;
+        }
+        
+        .btn-export.svg:hover {
+            background: #7bb8d9;
+            color: #2c2c2c;
+        }
+        
+        /* PDF Button - Orange Theme */
+        .btn-export.pdf {
+            background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+            color: white;
+        }
+        
+        .btn-export.pdf:hover {
+            background: linear-gradient(135deg, #d35400 0%, #c0392b 100%);
+        }
+        
+        /* PNG Button - Green Theme */
+        .btn-export.png {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+        }
+        
+        .btn-export.png:hover {
+            background: linear-gradient(135deg, #229954 0%, #1e8449 100%);
+        }
+        
+        /* Loading State */
+        .btn-export.loading {
+            opacity: 0.8;
+            cursor: wait;
+            transform: none !important;
+        }
+        
+        .btn-export.loading::before {
+            content: '⳻ ';
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Disabled State */
+        .btn-export:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            #segmentsTable {
+                font-size: 0.8rem;
+            }
+            
+            #segmentsTable th,
+            #segmentsTable td {
+                padding: 6px 4px;
+            }
+            
+            #segmentsTable input[type="number"] {
+                width: 60px !important;
+                font-size: 0.75rem !important;
+            }
+            
+            .export-buttons {
+                gap: 6px;
+            }
+            
+            .btn-export {
+                font-size: 0.75rem;
+                padding: 6px 10px;
+                min-width: 70px;
+            }
+            
+            .drawing-header {
+                flex-direction: column;
+                gap: 8px;
+                align-items: stretch;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .export-buttons {
+                flex-direction: column;
+                gap: 4px;
+                width: 100%;
+            }
+            
+            .btn-export {
+                width: 100%;
+                min-width: unset;
+            }
+        }
+    </style>
+
+    <script>
+        let currentLengthInputType = 'length';
+        let currentGradeInputType = 'percent';
+        let segments = [];
+        let segmentCounter = 0;
+
+        // Authentication check on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('authToken');
+            
+            if (!token || !isValidToken(token)) {
+                window.location.href = '/';
+                return;
+            }
+            
+            updateWelcomeMessage();
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('app').classList.remove('hidden');
+            initializeDefaultSegments();
+            setupDashboardFeedbackForm();
+        });
+
+        function isValidToken(token) {
+            try {
+                const decoded = atob(token);
+                const [timestamp, username] = decoded.split(':');
+                const tokenAge = Date.now() - parseInt(timestamp);
+                return tokenAge < 24 * 60 * 60 * 1000;
+            } catch {
+                return false;
+            }
+        }
+
+        function getUsernameFromToken() {
+            try {
+                const token = localStorage.getItem('authToken');
+                if (!token) return 'User';
+                
+                const decoded = atob(token);
+                const [timestamp, username] = decoded.split(':');
+                return username || 'User';
+            } catch {
+                return 'User';
+            }
+        }
+
+        function updateWelcomeMessage() {
+            const username = getUsernameFromToken();
+            document.getElementById('welcomeUser').textContent = `Welcome, ${username}`;
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            window.location.href = '/';
+        }
+
+        // Synchronize segment data from DOM inputs to segments array
+        function syncSegmentDataFromDOM() {
+            segments.forEach(segment => {
+                const lengthInput = document.getElementById(`length-${segment.id}`);
+                const gradeInput = document.getElementById(`grade-${segment.id}`);
+                
+                if (lengthInput) {
+                    segment.length = parseFloat(lengthInput.value) || 0;
+                }
+                if (gradeInput) {
+                    segment.grade = parseFloat(gradeInput.value) || 0;
+                }
+            });
+        }
+
+        function setLengthInputType(type) {
+            const oldType = currentLengthInputType;
+            currentLengthInputType = type;
+            
+            if (oldType !== type) {
+                // Sync current DOM values to segments array before conversion
+                syncSegmentDataFromDOM();
+                convertAllLengthInputs(oldType, type);
+            }
+            
+            renderSegments();
+            updateSegmentOutputs();
+        }
+
+        function setGradeInputType(type) {
+            const oldType = currentGradeInputType;
+            currentGradeInputType = type;
+            
+            if (oldType !== type) {
+                // Sync current DOM values to segments array before conversion
+                syncSegmentDataFromDOM();
+                convertAllGradeInputs(oldType, type);
+            }
+            
+            renderSegments();
+            updateSegmentOutputs();
+        }
+
+        function convertAllLengthInputs(fromType, toType) {
+            // Store current DOM values before conversion
+            const currentValues = segments.map(segment => {
+                const input = document.getElementById(`length-${segment.id}`);
+                return input ? parseFloat(input.value) || 0 : segment.length;
+            });
+            
+            segments.forEach((segment, index) => {
+                const currentValue = currentValues[index];
+                let convertedValue;
+                
+                if (fromType === 'length' && toType === 'chainage') {
+                    let chainageAtEnd = 0;
+                    for (let i = 0; i <= index; i++) {
+                        chainageAtEnd += currentValues[i];
+                    }
+                    convertedValue = chainageAtEnd;
+                } else if (fromType === 'chainage' && toType === 'length') {
+                    const previousChainage = index === 0 ? 0 : currentValues[index - 1];
+                    convertedValue = Math.max(0, currentValue - previousChainage);
+                }
+                
+                if (convertedValue !== undefined) {
+                    segment.length = convertedValue;
+                }
+            });
+        }
+
+        function convertAllGradeInputs(fromType, toType) {
+            let cumulativeRL = parseFloat(document.getElementById('startingRLInput').value) || 0;
+            
+            segments.forEach((segment, index) => {
+                const currentValue = segment.grade;
+                const segmentLength = getSegmentActualLength(segment.id);
+                let convertedValue;
+                
+                if (fromType === 'rl' && toType === 'percent') {
+                    if (segmentLength > 0) {
+                        const rise = currentValue - cumulativeRL;
+                        convertedValue = (rise / segmentLength) * 100;
+                        cumulativeRL = currentValue;
+                    } else {
+                        convertedValue = 0;
+                    }
+                } else if (fromType === 'rl' && toType === 'ratio') {
+                    if (segmentLength > 0) {
+                        const rise = currentValue - cumulativeRL;
+                        const gradePercent = (rise / segmentLength) * 100;
+                        convertedValue = gradePercent !== 0 ? Math.abs(100 / gradePercent) : 0;
+                        cumulativeRL = currentValue;
+                    } else {
+                        convertedValue = 0;
+                    }
+                } else if (fromType === 'percent' && toType === 'rl') {
+                    const rise = (currentValue / 100) * segmentLength;
+                    convertedValue = cumulativeRL + rise;
+                    cumulativeRL = convertedValue;
+                } else if (fromType === 'percent' && toType === 'ratio') {
+                    convertedValue = currentValue !== 0 ? Math.abs(100 / currentValue) : 0;
+                    const rise = (currentValue / 100) * segmentLength;
+                    cumulativeRL += rise;
+                } else if (fromType === 'ratio' && toType === 'rl') {
+                    const gradePercent = currentValue !== 0 ? 100 / currentValue : 0;
+                    const rise = (gradePercent / 100) * segmentLength;
+                    convertedValue = cumulativeRL + rise;
+                    cumulativeRL = convertedValue;
+                } else if (fromType === 'ratio' && toType === 'percent') {
+                    convertedValue = currentValue !== 0 ? 100 / currentValue : 0;
+                    const rise = (convertedValue / 100) * segmentLength;
+                    cumulativeRL += rise;
+                }
+                
+                if (convertedValue !== undefined) {
+                    segment.grade = convertedValue;
+                }
+            });
+        }
+
+        function getSegmentActualLength(segmentId) {
+            const segment = segments.find(s => s.id === segmentId);
+            if (!segment) return 0;
+            
+            if (currentLengthInputType === 'length') {
+                return segment.length;
+            } else {
+                const segmentIndex = segments.findIndex(s => s.id === segmentId);
+                let previousChainage = 0;
+                for (let i = 0; i < segmentIndex; i++) {
+                    previousChainage = segments[i].length;
+                }
+                return Math.max(0, segment.length - previousChainage);
+            }
+        }
+
+        function addSegment() {
+            const segmentId = ++segmentCounter;
+            
+            let defaultLength = 0;
+            let defaultGrade = 0;
+            
+            if (currentLengthInputType === 'chainage') {
+                defaultLength = segments.reduce((sum, seg) => sum + getSegmentActualLength(seg.id), 0);
+            }
+            
+            if (currentGradeInputType === 'rl') {
+                const segmentIndex = segments.length;
+                defaultGrade = getSegmentStartingRL(segmentIndex);
+            } else if (currentGradeInputType === 'percent') {
+                defaultGrade = 0;
+            } else if (currentGradeInputType === 'ratio') {
+                defaultGrade = 0;
+            }
+            
+            const segment = { id: segmentId, length: defaultLength, grade: defaultGrade };
+            segments.push(segment);
+            
+            renderSegments();
+            updateSegmentOutputs();
+        }
+
+        function removeSegment(segmentId) {
+            segments = segments.filter(s => s.id !== segmentId);
+            renderSegments();
+            updateSegmentOutputs();
+        }
+
+        function renderSegments() {
+            const tableBody = document.getElementById('segmentsTableBody');
+            const startingRL = parseFloat(document.getElementById('startingRLInput').value) || 0;
+            
+            let html = `
+                <tr class="starting-row">
+                    <td>0</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>0.000</td>
+                    <td>${startingRL.toFixed(3)}</td>
+                    <td><button class="btn-add" onclick="addSegmentBelow(0)">+</button></td>
+                    <td>-</td>
+                </tr>
+            `;
+            
+            html += segments.map((segment, index) => {
+                return `
+                    <tr>
+                        <td>${segment.id}</td>
+                        <td>
+                            <input type="number" id="length-${segment.id}" value="${segment.length.toFixed(3)}" 
+                                   min="0.001" step="0.001" onchange="updateSegmentOutputs()">
+                        </td>
+                        <td>
+                            <input type="number" id="grade-${segment.id}" value="${segment.grade.toFixed(3)}" 
+                                   step="0.001" onchange="updateSegmentOutputs()">
+                        </td>
+                        <td class="output-cell" id="chainage-output-${segment.id}">0.000</td>
+                        <td class="output-cell" id="rl-output-${segment.id}">0.000</td>
+                        <td><button class="btn-add" onclick="addSegmentBelow(${segment.id})">+</button></td>
+                        <td>
+                            <button class="btn-remove" onclick="removeSegment(${segment.id})">-</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            tableBody.innerHTML = html;
+        }
+
+        function addSegmentBelow(afterId) {
+            const segmentId = ++segmentCounter;
+            
+            let insertIndex = 0;
+            if (afterId !== 0) {
+                insertIndex = segments.findIndex(seg => seg.id === afterId) + 1;
+            }
+            
+            let defaultLength = 0;
+            let defaultGrade = 0;
+            
+            if (currentLengthInputType === 'chainage') {
+                let cumulativeLength = 0;
+                for (let i = 0; i < insertIndex; i++) {
+                    cumulativeLength += getSegmentActualLength(segments[i].id);
+                }
+                defaultLength = cumulativeLength;
+            }
+            
+            if (currentGradeInputType === 'rl') {
+                defaultGrade = getSegmentStartingRL(insertIndex);
+            } else if (currentGradeInputType === 'percent') {
+                defaultGrade = 0;
+            } else if (currentGradeInputType === 'ratio') {
+                defaultGrade = 0;
+            }
+            
+            const segment = { id: segmentId, length: defaultLength, grade: defaultGrade };
+            segments.splice(insertIndex, 0, segment);
+            
+            renderSegments();
+            updateSegmentOutputs();
+        }
+
+        function getSegmentStartingRL(segmentIndex) {
+            const startingRL = parseFloat(document.getElementById('startingRLInput').value) || 0;
+            let cumulativeRL = startingRL;
+            
+            for (let i = 0; i < segmentIndex; i++) {
+                const segment = segments[i];
+                const segmentLength = getSegmentActualLength(segment.id);
+                
+                let rise = 0;
+                if (currentGradeInputType === 'rl') {
+                    const prevStartingRL = i === 0 ? startingRL : getSegmentStartingRL(i);
+                    rise = segment.grade - prevStartingRL;
+                } else if (currentGradeInputType === 'percent') {
+                    rise = (segment.grade / 100) * segmentLength;
+                } else if (currentGradeInputType === 'ratio') {
+                    const gradePercent = segment.grade !== 0 ? 100 / segment.grade : 0;
+                    rise = (gradePercent / 100) * segmentLength;
+                }
+                
+                cumulativeRL += rise;
+            }
+            
+            return cumulativeRL;
+        }
+
+        function resetSegments() {
+            segments = [];
+            segmentCounter = 0;
+            initializeDefaultSegments();
+        }
+
+        function initializeDefaultSegments() {
+            segments = [];
+            segmentCounter = 0;
+
+            document.getElementById('widthInput').value = 3.6;
+            document.getElementById('startingRLInput').value = 0.000;
+            document.getElementById('startLabelInput').value = "Carpark";
+            document.getElementById('endLabelInput').value = "Property Boundary";
+
+            currentLengthInputType = 'length';
+            currentGradeInputType = 'percent';
+            
+            document.getElementById('lengthInputType').value = 'length';
+            document.getElementById('gradeInputType').value = 'percent';
+
+            const defaults = [
+                { length: 2, grade: 12.5 },
+                { length: 12, grade: 25 },
+                { length: 2, grade: 17.5 },
+                { length: 6, grade: 5 },
+                { length: 0, grade: 0 }
+            ];
+
+            defaults.forEach(def => {
+                const segmentId = ++segmentCounter;
+                segments.push({ id: segmentId, length: def.length, grade: def.grade });
+            });
+
+            renderSegments();
+            updateSegmentOutputs();
+        }
+
+        function resetInputs() {
+            initializeDefaultSegments();
+        }
+
+        function updateSegmentOutputs() {
+            // Sync DOM values to segments array first
+            syncSegmentDataFromDOM();
+            
+            const startingRL = parseFloat(document.getElementById('startingRLInput').value) || 0;
+            let cumulativeLength = 0;
+            let cumulativeRL = startingRL;
+            
+            const startingRLCells = document.querySelectorAll('.starting-row td');
+            if (startingRLCells.length > 4) {
+                startingRLCells[4].textContent = startingRL.toFixed(3);
+            }
+            
+            segments.forEach((segment, index) => {
+                const segmentLength = getSegmentActualLength(segment.id);
+                cumulativeLength += segmentLength;
+                
+                const gradeValue = segment.grade;
+                
+                let rise = 0;
+                let endRL = 0;
+                
+                if (currentGradeInputType === 'rl') {
+                    endRL = gradeValue;
+                    rise = endRL - cumulativeRL;
+                } else if (currentGradeInputType === 'percent') {
+                    rise = (gradeValue / 100) * segmentLength;
+                    endRL = cumulativeRL + rise;
+                } else if (currentGradeInputType === 'ratio') {
+                    const gradePercent = gradeValue !== 0 ? 100 / gradeValue : 0;
+                    rise = (gradePercent / 100) * segmentLength;
+                    endRL = cumulativeRL + rise;
+                }
+                
+                cumulativeRL = endRL;
+                
+                const chainageOutput = document.getElementById(`chainage-output-${segment.id}`);
+                const rlOutput = document.getElementById(`rl-output-${segment.id}`);
+                
+                if (chainageOutput) chainageOutput.textContent = cumulativeLength.toFixed(3);
+                if (rlOutput) rlOutput.textContent = endRL.toFixed(3);
+            });
+        }
+
+        function getSegmentData() {
+            // Sync data first
+            syncSegmentDataFromDOM();
+            
+            return segments.map((segment, index) => {
+                const segmentLength = getSegmentActualLength(segment.id);
+                const gradeValue = segment.grade;
+                
+                let gradePercent = 0;
+                
+                if (currentGradeInputType === 'rl') {
+                    const startingRL = getSegmentStartingRL(index);
+                    const rise = gradeValue - startingRL;
+                    gradePercent = segmentLength > 0 ? (rise / segmentLength) * 100 : 0;
+                } else if (currentGradeInputType === 'percent') {
+                    gradePercent = gradeValue;
+                } else if (currentGradeInputType === 'ratio') {
+                    gradePercent = gradeValue !== 0 ? 100 / gradeValue : 0;
+                }
+                
+                return {
+                    length: segmentLength,
+                    gradePercent: gradePercent,
+                    rise: (gradePercent / 100) * segmentLength
+                };
+            }).filter(seg => seg.length > 0);
+        }
+
+        async function generateRampDesign() {
+            const button = document.getElementById('generateButton');
+            const status = document.getElementById('status');
+            const token = localStorage.getItem('authToken');
+
+            if (!token || !isValidToken(token)) {
+                window.location.href = '/';
+                return;
+            }
+
+            const segmentData = getSegmentData();
+            const width = parseFloat(document.getElementById('widthInput').value);
+            const startingRL = parseFloat(document.getElementById('startingRLInput').value) || 0;
+            const startLabel = document.getElementById('startLabelInput').value || 'Start';
+            const endLabel = document.getElementById('endLabelInput').value || 'End';
+
+            if (!width || segmentData.length === 0) {
+                status.style.display = 'block';
+                status.className = 'status error';
+                status.textContent = 'Please fill in ramp width and add at least one segment';
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = 'Generating...';
+            status.style.display = 'block';
+            status.className = 'status running';
+            status.textContent = 'Generating ramp design drawings...';
+
+            try {
+                const response = await fetch('/api/rampdrawer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        action: 'generateDrawings',
+                        parameters: {
+                            segmentData,
+                            width,
+                            startingRL,
+                            startLabel,
+                            endLabel,
+                            gradeType: 'percent'
+                        }
+                    })
+                });
+
+                if (response.status === 401) {
+                    localStorage.removeItem('authToken');
+                    window.location.href = '/';
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    status.className = 'status complete';
+                    status.textContent = 'Ramp design generated successfully!';
+                    
+                    displayDrawings(data.drawings);
+
+                    setTimeout(() => {
+                        status.style.display = 'none';
+                    }, 3000);
+                } else {
+                    throw new Error(data.error || 'Failed to generate drawings');
+                }
+
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = 'Error: ' + error.message;
+            }
+
+            button.disabled = false;
+            button.textContent = 'Generate Ramp Design';
+        }
+
+        function displayDrawings(drawings) {
+            const container = document.getElementById('drawingsContent');
+            
+            container.innerHTML = `
+                <div class="drawing-section">
+                    <div class="drawing-header">
+                        <span>Section View</span>
+                        <div class="export-buttons">
+                            <button class="btn-export svg" onclick="exportFile('section', 'svg')">SVG</button>
+                            <button class="btn-export" onclick="exportFile('section', 'autocad')">CAD Script</button>
+                            <button class="btn-export" onclick="exportFile('section', 'dwf')">DWF</button>
+                        </div>
+                    </div>
+                    <div class="drawing-content">
+                        ${drawings.sectionSvg}
+                    </div>
+                </div>
+                
+                <div class="drawing-section">
+                    <div class="drawing-header">
+                        <span>Plan View</span>
+                        <div class="export-buttons">
+                            <button class="btn-export svg" onclick="exportFile('plan', 'svg')">SVG</button>
+                            <button class="btn-export" onclick="exportFile('plan', 'autocad')">CAD Script</button>
+                            <button class="btn-export" onclick="exportFile('plan', 'dwf')">DWF</button>
+                        </div>
+                    </div>
+                    <div class="drawing-content">
+                        ${drawings.planSvg}
+                    </div>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                const resultsContainer = document.querySelector('.results-container');
+                resultsContainer.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start'
+                });
+            }, 100);
+        }
+
+        async function exportFile(type, format) {
+            const token = localStorage.getItem('authToken');
+
+            if (!token || !isValidToken(token)) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Show loading state
+            const button = event.target;
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.classList.add('loading');
+            button.textContent = 'Generating...';
+
+            const segmentData = getSegmentData();
+            const width = parseFloat(document.getElementById('widthInput').value);
+            const startingRL = parseFloat(document.getElementById('startingRLInput').value) || 0;
+            const startLabel = document.getElementById('startLabelInput').value || 'Start';
+            const endLabel = document.getElementById('endLabelInput').value || 'End';
+
+            try {
+                const action = format === 'autocad' ? 'exportAutoCAD' : 'exportFile';
+                const response = await fetch('/api/rampdrawer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        action: action,
+                        parameters: {
+                            type,
+                            format,
+                            segmentData,
+                            width,
+                            startingRL,
+                            startLabel,
+                            endLabel,
+                            gradeType: 'percent'
+                        }
+                    })
+                });
+
+                if (response.status === 401) {
+                    localStorage.removeItem('authToken');
+                    window.location.href = '/';
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (format === 'svg') {
+                        // SVG text file download
+                        const blob = new Blob([data.content], { type: 'image/svg+xml' });
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `ramp_${type}.svg`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                    } else if (format === 'autocad' || format === 'dwf') {
+                        // Text file download
+                        const blob = new Blob([data.content], { type: 'text/plain' });
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `ramp_${type}.${format === 'autocad' ? 'scr' : format}`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                    }
+                } else {
+                    throw new Error(data.error || 'Export failed');
+                }
+
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Export error: ' + error.message);
+            } finally {
+                // Restore button state
+                button.disabled = false;
+                button.classList.remove('loading');
+                button.textContent = originalText;
+            }
+        }
+    </script>
+</body>
+</html>

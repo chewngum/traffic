@@ -1,0 +1,304 @@
+{
+  "metadata": {
+    "generatedAt": "2025-01-20T10:00:00.000Z",
+    "version": "1.0.0",
+    "description": "Site configuration manifest for Engineering Simulations platform"
+  },
+  "pages": {
+    "/": {
+      "path": "/",
+      "name": "Landing Page",
+      "category": "landing",
+      "pageId": "landing",
+      "type": "landing",
+      "accessLevel": 1,
+      "hasIndex": true
+    },
+    "/traffic/": {
+      "path": "/traffic/",
+      "name": "Dashboard",
+      "category": "dashboard",
+      "pageId": "dashboard",
+      "type": "dashboard",
+      "accessLevel": 1,
+      "hasIndex": true
+    },
+    "/traffic/simulators/": {
+      "path": "/traffic/simulators/",
+      "name": "All Simulations",
+      "category": "simulators",
+      "pageId": "simulators-dashboard",
+      "type": "dashboard",
+      "accessLevel": 1,
+      "hasIndex": true
+    },
+    "/traffic/simulators/boomgate/": {
+      "path": "/traffic/simulators/boomgate/",
+      "name": "Boom Gate Simulation",
+      "category": "simulators",
+      "pageId": "boomgate",
+      "type": "simulator",
+      "accessLevel": 1,
+      "hasIndex": true
+    },
+    "/traffic/simulators/carlift/": {
+      "path": "/traffic/simulators/carlift/",
+      "name": "Car Lift Simulation",
+      "category": "simulators",
+      "pageId": "carlift",
+      "type": "simulator",
+      "accessLevel": 2,
+      "hasIndex": true
+    },
+    "/traffic/simulators/carparkutilisation/": {
+      "path": "/traffic/simulators/carparkutilisation/",
+      "name": "Car Park Utilisation",
+      "category": "simulators",
+      "pageId": "carparkutilisation",
+      "type": "simulator",
+      "accessLevel": 2,
+      "hasIndex": true
+    },
+    "/traffic/simulators/mechanical/": {
+      "path": "/traffic/simulators/mechanical/",
+      "name": "Mechanical Parking Structure",
+      "category": "simulators",
+      "pageId": "mechanical",
+      "type": "simulator",
+      "accessLevel": 2,
+      "hasIndex": true
+    },
+    "/traffic/simulators/schoolpickup/": {
+      "path": "/traffic/simulators/schoolpickup/",
+      "name": "School Pickup Simulation",
+      "category": "simulators",
+      "pageId": "schoolpickup",
+      "type": "simulator",
+      "accessLevel": 2,
+      "hasIndex": true
+    },
+    "/traffic/simulators/two-way-passing/": {
+      "path": "/traffic/simulators/two-way-passing/",
+      "name": "Two-Way Passing Simulation",
+      "category": "simulators",
+      "pageId": "two-way-passing",
+      "type": "simulator",
+      "accessLevel": 1,
+      "hasIndex": true
+    },
+    "/traffic/tools/": {
+      "path": "/traffic/tools/",
+      "name": "All Tools",
+      "category": "tools",
+      "pageId": "tools-dashboard",
+      "type": "dashboard",
+      "accessLevel": 1,
+      "hasIndex": true
+    },
+    "/traffic/tools/rampdrawer/": {
+      "path": "/traffic/tools/rampdrawer/",
+      "name": "Ramp Design Tool",
+      "category": "tools",
+      "pageId": "rampdrawer",
+      "type": "tool",
+      "accessLevel": 1,
+      "hasIndex": true
+    },
+    "/traffic/tools/network/": {
+      "path": "/traffic/tools/network/",
+      "name": "Traffic Network Database",
+      "category": "tools",
+      "pageId": "network",
+      "type": "tool",
+      "accessLevel": 3,
+      "hasIndex": true
+    },
+    "/support/": {
+      "path": "/support/",
+      "name": "Support Center",
+      "category": "support",
+      "pageId": "support-dashboard",
+      "type": "dashboard",
+      "accessLevel": 1,
+      "hasIndex": true
+    },
+    "/support/FAQ/": {
+      "path": "/support/FAQ/",
+      "name": "Frequently Asked Questions",
+      "category": "support",
+      "pageId": "faq",
+      "type": "support",
+      "accessLevel": 4,
+      "hasIndex": true
+    },
+    "/support/glossary/": {
+      "path": "/support/glossary/",
+      "name": "Glossary",
+      "category": "support",
+      "pageId": "glossary",
+      "type": "support",
+      "accessLevel": 4,
+      "hasIndex": true
+    },
+    "/support/scenarios/": {
+      "path": "/support/scenarios/",
+      "name": "Scenarios",
+      "category": "support",
+      "pageId": "scenarios",
+      "type": "support",
+      "accessLevel": 4,
+      "hasIndex": true
+    },
+    "/accounts/": {
+      "path": "/accounts/",
+      "name": "Account Management",
+      "category": "account",
+      "pageId": "account",
+      "type": "account",
+      "accessLevel": 1,
+      "hasIndex": true
+    }
+  },
+  "navigation": {
+    "dashboard": {
+      "label": "Dashboard",
+      "path": "/traffic/",
+      "accessLevel": 1
+    },
+    "simulators": {
+      "label": "Simulations",
+      "path": "/traffic/simulators/",
+      "accessLevel": 1,
+      "children": [
+        {
+          "label": "Boom Gate",
+          "path": "/traffic/simulators/boomgate/",
+          "pageId": "boomgate",
+          "accessLevel": 1
+        },
+        {
+          "label": "Two-Way Passing",
+          "path": "/traffic/simulators/two-way-passing/",
+          "pageId": "two-way-passing",
+          "accessLevel": 1
+        },
+        {
+          "label": "Car Park Utilisation",
+          "path": "/traffic/simulators/carparkutilisation/",
+          "pageId": "carparkutilisation",
+          "accessLevel": 2
+        },
+        {
+          "label": "Car Lift",
+          "path": "/traffic/simulators/carlift/",
+          "pageId": "carlift",
+          "accessLevel": 2
+        },
+        {
+          "label": "Mechanical Parking",
+          "path": "/traffic/simulators/mechanical/",
+          "pageId": "mechanical",
+          "accessLevel": 2
+        },
+        {
+          "label": "School Pickup",
+          "path": "/traffic/simulators/schoolpickup/",
+          "pageId": "schoolpickup",
+          "accessLevel": 2
+        }
+      ]
+    },
+    "tools": {
+      "label": "Tools",
+      "path": "/traffic/tools/",
+      "accessLevel": 1,
+      "children": [
+        {
+          "label": "Ramp Design",
+          "path": "/traffic/tools/rampdrawer/",
+          "pageId": "rampdrawer",
+          "accessLevel": 1
+        },
+        {
+          "label": "Traffic Network",
+          "path": "/traffic/tools/network/",
+          "pageId": "network",
+          "accessLevel": 3
+        }
+      ]
+    },
+    "support": {
+      "label": "Support",
+      "path": "/support/",
+      "accessLevel": 1,
+      "children": [
+        {
+          "label": "FAQ",
+          "path": "/support/FAQ/",
+          "pageId": "faq",
+          "accessLevel": 4
+        },
+        {
+          "label": "Glossary",
+          "path": "/support/glossary/",
+          "pageId": "glossary",
+          "accessLevel": 4
+        },
+        {
+          "label": "Scenarios",
+          "path": "/support/scenarios/",
+          "pageId": "scenarios",
+          "accessLevel": 4
+        }
+      ]
+    },
+    "accounts": {
+      "label": "Account",
+      "path": "/accounts/",
+      "accessLevel": 1
+    }
+  },
+  "users": {
+    "guest": {
+      "password": "guest123",
+      "accessLevel": 1,
+      "displayName": "Guest User",
+      "description": "Limited access to basic features"
+    },
+    "demo": {
+      "password": "demo456",
+      "accessLevel": 2,
+      "displayName": "Demo User",
+      "description": "Standard access to most features"
+    },
+    "admin": {
+      "password": "admin789",
+      "accessLevel": 3,
+      "displayName": "Administrator",
+      "description": "Full access to all features"
+    }
+  },
+  "accessLevels": {
+    "1": {
+      "name": "Guest",
+      "color": "#6c757d",
+      "description": "Basic access to free simulations and tools"
+    },
+    "2": {
+      "name": "Premium",
+      "color": "#6b99c2",
+      "description": "Access to advanced simulations and features"
+    },
+    "3": {
+      "name": "Admin",
+      "color": "#354e8d",
+      "description": "Full access to all features and tools"
+    }
+  },
+  "settings": {
+    "tokenExpiry": 24,
+    "defaultAccessLevel": 1,
+    "siteName": "Engineering Simulations",
+    "adminEmail": "admin@example.com"
+  }
+}

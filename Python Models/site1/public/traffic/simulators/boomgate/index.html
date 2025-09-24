@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Labb - Boom Gate Simulation</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/common.js"></script>
+</head>
+<body>
+    <div id="loading" class="loading">
+        <h2>Verifying access...</h2>
+    </div>
+
+    <div id="app" class="container hidden">
+        <div class="dashboard-header">
+            <div class="header-left">
+                <div class="header-title">
+                    <h1>Boom Gate Simulation</h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="glass-card">
+                <h3 class="section-title">Configuration</h3>
+                
+                <div class="cards-container">
+                    <div class="card">
+                        <div class="card-title">Arrival Data</div>
+                        <div style="background: #e3f1f7; padding: 12px; border-radius: 6px; margin-bottom: 12px; text-align: center; border: 1px solid #a3c9e0;">
+                            <div style="font-size: 0.9rem; margin-bottom: 6px; font-weight: 600;">Traffic Flow</div>
+                            <div style="font-size: 1.2rem; margin: 8px 0; color: #354e8d; font-weight: bold;">→ Single Queue → Boom Gate</div>
+                            <div style="font-size: 0.8rem; color: #666;">Vehicle Entry Control Point</div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="arrivalRate">Arrival Rate (cars/hr):</label>
+                                <input type="number" id="arrivalRate" value="30" min="0" max="1000" step="0.1" onchange="calculateSampleSize(); updateRuntimeDisplay(); updateTotalService()">
+                            </div>
+                            <div class="form-group">
+                                <label for="minHeadway">Min Headway (seconds):</label>
+                                <input type="number" id="minHeadway" value="0" min="0" max="3600" step="0.1">
+                                <!-- <div class="help-text">Minimum time between consecutive arrivals</div> -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Timing Data</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="servicePart1">Movement Time (s):</label>
+                                <input type="number" id="servicePart1" value="10" min="0" max="3600" step="0.1" onchange="updateTotalService()">
+                                <div class="help-text">e.g. boom opening, car passing out of detection range, boom closing, next car to stop point</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="part1Dist">Variability:</label>
+                                <select id="part1Dist">
+                                    <option value="static">Fixed</option>
+                                    <option value="exponential" selected>Variable (exp dist)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="servicePart2">Ticket Operations (s):</label>
+                                <input type="number" id="servicePart2" value="5" min="0" max="3600" step="0.1" onchange="updateTotalService()">
+                                <div class="help-text">e.g. Ticket insertion, payment, processing and error handling</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="part2Dist">Variability:</label>
+                                <select id="part2Dist">
+                                    <option value="static">Fixed</option>
+                                    <option value="exponential" selected>Variable (exp dist)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="validation-check">
+                            <strong>Average Service Time:</strong> <span id="totalServiceDisplay">15.00</span> seconds
+                        </div>
+                        <div class="validation-check utilization-check">
+                            <strong>Utilization Rate:</strong> <span id="utilizationDisplay">12.5%</span>
+                        </div>
+                        <div id="utilizationWarning" class="utilization-warning" style="display: none;">
+                            <span id="utilizationMessage"></span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Simulation Settings</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="simulationHours">Simulation Hours:</label>
+                                <input type="number" id="simulationHours" value="1000" min="1" max="10000" step="10" onchange="calculateSampleSize(); updateRuntimeDisplay()">
+                            </div>
+                            <div class="form-group">
+                                <label for="numSeeds">Number of Seeds:</label>
+                                <input type="number" id="numSeeds" value="130" min="1" max="1000" step="1" onchange="updateRuntimeDisplay(); calculateSampleSize()">
+                            </div>
+                        </div>
+                        <div class="form-row single">
+                            <div class="form-group">
+                                <label for="seedMode">Seed Mode:</label>
+                                <select id="seedMode">
+                                    <option value="fixed" selected>Fixed (Reproducible)</option>
+                                    <option value="random">Random</option>
+                                </select>
+                                <!-- <div class="help-text">Fixed: For comparison purposes | Random: Unreliable</div> -->
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Estimated Runtime:</label>
+                            <div id="runtimeEstimate" class="help-text" style="font-weight: 600;">Calculating...</div>
+                        </div>
+                    </div>
+
+                    <div class="card sample-calculator">
+                        <div class="card-title">Sample Size Calculator</div>
+                        <p style="margin-bottom: 6px; font-size: 0.85rem; color: #666;">Calculate minimum seeds for statistical confidence</p>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="confidenceLevel">Confidence Level:</label>
+                                <select id="confidenceLevel" onchange="calculateSampleSize()">
+                                    <option value="90">90%</option>
+                                    <option value="95">95%</option>
+                                    <option value="99">99%</option>
+                                    <option value="99.9" selected>99.9%</option>
+                                    <option value="99.99">99.99%</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="marginError">Error Margin (cars/hour):</label>
+                                <input type="number" id="marginError" value="0.05" min="0.01" step="0.01" onchange="calculateSampleSize()">
+                            </div>
+                        </div>
+                        
+                        <div id="sampleSizeResult" class="sample-result">
+                            Calculating minimum seeds...
+                        </div>
+                        
+                        <div class="sample-actions">
+                            <button id="applySampleSize" class="btn-apply-sample">
+                                Use Minimum Seeds
+                            </button>
+                            <div class="current-seeds-info">
+                                Current: <span id="currentSeedsDisplay">130</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="buttons-row">
+                    <button class="btn btn-reset" id="resetButton">Reset Inputs</button>
+                    <button class="btn btn-run" id="runSimulation">Run Simulation</button>
+                </div>
+                
+                <div class="status" id="status" style="display: none;"></div>
+                <div class="progress-bar" id="progressContainer" style="display: none;">
+                    <div class="progress-fill" id="progressFill"></div>
+                    <div class="progress-text">
+                        <div id="progressPercentage">0%</div>
+                        <div id="progressDetails">Initializing...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="results-container" id="resultsSection">
+                <h3 class="section-title">Results</h3>
+                
+                <div id="resultsContent">
+                    <div class="no-results">
+                        <h4>Results will appear here</h4>
+                        <p>Configure parameters and run simulation to see results</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .sample-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-apply-sample {
+            background: #6b99c2;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            flex: 1;
+            max-width: 150px;
+        }
+
+        .btn-apply-sample:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .btn-apply-sample:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .sample-result {
+            padding: 12px;
+            border: 2px solid #a3c9e0;
+            border-radius: 6px;
+            background: rgba(163, 201, 224, 0.1);
+            text-align: center;
+            margin-bottom: 0;
+            transition: all 0.3s ease;
+        }
+
+        .current-seeds-info {
+            font-size: 0.75rem;
+            color: #666;
+            text-align: right;
+            flex: 1;
+        }
+
+        #currentSeedsDisplay {
+            font-weight: 600;
+            color: #354e8d;
+        }
+
+        .seeds-updated {
+            background: #e8f5e8 !important;
+            border-color: #6b99c2 !important;
+            transition: all 0.3s ease;
+        }
+
+        .utilization-check {
+            margin-top: 8px;
+        }
+
+        .utilization-warning {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 6px;
+            border: 2px solid;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .btn-disabled {
+            background: #95a5a6 !important;
+            cursor: not-allowed !important;
+            opacity: 0.6;
+        }
+
+        .btn-disabled:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .input-summary {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 16px;
+        }
+
+        .input-summary h4 {
+            margin: 0 0 12px 0;
+            color: #354e8d;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .input-summary-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .input-summary-list li {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #495057;
+        }
+
+        .input-summary-list li:last-child {
+            margin-bottom: 0;
+        }
+
+        .input-summary-list strong {
+            color: #354e8d;
+            margin-right: 8px;
+        }
+
+        .results-cards-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .results-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 16px;
+        }
+
+        .results-card h4 {
+            margin: 0 0 12px 0;
+            color: #354e8d;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .validation-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .validation-list li {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #495057;
+        }
+
+        .validation-list li:last-child {
+            margin-bottom: 0;
+        }
+
+        .validation-list strong {
+            color: #354e8d;
+            margin-right: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .results-cards-container {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+    </style>
+ 
+ <script>
+    // Global variable to store recommended seeds
+    let recommendedSeeds = 0;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Give common.js time to load manifest and handle authentication
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Check if we were redirected or blocked by access control
+        if (window.location.pathname !== '/traffic/simulators/boomgate/') {
+            return; // Access was denied, page was redirected
+        }
+        
+        // Check authentication using common.js functions
+        const token = localStorage.getItem('authToken');
+        if (!token || !isValidToken(token)) {
+            window.location.href = '/login/';
+            return;
+        }
+        
+        // Show the app
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('app').classList.remove('hidden');
+        
+        // Initialize the page
+        resetInputs();
+        updateTotalService(); // Ensure this is called after page load
+        
+        // Setup apply sample size button
+        document.getElementById('applySampleSize').addEventListener('click', applySampleSize);
+    });
+
+    function isValidToken(token) {
+        try {
+            const decoded = atob(token);
+            const [timestamp, username, accessLevel] = decoded.split(':');
+            const tokenAge = Date.now() - parseInt(timestamp);
+            
+            // Use 24 hours as default, or get from manifest if available
+            let expiryHours = 24;
+            if (window.SITE_MANIFEST?.settings?.tokenExpiry) {
+                expiryHours = window.SITE_MANIFEST.settings.tokenExpiry;
+            }
+            
+            return tokenAge < expiryHours * 60 * 60 * 1000;
+        } catch {
+            return false;
+        }
+    }
+
+    function validateAndParseFloat(elementId, min = 0, max = Infinity, defaultValue = null) {
+        const element = document.getElementById(elementId);
+        const value = parseFloat(element.value);
+        
+        if (isNaN(value)) {
+            if (defaultValue !== null) {
+                element.value = defaultValue;
+                element.style.borderColor = '';
+                return defaultValue;
+            } else {
+                element.style.borderColor = '#d4691e';
+                throw new Error(`Invalid value for ${elementId}: must be a number`);
+            }
+        }
+        
+        if (value < min || value > max) {
+            element.style.borderColor = '#d4691e';
+            throw new Error(`${elementId} must be between ${min} and ${max}`);
+        }
+        
+        element.style.borderColor = ''; // Reset border
+        return value;
+    }
+
+    function validateAndParseInt(elementId, min = 1, max = Infinity, defaultValue = null) {
+        const element = document.getElementById(elementId);
+        const value = parseInt(element.value);
+        
+        if (isNaN(value)) {
+            if (defaultValue !== null) {
+                element.value = defaultValue;
+                element.style.borderColor = '';
+                return defaultValue;
+            } else {
+                element.style.borderColor = '#d4691e';
+                throw new Error(`Invalid value for ${elementId}: must be a whole number`);
+            }
+        }
+        
+        if (value < min || value > max) {
+            element.style.borderColor = '#d4691e';
+            throw new Error(`${elementId} must be between ${min} and ${max}`);
+        }
+        
+        element.style.borderColor = ''; // Reset border
+        return value;
+    }
+
+    function validateUtilization() {
+        try {
+            const arrivalRate = validateAndParseFloat('arrivalRate', 0, 1000);
+            const servicePart1 = validateAndParseFloat('servicePart1', 0, 3600);
+            const servicePart2 = validateAndParseFloat('servicePart2', 0, 3600);
+            
+            const avgServiceTime = servicePart1 + servicePart2;
+            const serviceRate = avgServiceTime > 0 ? 3600 / avgServiceTime : Infinity; // cars per hour
+            const utilization = arrivalRate / serviceRate;
+            const utilizationPercent = utilization * 100;
+            
+            const warningDiv = document.getElementById('utilizationWarning');
+            const messageSpan = document.getElementById('utilizationMessage');
+            const runButton = document.getElementById('runSimulation');
+            
+            if (arrivalRate === 0) {
+                // Hide warning for zero arrival rate
+                warningDiv.style.display = 'none';
+                runButton.disabled = false;
+                runButton.classList.remove('btn-disabled');
+            } else if (utilizationPercent >= 100) {
+                // Critical: System cannot handle this load
+                warningDiv.style.display = 'block';
+                warningDiv.style.borderColor = '#d4691e';
+                warningDiv.style.background = 'rgba(212, 105, 30, 0.1)';
+                messageSpan.innerHTML = `Utilization rate is ${utilizationPercent.toFixed(1)}%<br><strong>System overloaded - queues will grow indefinitely</strong>`;
+                runButton.disabled = true;
+                runButton.classList.add('btn-disabled');
+            } else if (utilizationPercent >= 95) {
+                // High warning: Very unstable
+                warningDiv.style.display = 'block';
+                warningDiv.style.borderColor = '#d4691e';
+                warningDiv.style.background = 'rgba(212, 105, 30, 0.1)';
+                messageSpan.innerHTML = `Utilization rate is ${utilizationPercent.toFixed(1)}%<br><strong>Very high utilization - expect long queues and delays</strong>`;
+                runButton.disabled = false;
+                runButton.classList.remove('btn-disabled');
+            } else if (utilizationPercent >= 80) {
+                // Moderate warning: High utilization
+                warningDiv.style.display = 'block';
+                warningDiv.style.borderColor = '#f39c12';
+                warningDiv.style.background = 'rgba(243, 156, 18, 0.1)';
+                messageSpan.innerHTML = `Utilization rate is ${utilizationPercent.toFixed(1)}%<br><strong>High utilization - moderate queuing expected</strong>`;
+                runButton.disabled = false;
+                runButton.classList.remove('btn-disabled');
+            } else {
+                // Normal operation
+                warningDiv.style.display = 'none';
+                runButton.disabled = false;
+                runButton.classList.remove('btn-disabled');
+            }
+            
+            return utilizationPercent;
+            
+        } catch (error) {
+            // If validation fails, hide warning and let other validation handle it
+            const warningDiv = document.getElementById('utilizationWarning');
+            warningDiv.style.display = 'none';
+            return 0;
+        }
+    }
+
+    function formatScientificWithSuperscript(number) {
+        if (number < 1000) {
+            return number.toFixed(0);
+        }
+        
+        const exponent = Math.floor(Math.log10(number));
+        const mantissa = number / Math.pow(10, exponent);
+        
+        return `${mantissa.toFixed(1)} × 10<sup>${exponent}</sup>`;
+    }
+
+    function updateTotalService() {
+        try {
+            const part1 = parseFloat(document.getElementById('servicePart1').value) || 0;
+            const part2 = parseFloat(document.getElementById('servicePart2').value) || 0;
+            const total = part1 + part2;
+            
+            // Update service time display
+            document.getElementById('totalServiceDisplay').textContent = total.toFixed(2);
+            
+            // Check utilization whenever service time changes
+            validateUtilization();
+        } catch (error) {
+            document.getElementById('totalServiceDisplay').textContent = '0.00';
+        }
+    }
+
+    function calculateServiceTimeStats(params) {
+        const part1Mean = params.servicePart1;
+        const part2Mean = params.servicePart2;
+        const totalMean = part1Mean + part2Mean;
+        
+        // Calculate variance for each part based on distribution type
+        let part1Variance, part2Variance;
+        
+        if (params.part1IsExp) {
+            // Exponential: Var = μ²
+            part1Variance = part1Mean * part1Mean;
+        } else {
+            // Fixed/Static: Var = 0
+            part1Variance = 0;
+        }
+        
+        if (params.part2IsExp) {
+            // Exponential: Var = μ²  
+            part2Variance = part2Mean * part2Mean;
+        } else {
+            // Fixed/Static: Var = 0
+            part2Variance = 0;
+        }
+        
+        // For independent random variables: Var(X + Y) = Var(X) + Var(Y)
+        const totalVariance = part1Variance + part2Variance;
+        const totalStdDev = Math.sqrt(totalVariance);
+        
+        return {
+            mean: totalMean,
+            stdDev: totalStdDev,
+            lowerBound: totalMean - totalStdDev,
+            upperBound: totalMean + totalStdDev
+        };
+    }
+
+    // Update runtime display when parameters change
+    function updateRuntimeDisplay() {
+        try {
+            const parameters = collectParameters();
+            updateRuntimeEstimateDisplay(parameters);
+        } catch (error) {
+            console.warn('Could not update runtime display:', error);
+        }
+    }
+
+    function collectParameters() {
+        try {
+            return {
+                arrivalRate: validateAndParseFloat('arrivalRate', 0, 1000),
+                minHeadway: validateAndParseFloat('minHeadway', 0, 3600),
+                servicePart1: validateAndParseFloat('servicePart1', 0, 3600),
+                servicePart2: validateAndParseFloat('servicePart2', 0, 3600),
+                part1IsExp: document.getElementById('part1Dist').value === 'exponential',
+                part2IsExp: document.getElementById('part2Dist').value === 'exponential',
+                simulationHours: validateAndParseInt('simulationHours', 1, 10000),
+                numSeeds: validateAndParseInt('numSeeds', 1, 1000),
+                seedMode: document.getElementById('seedMode').value
+            };
+        } catch (error) {
+            // Show error to user
+            const statusEl = document.getElementById('status');
+            statusEl.style.display = 'block';
+            statusEl.className = 'status error';
+            statusEl.textContent = error.message;
+            throw error;
+        }
+    }
+
+    function calculateSampleSize() {
+        try {
+            const confidenceLevel = validateAndParseFloat('confidenceLevel');
+            const marginError = validateAndParseFloat('marginError', 0.01);
+            const simHours = validateAndParseFloat('simulationHours', 1);
+            const arrivalRate = validateAndParseFloat('arrivalRate', 0);
+            const currentSeeds = validateAndParseInt('numSeeds', 1);
+            
+            // Handle zero arrival rate case
+            if (arrivalRate === 0) {
+                const resultDiv = document.getElementById('sampleSizeResult');
+                const currentSeedsDisplay = document.getElementById('currentSeedsDisplay');
+                const applyButton = document.getElementById('applySampleSize');
+                
+                if (currentSeedsDisplay) {
+                    currentSeedsDisplay.textContent = currentSeeds;
+                }
+                
+                resultDiv.innerHTML = `
+                    <strong>Sample size calculation not applicable</strong><br>
+                    <small style="color: #999;">Zero arrival rate - no statistical analysis needed</small>
+                `;
+                resultDiv.style.borderColor = '#999';
+                resultDiv.style.background = 'rgba(153, 153, 153, 0.1)';
+                
+                if (applyButton) {
+                    applyButton.disabled = true;
+                    applyButton.textContent = 'N/A for Zero Rate';
+                    applyButton.style.background = '#95a5a6';
+                }
+                return;
+            }
+            
+            const zScore = getZScoreForConfidence(confidenceLevel);
+            const estimatedStdDev = Math.sqrt(arrivalRate);
+            const minSampleSize = Math.ceil(Math.pow((zScore * estimatedStdDev) / marginError, 2));
+            const adjustedSampleSize = Math.ceil(minSampleSize / simHours);
+            recommendedSeeds = Math.max(adjustedSampleSize, 10);
+            
+            const resultDiv = document.getElementById('sampleSizeResult');
+            const currentSeedsDisplay = document.getElementById('currentSeedsDisplay');
+            const applyButton = document.getElementById('applySampleSize');
+            
+            // Update current seeds display
+            if (currentSeedsDisplay) {
+                currentSeedsDisplay.textContent = currentSeeds;
+            }
+            
+            resultDiv.innerHTML = `
+                <strong>Minimum ${recommendedSeeds} seeds required</strong><br>
+                <small>(${confidenceLevel}% confidence, Z=${zScore.toFixed(3)}, σ=√${arrivalRate}=${estimatedStdDev.toFixed(2)})</small>
+            `;
+            
+            // Update button state and styling
+            if (applyButton) {
+                if (currentSeeds < recommendedSeeds) {
+                    resultDiv.style.borderColor = '#d4691e';
+                    resultDiv.style.background = 'rgba(212, 105, 30, 0.1)';
+                    resultDiv.innerHTML += '<br><small style="color: #d4691e;">⚠ Currently below recommended seeds.</small>';
+                    
+                    applyButton.disabled = false;
+                    applyButton.textContent = `Use ${recommendedSeeds} Seeds`;
+                    applyButton.style.background = '#d4691e';
+                } else if (currentSeeds === recommendedSeeds) {
+                    resultDiv.style.borderColor = '#6b99c2';
+                    resultDiv.style.background = 'rgba(107, 153, 194, 0.1)';
+                    resultDiv.innerHTML += '<br><small style="color: #6b99c2;">✓ Current seeds exactly at minimum</small>';
+                    
+                    applyButton.disabled = true;
+                    applyButton.textContent = 'Already at Minimum';
+                    applyButton.style.background = '#95a5a6';
+                } else {
+                    resultDiv.style.borderColor = '#6b99c2';
+                    resultDiv.style.background = 'rgba(107, 153, 194, 0.1)';
+                    resultDiv.innerHTML += '<br><small style="color: #6b99c2;">✓ Current seeds adequate</small>';
+                    
+                    applyButton.disabled = false;
+                    applyButton.textContent = `Use ${recommendedSeeds} Seeds`;
+                    applyButton.style.background = '#6b99c2';
+                }
+            }
+            
+        } catch (error) {
+            const resultDiv = document.getElementById('sampleSizeResult');
+            resultDiv.innerHTML = `<span style="color: #d4691e;">⚠️ ${error.message}</span>`;
+            resultDiv.style.borderColor = '#d4691e';
+            resultDiv.style.background = 'rgba(212, 105, 30, 0.1)';
+        }
+    }
+
+    function applySampleSize() {
+        if (recommendedSeeds > 0) {
+            const numSeedsInput = document.getElementById('numSeeds');
+            const oldValue = numSeedsInput.value;
+            numSeedsInput.value = recommendedSeeds;
+            
+            // Add visual feedback class
+            numSeedsInput.classList.add('seeds-updated');
+            
+            // Trigger change events to update other dependent calculations
+            updateRuntimeDisplay();
+            calculateSampleSize();
+            
+            // Remove visual feedback after 2 seconds
+            setTimeout(() => {
+                numSeedsInput.classList.remove('seeds-updated');
+            }, 2000);
+            
+            console.log(`Applied sample size: ${oldValue} → ${recommendedSeeds} seeds`);
+        }
+    }
+
+    function getZScoreForConfidence(confidenceLevel) {
+        const zScores = {
+            90: 1.645,
+            95: 1.96,
+            99: 2.576,
+            99.9: 3.291,
+            99.99: 3.891
+        };
+        return zScores[confidenceLevel];
+    }
+
+    function generateValidationCheck(results, params) {
+        const expectedArrival = params.arrivalRate;
+        const actualArrival = results.avgArrivalsPerHour;
+        const marginError = parseFloat(document.getElementById('marginError').value);
+        const error = Math.abs(expectedArrival - actualArrival);
+        const validationPassed = error <= marginError;
+        
+        return `
+            <h4>${validationPassed ? '✅' : '⚠️'} Arrival Rate Validation</h4>
+            <ul class="validation-list">
+                <li><strong>Expected:</strong> ${expectedArrival.toFixed(2)} cars/hr</li>
+                <li><strong>Actual:</strong> ${actualArrival.toFixed(2)} cars/hr</li>
+                <li><strong>Error:</strong> ${error.toFixed(3)} cars/hr</li>
+                <li><strong>Status:</strong> ${validationPassed ? 'Rate validated successfully' : 'Rate outside margin'} (±${marginError})</li>
+            </ul>
+        `;
+    }
+
+    function displayResults(results, params) {
+        const container = document.getElementById('resultsContent');
+        
+        // Check if arrival rate is effectively zero
+        const hasArrivals = params.arrivalRate > 0;
+        const serviceStats = calculateServiceTimeStats(params);
+        
+        // Calculate utilization for display
+        const utilizationPercent = hasArrivals ? (results.serverUtilization * 100) : 0;
+        
+        let html = `
+            <div class="results-cards-container">
+                <div class="input-summary">
+                    <h4>Input Parameters</h4>
+                    <div class="input-summary-grid">
+                        <div class="input-group">
+                            <strong>Model:</strong> Vehicle Control Point/ Boom Gate
+                        </div>
+                        <div class="input-group">
+                            <strong>Arrivals:</strong> ${params.arrivalRate} cars/hr
+                        </div>
+                        <div class="input-group">
+                            <strong>Min Headway:</strong> ${params.minHeadway}s
+                        </div>
+                        <div class="input-group">
+                            <strong>Movement:</strong> ${params.servicePart1}s (${document.getElementById('part1Dist').options[document.getElementById('part1Dist').selectedIndex].text})
+                        </div>
+                        <div class="input-group">
+                            <strong>Ticket Ops:</strong> ${params.servicePart2}s (${document.getElementById('part2Dist').options[document.getElementById('part2Dist').selectedIndex].text})
+                        </div>
+                        <div class="input-group">
+                            <strong>Total Service:</strong> ${serviceStats.mean.toFixed(2)}s avg
+                        </div>
+                        <div class="input-group">
+                            <strong>Simulation:</strong> ${params.simulationHours}h × ${params.numSeeds} seeds
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="results-card">
+                    ${generateValidationCheck(results, params)}
+                </div>
+            </div>
+            
+            <div class="tables-container" style="grid-template-columns: 1fr 1fr 1fr;">
+                <div class="table-section" style="padding: 8px;">
+                    <h4 style="color: #354e8d; margin-bottom: 8px; font-size: 1rem; font-weight: 600; text-align: center;">Performance Metrics</h4>
+                    <table class="metrics-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+
+        if (hasArrivals) {
+            // Normal case with arrivals
+            html += `
+                            <tr>
+                                <td style="text-align: left; font-weight: 600;">Utilization Rate</td>
+                                <td style="color: ${utilizationPercent >= 95 ? '#d4691e' : utilizationPercent >= 80 ? '#f39c12' : '#354e8d'}">${utilizationPercent.toFixed(2)}%${utilizationPercent >= 100 ? ' (OVERLOADED)' : utilizationPercent >= 95 ? ' (Very High)' : utilizationPercent >= 80 ? ' (High)' : ''}</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: left; font-weight: 600;">Wait per Arrival</td>
+                                <td>${results.avgWaitTimePerArrival.avg.toFixed(2)}s</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: left; font-weight: 600;">Wait per Queued</td>
+                                <td>${results.avgWaitTimePerWaiter.avg.toFixed(2)}s</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: left; font-weight: 600;">Probability of Queuing</td>
+                                <td>${(results.probabilityOfWaiting.avg * 100).toFixed(2)}%</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: left; font-weight: 600;">Avg Service Time</td>
+                                <td>${serviceStats.mean.toFixed(2)}s</td>
+                            </tr>
+            `;
+            
+            // Conditional service variability display
+            if (serviceStats.stdDev > 0) {
+                html += `
+                            <tr>
+                                <td style="text-align: left; font-weight: 600;">Service ± 1σ</td>
+                                <td>${serviceStats.lowerBound.toFixed(1)}s, ${serviceStats.upperBound.toFixed(1)}s</td>
+                            </tr>
+                `;
+            } else {
+                html += `
+                            <tr>
+                                <td style="text-align: left; font-weight: 600;">Service Variability</td>
+                                <td>Fixed (no variation)</td>
+                            </tr>
+                `;
+            }
+            
+            html += `
+                            <tr>
+                                <td style="text-align: left; font-weight: 600;">Total Arrivals</td>
+                                <td>${formatScientificWithSuperscript(results.totalCustomers.avg * results.numSeeds)}</td>
+                            </tr>
+            `;
+        } else {
+            // Zero arrivals case
+            html += `
+                            <tr>
+                                <td style="text-align: left; font-weight: 600;">Utilization Rate</td>
+                                <td style="color: #999;">N/A (no arrivals)</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: left; font-weight: 600;">Wait per Arrival</td>
+                                <td>N/A</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: left; font-weight: 600;">Wait per Queued</td>
+                                <td>N/A</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: left; font-weight: 600;">Probability of Queuing</td>
+                                <td>0.00%</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: left; font-weight: 600; color: #999;">Avg Service Time</td>
+                                <td style="color: #999;">N/A (no services)</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: left; font-weight: 600; color: #999;">Service ± 1σ</td>
+                                <td style="color: #999;">N/A (no services)</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: left; font-weight: 600;">Total Arrivals</td>
+                                <td>0</td>
+                            </tr>
+            `;
+        }
+
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="table-section" style="padding: 8px;">
+                    <h4 style="color: #354e8d; margin-bottom: 8px; font-size: 1rem; font-weight: 600; text-align: center;">Cars in System</h4>
+        `;
+
+        if (hasArrivals) {
+            // Normal system state table
+            html += `
+                    <table class="distribution-table">
+                        <thead>
+                            <tr>
+                                <th>Cars</th>
+                                <th>% Time</th>
+                                <th>Cumulative</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            // Build system state table with cumulative
+            const sortedStates = Object.keys(results.systemStatePercentages)
+                .map(s => parseInt(s))
+                .sort((a, b) => a - b);
+            
+            let cumulative = 0;
+            for (const state of sortedStates) {
+                const percentage = results.systemStatePercentages[state].avg;
+                cumulative += percentage;
+                
+                if (percentage > 0.01 && cumulative <= 99.99) {
+                    html += `
+                        <tr>
+                            <td>${state}</td>
+                            <td>${percentage.toFixed(2)}%</td>
+                            <td>${cumulative.toFixed(2)}%</td>
+                        </tr>
+                    `;
+                }
+            }
+            
+            html += `
+                        </tbody>
+                    </table>
+            `;
+        } else {
+            // Zero arrivals case
+            html += `
+                    <table class="distribution-table">
+                        <thead>
+                            <tr>
+                                <th>Cars</th>
+                                <th>% Time</th>
+                                <th>Cumulative</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0</td>
+                                <td>100.00%</td>
+                                <td>100.00%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+            `;
+        }
+
+        html += `
+                </div>
+                
+                <div class="table-section" style="padding: 8px;">
+                    <h4 style="color: #354e8d; margin-bottom: 8px; font-size: 1rem; font-weight: 600; text-align: center;">Hourly Maximum Distribution</h4>
+        `;
+
+        if (hasArrivals) {
+            // Normal hourly max table
+            html += `
+                    <table class="distribution-table">
+                        <thead>
+                            <tr>
+                                <th>Max/Hour</th>
+                                <th>% Hours</th>
+                                <th>Cumulative</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            // Build hourly max table with cumulative
+            const sortedMaxes = Object.keys(results.hourlyMaxDistribution)
+                .map(m => parseInt(m))
+                .sort((a, b) => a - b);
+            
+            let maxCumulative = 0;
+            for (const max of sortedMaxes) {
+                const percentage = results.hourlyMaxDistribution[max].avg;
+                maxCumulative += percentage;
+                
+                if (percentage > 0.01 && maxCumulative <= 99.99) {
+                    html += `
+                        <tr>
+                            <td>${max}</td>
+                            <td>${percentage.toFixed(2)}%</td>
+                            <td>${maxCumulative.toFixed(2)}%</td>
+                        </tr>
+                    `;
+                }
+            }
+            
+            html += `
+                        </tbody>
+                    </table>
+            `;
+        } else {
+            // Zero arrivals case
+            html += `
+                    <table class="distribution-table">
+                        <thead>
+                            <tr>
+                                <th>Max/Hour</th>
+                                <th>% Hours</th>
+                                <th>Cumulative</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0</td>
+                                <td>100.00%</td>
+                                <td>100.00%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+            `;
+        }
+
+        html += `
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = html;
+    }
+
+    function resetInputs() {
+        document.getElementById('arrivalRate').value = '30';
+        document.getElementById('minHeadway').value = '0';
+        document.getElementById('servicePart1').value = '10';
+        document.getElementById('servicePart2').value = '5';
+        document.getElementById('part1Dist').value = 'static';
+        document.getElementById('part2Dist').value = 'exponential';
+        document.getElementById('simulationHours').value = '1000';
+        document.getElementById('numSeeds').value = '130';
+        document.getElementById('seedMode').value = 'fixed';
+        document.getElementById('confidenceLevel').value = '99.9';
+        document.getElementById('marginError').value = '0.05';
+        
+        // Clear any error styling
+        document.querySelectorAll('input').forEach(input => {
+            input.style.borderColor = '';
+        });
+        
+        // Initialize displays in the correct order
+        setTimeout(() => {
+            updateTotalService();
+            calculateSampleSize();
+            updateRuntimeDisplay();
+            validateUtilization();
+        }, 100);
+    }
+
+    // Event listeners
+    document.getElementById('resetButton').addEventListener('click', resetInputs);
+
+    document.getElementById('runSimulation').addEventListener('click', async () => {
+        const token = localStorage.getItem('authToken');
+        if (!token || !isValidToken(token)) {
+            window.location.href = '/login/';
+            return;
+        }
+
+        const runButton = document.getElementById('runSimulation');
+        if (runButton.disabled) return;
+
+        let parameters;
+        try {
+            parameters = collectParameters();
+        } catch (error) {
+            // Error already displayed by collectParameters
+            return;
+        }
+
+        const estimatedMs = estimateSimulationRuntime(parameters);
+        const estimatedTimeStr = formatEstimatedTime(estimatedMs);
+        const numSeeds = parameters.numSeeds;
+
+        // UI Elements
+        const elements = {
+            status: document.getElementById('status'),
+            progressContainer: document.getElementById('progressContainer'),
+            progressFill: document.getElementById('progressFill'),
+            progressPercentage: document.getElementById('progressPercentage'),
+            progressDetails: document.getElementById('progressDetails'),
+            resultsContent: document.getElementById('resultsContent')
+        };
+
+        // Show loading state
+        runButton.disabled = true;
+        runButton.textContent = `Running simulation...`;
+        elements.status.style.display = 'block';
+        elements.status.className = 'status running';
+        elements.status.textContent = `Running simulation...`;
+        elements.progressContainer.style.display = 'block';
+        elements.resultsContent.innerHTML = `<div class="no-results"><h4>Running simulation...</h4><p>Processing ${numSeeds} seeds</p></div>`;
+
+        // Scroll to progress bar using common.js function
+        scrollToProgress();
+
+        // Start progress tracking from common.js
+        const progressInterval = createRealisticProgress(estimatedMs, elements.progressFill, elements.progressPercentage, elements.progressDetails);
+        const startTime = Date.now();
+
+        try {
+            const response = await fetch('/api/boomgate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ action: 'runSimulationBatched', parameters })
+            });
+
+            clearInterval(progressInterval);
+
+            if (response.status === 401) {
+                localStorage.removeItem('authToken');
+                window.location.href = '/login/';
+                return;
+            }
+
+            if (!response.headers.get('content-type')?.includes('application/json')) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (!data.success) throw new Error(data.error || 'Simulation failed');
+
+            // Complete progress and show results
+            const actualTime = Date.now() - startTime;
+            
+            elements.progressFill.style.width = '100%';
+            elements.progressPercentage.textContent = '100%';
+            elements.progressDetails.textContent = 'Complete!';
+            elements.status.className = 'status complete';
+            elements.status.textContent = `Completed!`;
+            
+            displayResults(data.results, parameters);
+
+            // Scroll to results using common.js function after a brief delay to allow for DOM updates
+            setTimeout(() => {
+                scrollToResults();
+            }, 300);
+
+            setTimeout(() => {
+                elements.status.style.display = 'none';
+                elements.progressContainer.style.display = 'none';
+            }, 4000);
+
+        } catch (error) {
+            clearInterval(progressInterval);
+            elements.status.className = 'status error';
+            elements.status.textContent = 'Error: ' + error.message;
+            elements.resultsContent.innerHTML = `<div class="no-results"><h4>Error</h4><p>${error.message}</p></div>`;
+            
+            // Still scroll to results section even on error so user can see the error message
+            setTimeout(() => {
+                scrollToResults();
+            }, 300);
+        }
+
+        runButton.disabled = false;
+        runButton.textContent = 'Run Simulation';
+    });
+</script>
+
+</body>
+</html>

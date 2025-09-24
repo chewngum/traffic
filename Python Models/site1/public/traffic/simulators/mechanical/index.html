@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Labb - Mechanical Parking</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="/common.js"></script>
+</head>
+<body>
+    <div id="loading" class="loading">
+        <h2>Verifying access...</h2>
+    </div>
+
+    <div id="app" class="container hidden">
+        <div class="dashboard-header">
+            <div class="header-left">
+                <div class="header-title">
+                    <h1>Mechanical Parking Simulation</h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="glass-card">
+                <h3 class="section-title">Configuration</h3>
+                
+                <div class="cards-container">
+                    <div class="card">
+                        <div class="card-title">Movement Rates</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="entryRate">Entry Rate (cars/hour):</label>
+                                <input type="number" id="entryRate" value="15" min="0" step="0.1" onchange="calculateSampleSize(); updateRuntimeDisplay()">
+                            </div>
+                            <div class="form-group">
+                                <label for="exitRate">Exit Rate (cars/hour):</label>
+                                <input type="number" id="exitRate" value="15" min="0" step="0.1" onchange="calculateSampleSize(); updateRuntimeDisplay()">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="entryServiceTime">Entry Service (seconds):</label>
+                                <input type="number" id="entryServiceTime" value="30" min="0.1" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label for="exitServiceTime">Exit Service (seconds):</label>
+                                <input type="number" id="exitServiceTime" value="40" min="0.1" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Headway Controls</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="entryHeadway">Min Headway (s):</label>
+                                <input type="number" id="entryHeadway" value="3" min="0" step="0.1">
+                                <div class="help-text">Min time between entries</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="exitHeadwayMode">Exit Headway Mode:</label>
+                                <select id="exitHeadwayMode" onchange="toggleExitHeadway()">
+                                    <option value="same">Same as Entry</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" id="exitHeadwayGroup" style="display: none;">
+                            <label for="exitHeadway">Exit Min Headway (seconds):</label>
+                            <input type="number" id="exitHeadway" value="3" min="0" step="0.1">
+                            <div class="help-text">Min time between exits</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="priority">Priority Mode:</label>
+                            <select id="priority">
+                                <option value="FCFS">First Come First Served</option>
+                                <option value="CARS">Entry Priority</option>
+                                <option value="PEOPLE">Exit Priority</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Simulation Settings</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="simulationHours">Simulation Hours:</label>
+                                <input type="number" id="simulationHours" value="1000" min="10" step="10" onchange="calculateSampleSize(); updateRuntimeDisplay()">
+                            </div>
+                            <div class="form-group">
+                                <label for="numSeeds">Number of Seeds:</label>
+                                <input type="number" id="numSeeds" value="130" min="1" step="1" onchange="updateRuntimeDisplay()">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Estimated Runtime:</label>
+                            <div id="runtimeEstimate" class="help-text" style="font-weight: 600;">Calculating...</div>
+                        </div>
+                    </div>
+
+                    <div class="card sample-calculator">
+                        <div class="card-title">Sample Size Calculator</div>
+                        <p style="margin-bottom: 6px; font-size: 0.85rem; color: #666;">Calculate minimum seeds for statistical confidence</p>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="confidenceLevel">Confidence Level:</label>
+                                <select id="confidenceLevel" onchange="calculateSampleSize()">
+                                    <option value="90">90%</option>
+                                    <option value="95">95%</option>
+                                    <option value="99">99%</option>
+                                    <option value="99.9" selected>99.9%</option>
+                                    <option value="99.99">99.99%</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="marginError">Margin (trips/hour):</label>
+                                <input type="number" id="marginError" value="0.05" min="0.01" step="0.01" onchange="calculateSampleSize()">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="seedMode">Seed Mode:</label>
+                            <select id="seedMode">
+                                <option value="fixed" selected>Fixed (Reproducible)</option>
+                                <option value="random">Random</option>
+                            </select>
+                        </div>
+                        
+                        <div id="sampleSizeResult" class="sample-result">
+                            Calculating minimum seeds...
+                        </div>
+                        
+                        <button type="button" id="applySampleSize" class="apply-sample-btn">
+                            Apply Recommended Seeds
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="buttons-row">
+                    <button class="btn btn-reset" id="resetButton">Reset</button>
+                    <button class="btn btn-run" id="runSimulation">Run Simulation</button>
+                </div>
+                
+                <div class="status" id="status" style="display: none;"></div>
+                <div class="progress-bar" id="progressContainer" style="display: none;">
+                    <div class="progress-fill" id="progressFill"></div>
+                    <div class="progress-text">
+                        <div id="progressPercentage">0%</div>
+                        <div id="progressDetails">Initializing...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="results-container" id="resultsSection">
+                <h3 class="section-title">Results</h3>
+                
+                <div id="resultsContent">
+                    <div class="no-results">
+                        <h4>Results will appear here</h4>
+                        <p>Configure parameters and run simulation to see results</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Authentication check on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Give common.js time to load manifest and handle authentication
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Check authentication using common.js functions
+            const token = localStorage.getItem('authToken');
+            if (!token || !isValidToken(token)) {
+                window.location.href = '/login/';
+                return;
+            }
+            
+            // Show the app
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('app').classList.remove('hidden');
+            
+            resetInputs();
+            calculateSampleSize();
+            updateRuntimeDisplay();
+        });
+
+        function isValidToken(token) {
+            try {
+                const decoded = atob(token);
+                const [timestamp, username] = decoded.split(':');
+                const tokenAge = Date.now() - parseInt(timestamp);
+                return tokenAge < 24 * 60 * 60 * 1000; // 24 hours
+            } catch {
+                return false;
+            }
+        }
+
+        // Update runtime display when parameters change
+        function updateRuntimeDisplay() {
+            try {
+                const parameters = collectParameters();
+                updateRuntimeEstimateDisplay(parameters);
+            } catch (error) {
+                console.warn('Could not update runtime display:', error);
+            }
+        }
+
+        function collectParameters() {
+            return {
+                entryRate: parseFloat(document.getElementById('entryRate').value) || 15,
+                exitRate: parseFloat(document.getElementById('exitRate').value) || 15,
+                levels: parseFloat(document.getElementById('entryRate').value) + parseFloat(document.getElementById('exitRate').value),
+                entryServiceTime: parseFloat(document.getElementById('entryServiceTime').value) || 30,
+                exitServiceTime: parseFloat(document.getElementById('exitServiceTime').value) || 40,
+                entryHeadway: parseFloat(document.getElementById('entryHeadway').value) || 3,
+                exitHeadway: document.getElementById('exitHeadwayMode').value === 'same' 
+                    ? parseFloat(document.getElementById('entryHeadway').value) || 3
+                    : parseFloat(document.getElementById('exitHeadway').value) || 3,
+                simulationHours: parseInt(document.getElementById('simulationHours').value) || 1000,
+                simHours: parseInt(document.getElementById('simulationHours').value) || 1000,
+                numSeeds: parseInt(document.getElementById('numSeeds').value) || 200,
+                priority: document.getElementById('priority').value || 'FCFS',
+                seedMode: document.getElementById('seedMode').value || 'fixed'
+            };
+        }
+
+        function calculateSampleSize() {
+            const entryRate = parseFloat(document.getElementById('entryRate').value) || 0;
+            const exitRate = parseFloat(document.getElementById('exitRate').value) || 0;
+            const simulationHours = parseInt(document.getElementById('simulationHours').value) || 1000;
+            const confidenceLevel = parseFloat(document.getElementById('confidenceLevel').value) || 99.9;
+            const marginError = parseFloat(document.getElementById('marginError').value) || 0.05;
+            
+            const totalTripsPerHour = entryRate + exitRate;
+            const estimatedSigma = Math.sqrt(totalTripsPerHour);
+            const zScore = getZScoreForConfidence(confidenceLevel);
+            const minSampleSize = Math.ceil(Math.pow((zScore * estimatedSigma) / marginError, 2) / simulationHours);
+            
+            const resultDiv = document.getElementById('sampleSizeResult');
+            const applyButton = document.getElementById('applySampleSize');
+            const runButton = document.getElementById('runSimulation');
+            const currentSeeds = parseInt(document.getElementById('numSeeds').value) || 130;
+            
+            resultDiv.innerHTML = `
+                <strong>Minimum ${minSampleSize} seeds required</strong><br>
+                <small>(Z=${zScore.toFixed(3)}, Est. Ïƒ=${estimatedSigma.toFixed(1)}, Observations/run=${simulationHours})</small>
+            `;
+            
+            if (currentSeeds < minSampleSize) {
+                applyButton.style.display = 'block';
+                applyButton.setAttribute('data-recommended', minSampleSize);
+                applyButton.textContent = `Use ${minSampleSize} seeds`;
+                resultDiv.style.borderColor = '#a3c9e0';
+                resultDiv.style.background = 'rgba(163, 201, 224, 0.1)';
+                
+                // Update run button to light blue (inadequate)
+                runButton.className = 'btn btn-run inadequate';
+            } else {
+                applyButton.style.display = 'none';
+                resultDiv.style.borderColor = '#6b99c2';
+                resultDiv.style.background = 'rgba(107, 153, 194, 0.1)';
+                resultDiv.innerHTML += '<br><small style="color: #6b99c2;">âœ… Current seeds adequate</small>';
+                
+                // Update run button to darker blue (adequate)
+                runButton.className = 'btn btn-run adequate';
+            }
+        }
+
+        function toggleExitHeadway() {
+            const mode = document.getElementById('exitHeadwayMode').value;
+            const exitGroup = document.getElementById('exitHeadwayGroup');
+            
+            if (mode === 'custom') {
+                exitGroup.style.display = 'block';
+            } else {
+                exitGroup.style.display = 'none';
+            }
+        }
+
+        function resetInputs() {
+            document.getElementById('entryRate').value = '15';
+            document.getElementById('exitRate').value = '15';
+            document.getElementById('entryServiceTime').value = '30';
+            document.getElementById('exitServiceTime').value = '40';
+            document.getElementById('entryHeadway').value = '3';
+            document.getElementById('exitHeadway').value = '3';
+            document.getElementById('exitHeadwayMode').value = 'same';
+            document.getElementById('priority').value = 'FCFS';
+            document.getElementById('simulationHours').value = '1000';
+            document.getElementById('numSeeds').value = '130';
+            document.getElementById('confidenceLevel').value = '99.9';
+            document.getElementById('marginError').value = '0.05';
+            document.getElementById('seedMode').value = 'fixed';
+            
+            toggleExitHeadway();
+            calculateSampleSize();
+            updateRuntimeDisplay();
+        }
+
+        function displayResults(results, params) {
+            const container = document.getElementById('resultsContent');
+            
+            // Calculate validation metrics
+            const expectedEntryRate = params.entryRate;
+            const expectedExitRate = params.exitRate;
+            const actualEntryRate = results.totalEntries ? (results.totalEntries / params.simulationHours / results.numSeeds) : null;
+            const actualExitRate = results.totalExits ? (results.totalExits / params.simulationHours / results.numSeeds) : null;
+            const canValidate = actualEntryRate !== null && actualExitRate !== null;
+            
+            let entryError, exitError, totalError;
+            if (canValidate) {
+                entryError = Math.abs(actualEntryRate - expectedEntryRate);
+                exitError = Math.abs(actualExitRate - expectedExitRate);
+                totalError = entryError + exitError;
+            }
+            
+            const marginError = parseFloat(document.getElementById('marginError').value) || 0.05;
+            const validationPassed = canValidate ? totalError <= marginError : null;
+            
+            let html = `
+                <div class="summary-note">
+                    Results from ${params.simulationHours} hours Ã— ${results.numSeeds} seeds analysed and averaged below
+                </div>
+                
+                <div class="validation-section ${validationPassed === null ? '' : validationPassed ? '' : 'error'}">
+                    <h4>${validationPassed === null ? 'âš ï¸' : validationPassed ? 'âœ…' : 'âŒ'} Arrival Rate Validation</h4>
+                    ${canValidate ? `
+                    <ul class="validation-list">
+                        <li><strong>Expected:</strong> Entry=${expectedEntryRate.toFixed(2)}, Exit=${expectedExitRate.toFixed(2)}</li>
+                        <li><strong>Actual:</strong> Entry=${actualEntryRate.toFixed(2)}, Exit=${actualExitRate.toFixed(2)}</li>
+                        <li><strong>Error:</strong> ${totalError.toFixed(3)} (Entry=${entryError.toFixed(3)} + Exit=${exitError.toFixed(3)})</li>
+                        <li><strong>Status:</strong> ${validationPassed ? 'Rates validated successfully' : 'Rates outside margin'} (Â±${marginError})</li>
+                    </ul>
+                    ` : `
+                    <ul class="validation-list">
+                        <li><strong>Expected:</strong> Entry=${expectedEntryRate.toFixed(2)}, Exit=${expectedExitRate.toFixed(2)} cars/hour</li>
+                        <li><strong>Note:</strong> Backend validation data not available</li>
+                    </ul>
+                    `}
+                </div>
+                
+                <div class="utilisation-checkpoint">
+                    Structure Utilisation: ${(results.utilisation * 100).toFixed(2)}%
+                </div>
+                
+                <div class="metrics-section">
+                    <h4 style="color: #354e8d; margin-bottom: 8px; font-size: 1rem; font-weight: 600; text-align: center;">Performance Metrics</h4>
+                    <table class="metrics-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Wait Time (s)</th>
+                                <th>Delay Probability</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="text-align: left; font-weight: 600;">Entry</td>
+                                <td>${results.avgWaitEntryArrival.toFixed(2)}</td>
+                                <td>${(results.delayEntry * 100).toFixed(2)}%</td>
+                            </tr>
+                            <tr>
+                                <td style="text-align: left; font-weight: 600;">Exit</td>
+                                <td>${results.avgWaitExitArrival.toFixed(2)}</td>
+                                <td>${(results.delayExit * 100).toFixed(2)}%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="tables-container">
+                    <div class="table-section">
+                        <h4>Entry Queue Analysis</h4>
+                        <div class="table-content">
+                            <div class="distribution-table-container">
+                                <table class="distribution-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Queue Length</th>
+                                            <th>% Time</th>
+                                            <th>Cum. % Time</th>
+                                            <th>% Hours Max</th>
+                                            <th>Cum. % Hours Max</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+            `;
+            
+            // Build entry table
+            const entryKeys = Object.keys(results.entryHist).map(k => parseInt(k)).sort((a, b) => a - b).slice(0, 10);
+            let entryCumTime = 0;
+            let entryCumMax = 0;
+            
+            for (const length of entryKeys) {
+                const timePercent = results.entryHist[length] || 0;
+                const maxPercent = results.entryMaxHist[length] || 0;
+                
+                entryCumTime += timePercent;
+                entryCumMax += maxPercent;
+                
+                if (timePercent > 0.01 || maxPercent > 0.01) {
+                    html += `
+                        <tr>
+                            <td>${length}</td>
+                            <td>${timePercent.toFixed(2)}%</td>
+                            <td>${entryCumTime.toFixed(2)}%</td>
+                            <td>${maxPercent.toFixed(2)}%</td>
+                            <td>${entryCumMax.toFixed(2)}%</td>
+                        </tr>
+                    `;
+                }
+            }
+            
+            html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="wait-stats">
+                                <h5>Wait Time Statistics</h5>
+                                <ul class="wait-stat-list">
+                                    <li>
+                                        <span>Avg. wait per arrival:</span>
+                                        <span>${results.avgWaitEntryArrival.toFixed(2)} s</span>
+                                    </li>
+                                    <li>
+                                        <span>Avg. wait per queued:</span>
+                                        <span>${results.avgWaitEntryQueued.toFixed(2)} s</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-section">
+                        <h4>Exit Queue Analysis</h4>
+                        <div class="table-content">
+                            <div class="distribution-table-container">
+                                <table class="distribution-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Queue Length</th>
+                                            <th>% Time</th>
+                                            <th>Cum. % Time</th>
+                                            <th>% Hours Max</th>
+                                            <th>Cum. % Hours Max</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+            `;
+            
+            // Build exit table
+            const exitKeys = Object.keys(results.exitHist).map(k => parseInt(k)).sort((a, b) => a - b).slice(0, 10);
+            let exitCumTime = 0;
+            let exitCumMax = 0;
+            
+            for (const length of exitKeys) {
+                const timePercent = results.exitHist[length] || 0;
+                const maxPercent = results.exitMaxHist[length] || 0;
+                
+                exitCumTime += timePercent;
+                exitCumMax += maxPercent;
+                
+                if (timePercent > 0.01 || maxPercent > 0.01) {
+                    html += `
+                        <tr>
+                            <td>${length}</td>
+                            <td>${timePercent.toFixed(2)}%</td>
+                            <td>${exitCumTime.toFixed(2)}%</td>
+                            <td>${maxPercent.toFixed(2)}%</td>
+                            <td>${exitCumMax.toFixed(2)}%</td>
+                        </tr>
+                    `;
+                }
+            }
+            
+            html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="wait-stats">
+                                <h5>Wait Time Statistics</h5>
+                                <ul class="wait-stat-list">
+                                    <li>
+                                        <span>Avg. wait per arrival:</span>
+                                        <span>${results.avgWaitExitArrival.toFixed(2)} s</span>
+                                    </li>
+                                    <li>
+                                        <span>Avg. wait per queued:</span>
+                                        <span>${results.avgWaitExitQueued.toFixed(2)} s</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // Event listeners
+        document.getElementById('resetButton').addEventListener('click', resetInputs);
+        
+        document.getElementById('applySampleSize').addEventListener('click', () => {
+            const recommendedSeeds = parseInt(document.getElementById('applySampleSize').getAttribute('data-recommended'));
+            document.getElementById('numSeeds').value = recommendedSeeds;
+            calculateSampleSize(); // This will recheck and hide the button
+            updateRuntimeDisplay();
+        });
+
+        document.getElementById('runSimulation').addEventListener('click', async () => {
+            const token = localStorage.getItem('authToken');
+            if (!token || !isValidToken(token)) {
+                window.location.href = '/login/';
+                return;
+            }
+
+            const runButton = document.getElementById('runSimulation');
+            if (runButton.disabled) return;
+
+            const parameters = collectParameters();
+            const estimatedMs = estimateSimulationRuntime(parameters);
+            const estimatedTimeStr = formatEstimatedTime(estimatedMs);
+            const numSeeds = parameters.numSeeds;
+
+            // UI Elements
+            const elements = {
+                status: document.getElementById('status'),
+                progressContainer: document.getElementById('progressContainer'),
+                progressFill: document.getElementById('progressFill'),
+                progressPercentage: document.getElementById('progressPercentage'),
+                progressDetails: document.getElementById('progressDetails'),
+                resultsContent: document.getElementById('resultsContent')
+            };
+
+            // Show loading state
+            runButton.disabled = true;
+            runButton.textContent = `Running simulation...`;
+            elements.status.style.display = 'block';
+            elements.status.className = 'status running';
+            elements.status.textContent = `Running simulation...`;
+            elements.progressContainer.style.display = 'block';
+            elements.resultsContent.innerHTML = `<div class="no-results"><h4>Running simulation...</h4><p>Processing ${numSeeds} seeds</p></div>`;
+
+            // Scroll to progress bar using common.js function
+            scrollToProgress();
+
+            // Start progress tracking from common.js
+            const progressInterval = createRealisticProgress(estimatedMs, elements.progressFill, elements.progressPercentage, elements.progressDetails);
+            const startTime = Date.now();
+
+            try {
+                const response = await fetch('/api/mechanical', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ action: 'runParkingSimulation', parameters })
+                });
+
+                clearInterval(progressInterval);
+
+                if (response.status === 401) {
+                    localStorage.removeItem('authToken');
+                    window.location.href = '/login/';
+                    return;
+                }
+
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Simulation failed');
+
+                // Complete progress and show results
+                const actualTime = Date.now() - startTime;
+                
+                elements.progressFill.style.width = '100%';
+                elements.progressPercentage.textContent = '100%';
+                elements.progressDetails.textContent = 'Complete!';
+                elements.status.className = 'status complete';
+                elements.status.textContent = `Completed!`;
+                
+                displayResults(data.results, parameters);
+
+                // Scroll to results using common.js function after a brief delay to allow for DOM updates
+                setTimeout(() => {
+                    scrollToResults();
+                }, 300);
+
+                setTimeout(() => {
+                    elements.status.style.display = 'none';
+                    elements.progressContainer.style.display = 'none';
+                }, 4000);
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                elements.status.className = 'status error';
+                elements.status.textContent = 'Error: ' + error.message;
+                elements.resultsContent.innerHTML = `<div class="no-results"><h4>Error</h4><p>${error.message}</p></div>`;
+                
+                // Still scroll to results section even on error so user can see the error message
+                setTimeout(() => {
+                    scrollToResults();
+                }, 300);
+            }
+
+            runButton.disabled = false;
+            runButton.textContent = 'Run Simulation';
+        });
+    </script>
+</body>
+</html>

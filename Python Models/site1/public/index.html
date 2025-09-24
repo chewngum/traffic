@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Labb - Advanced Traffic Engineering Simulations</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/common.js"></script>
+    
+    <!-- Favicons will be injected by common.js -->
+    <style>
+        body {
+            margin-top: 0;
+        }
+
+        /* Landing Page Specific Styles */
+        .hero-section {
+            background: linear-gradient(135deg, #354e8d 0%, #496f9c 100%);
+            color: white;
+            padding: 100px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.4rem;
+            margin-bottom: 30px;
+            opacity: 0.95;
+            font-weight: 400;
+            line-height: 1.4;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .cta-button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .cta-primary {
+            background: #87ceeb;
+            color: #2c2c2c;
+            box-shadow: 0 4px 15px rgba(135, 206, 235, 0.3);
+        }
+
+        .cta-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(135, 206, 235, 0.4);
+        }
+
+        .cta-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .cta-secondary:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        /* Benefits Section */
+        .benefits-section {
+            padding: 100px 0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e3f1f7 50%, #f8f9fa 100%);
+        }
+
+        .benefits-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .section-title {
+            font-size: 2.8rem;
+            color: #354e8d;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .section-description {
+            font-size: 1.3rem;
+            color: #6c757d;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            margin-top: 80px;
+        }
+
+        .benefit-card {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: all 0.4s ease;
+            border: 1px solid rgba(107, 153, 194, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .benefit-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #6b99c2, #87ceeb);
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 50px rgba(53, 78, 141, 0.2);
+        }
+
+        .benefit-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #6b99c2, #354e8d);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            font-size: 2rem;
+            color: white;
+            box-shadow: 0 10px 20px rgba(107, 153, 194, 0.3);
+        }
+
+        .benefit-title {
+            font-size: 1.5rem;
+            color: #354e8d;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .benefit-description {
+            color: #6c757d;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            background: linear-gradient(135deg, #2c3e50 0%, #354e8d 100%);
+            color: white;
+            padding: 80px 0;
+        }
+
+        .stats-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            text-align: center;
+        }
+
+        .stat-item {
+            padding: 20px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: scale(1.05);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #87ceeb;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Simulations Showcase */
+        .simulations-section {
+            padding: 80px 0;
+            background: white;
+        }
+
+        .simulations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .simulation-preview {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e3f1f7 100%);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid #a3c9e0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .simulation-preview:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(53, 78, 141, 0.12);
+        }
+
+        .simulation-category {
+            font-size: 0.85rem;
+            color: #6b99c2;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .simulation-name {
+            font-size: 1.3rem;
+            color: #354e8d;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .simulation-description {
+            color: #6c757d;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+
+        .simulation-features {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .simulation-features li {
+            color: #5a7ba3;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .simulation-features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #6b99c2;
+            font-weight: bold;
+        }
+
+        /* Call to Action Section */
+        .final-cta {
+            background: linear-gradient(135deg, #354e8d 0%, #496f9c 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .final-cta-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .final-cta h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .final-cta p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.95;
+            line-height: 1.6;
+        }
+
+        /* Contact Form */
+        .contact-section {
+            padding: 100px 0;
+            background: linear-gradient(135deg, #f8f9fa 0%, white 100%);
+        }
+
+        .contact-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .contact-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .contact-title {
+            font-size: 2.5rem;
+            color: #354e8d;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .contact-description {
+            font-size: 1.2rem;
+            color: #6c757d;
+            line-height: 1.6;
+        }
+
+        .contact-form {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+            border: 1px solid rgba(107, 153, 194, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #354e8d;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e3f1f7;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #6b99c2;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(107, 153, 194, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .submit-button {
+            background: linear-gradient(135deg, #6b99c2, #354e8d);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(107, 153, 194, 0.3);
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(107, 153, 194, 0.4);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .form-status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+
+        .form-status.success {
+            background: #e3f1f7;
+            color: #354e8d;
+            border: 1px solid #6b99c2;
+        }
+
+        .form-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .benefits-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .simulations-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-cta {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .cta-button {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation will be injected by common.js -->
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Specialised Traffic Engineering Software</h1>
+            <p class="hero-subtitle">We provide highly configurable statistical analyses of standard scenarios beyond typical probability capabilities.</p>
+
+            <div class="hero-cta">
+                <a href="/login/" class="cta-button cta-primary">Start Free Trial</a>
+                <a href="#simulations" class="cta-button cta-secondary">Explore Tools</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="benefits-section">
+        <div class="benefits-container">
+            <div class="section-header">
+                <h2 class="section-title">Transform Your Traffic Engineering Workflow</h2>
+                <p class="section-description">Professional-grade simulations and design tools that deliver statistical confidence and actionable insights for complex traffic scenarios.</p>
+
+            </div>
+            
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon">⚡</div>
+                    <h3 class="benefit-title">Accelerate Analysis</h3>
+                    <p class="benefit-description">Let us run the numbers so you don't have to-reinvent the wheel. Idyllic Monte Carlo simulations with configurable metrics that queue theory misses, means we don't leave excess yield on the table.</p>
+
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon">🎯</div>
+                    <h3 class="benefit-title">Precision Engineering</h3>
+                    <p class="benefit-description">Statistical validation with customisable confidence levels up to 99.99%. Advanced queueing theory models provide accuracy that traditional methods cannot match for critical infrastructure decisions.</p>
+
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon">📊</div>
+                    <h3 class="benefit-title">Data-Driven Insights</h3>
+                    <p class="benefit-description">Comprehensive utilisation analysis, capacity planning, and performance optimisation. Identify bottlenecks, predict failures, and optimise operations with detailed statistical breakdowns.</p>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="stats-container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">6+</span>
+                    <span class="stat-label">Simulators and Tools</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">20+</span>
+                    <span class="stat-label">I/O metrics per Simulation</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">1M+</span>
+                    <span class="stat-label">Unmatchable Survey Hours</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">10+</span>
+                    <span class="stat-label">New tools in development</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Simulations Showcase -->
+    <section class="simulations-section" id="simulations">
+        <div class="benefits-container">
+            <div class="section-header">
+                <h2 class="section-title">Professional Simulation Suite</h2>
+                <p class="section-description">Specialised tools for every traffic engineering challenge, from basic capacity analysis to complex multi-modal systems.</p>
+
+            </div>
+            
+            <div class="simulations-grid">
+                <div class="simulation-preview">
+                    <div class="simulation-category">Queueing Analysis</div>
+                    <h3 class="simulation-name">Boom Gate & Checkpoint Systems</h3>
+                    <p class="simulation-description">Model vehicle processing at security checkpoints, toll plazas, and access control points with realistic service time distributions.</p>
+                    <ul class="simulation-features">
+                        <li>Variable service time modeling</li>
+                        <li>Queue length optimisation</li>
+                        <li>Peak hour capacity analysis</li>
+                        <li>Exit lane planning</li>
+
+                    </ul>
+                </div>
+
+                <div class="simulation-preview">
+                    <div class="simulation-category">Complex Scenarios</div>
+                    <h3 class="simulation-name">Two-Way Passing Operations</h3>
+                    <p class="simulation-description">Analyse single-lane bi-directional traffic with advanced conflict resolution and priority management algorithms.</p>
+
+                    <ul class="simulation-features">
+                        <li>Independent Queues for arrivals/departures</li>
+                        <li>Priority rule optimisation</li>
+                        <li>Standardised Queue Percentiles</li>
+                        <li>Per direction statistics</li>
+
+                    </ul>
+                </div>
+
+                <div class="simulation-preview">
+                    <div class="simulation-category">Parking Systems</div>
+                    <h3 class="simulation-name">Car Park Utilisation</h3>
+                    <p class="simulation-description">Optimise parking facility operations with stochastic arrival patterns and dynamic stay lengths.</p>
+
+                    <ul class="simulation-features">
+                        <li>Demand pattern analysis</li>
+                        <li>Diverted Trips</li>
+                        <li>Space allocation efficiency</li>
+                        <li>Utilisation Rates</li>
+                    </ul>
+                </div>
+
+                <div class="simulation-preview">
+                    <div class="simulation-category">Vertical Transportation</div>
+                    <h3 class="simulation-name">Car Lift Operations</h3>
+                    <p class="simulation-description">Model multi-floor vehicle movement with complex dispatching algorithms and bi-directional traffic flows.</p>
+                    <ul class="simulation-features">
+                        <li>Multi-floor dispatching</li>
+                        <li>Lift Routing optimisation</li>
+                        <li>Traffic flow balancing</li>
+                        <li>Wait time minimisation</li>
+                    </ul>
+                </div>
+
+                <div class="simulation-preview">
+                    <div class="simulation-category">Automated Systems</div>
+                    <h3 class="simulation-name">Mechanical Parking</h3>
+                    <p class="simulation-description">Analyse automated parking structure performance with robotic systems and high-density storage optimisation.</p>
+                    <ul class="simulation-features">
+                        <li>Automated retrieval modeling</li>
+                        <li>Fully Factored Movement Characteristics</li>
+                        <li>Throughput optimisation</li>
+                        <li>Independent Queue Directions</li>
+                    </ul>
+                </div>
+
+                <div class="simulation-preview">
+                    <div class="simulation-category">Design Tools</div>
+                    <h3 class="simulation-name">Professional Utilities</h3>
+                    <p class="simulation-description">CAD automation, network modeling, and design validation tools that integrate seamlessly with your existing workflow.</p>
+                    <ul class="simulation-features">
+                        <li>Automated ramp design</li>
+                        <li>Compliance verification</li>
+                        <li>Network trip distribution</li>
+                        <li>Standards automation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="final-cta">
+        <div class="final-cta-content">
+            <h2>Ready to Transform Your Practice and give your clients better results?</h2>
+            <p>Join other traffic engineers who have revolutionised their analysis workflow with professional-grade simulation tools. Start your free trial today.</p>
+            <div class="hero-cta">
+                <a href="/login/" class="cta-button cta-primary">Start Free Trial</a>
+                <a href="#contact" class="cta-button cta-secondary">Contact Sales</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section" id="contact">
+        <div class="contact-container">
+            <div class="contact-header">
+                <h2 class="contact-title">Get in Touch</h2>
+                <p class="contact-description">Ready to see how <strong>Traffic Labb</strong> can transform your engineering workflow? Contact us for a personalised demonstration or to discuss your specific requirements.</p>
+            </div>
+            
+            <form class="contact-form" id="contactForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="contactName" class="form-label">Name *</label>
+                        <input type="text" id="contactName" name="name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactEmail" class="form-label">Email *</label>
+                        <input type="email" id="contactEmail" name="email" class="form-input" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="contactCompany" class="form-label">Company</label>
+                        <input type="text" id="contactCompany" name="company" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="contactType" class="form-label">Inquiry Type *</label>
+                        <select id="contactType" name="inquiryType" class="form-select" required>
+                            <option value="">Select...</option>
+                            <option value="demo">Request Demo</option>
+                            <option value="pricing">Pricing Information</option>
+                            <option value="technical">Technical Questions</option>
+                            <option value="partnership">Partnership</option>
+                            <option value="support">Support</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="contactMessage" class="form-label">Message *</label>
+                    <textarea id="contactMessage" name="message" class="form-textarea" placeholder="Tell us about your traffic engineering challenges and how we can help..." required></textarea>
+                </div>
+                
+                <button type="submit" class="submit-button" id="contactSubmitBtn">Send Message</button>
+                <div class="form-status" id="contactStatus"></div>
+            </form>
+        </div>
+    </section>
+
+    <script>
+        // Contact form setup will be handled by common.js navigation
+        document.addEventListener('DOMContentLoaded', function() {
+            setupContactForm();
+        });
+
+        function setupContactForm() {
+            const contactForm = document.getElementById('contactForm');
+            if (!contactForm) return;
+
+            contactForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const submitBtn = document.getElementById('contactSubmitBtn');
+                const statusDiv = document.getElementById('contactStatus');
+                
+                // Get form data
+                const formData = new FormData(this);
+                const contactData = {
+                    feedbackType: 'contact', // Mark as contact form
+                    name: formData.get('name'),
+                    email: formData.get('email'),
+                    company: formData.get('company'),
+                    inquiryType: formData.get('inquiryType'),
+                    message: formData.get('message'),
+                    timestamp: new Date().toISOString(),
+                    page: 'Homepage Contact Form',
+                    url: window.location.href
+                };
+
+                // Basic validation
+                if (!contactData.name || !contactData.email || !contactData.inquiryType || !contactData.message) {
+                    showStatus('Please fill in all required fields.', 'error');
+                    return;
+                }
+
+                // Submit
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Sending...';
+                statusDiv.style.display = 'none';
+
+                try {
+                    const response = await fetch('/api/sendform', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(contactData)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showStatus('Message sent successfully! We\'ll get back to you soon.', 'success');
+                        this.reset();
+                    } else {
+                        showStatus('Failed to send message. Please try again or contact us directly.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Contact form error:', error);
+                    showStatus('An error occurred. Please try again later.', 'error');
+                }
+
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Message';
+            });
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('contactStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `form-status ${type}`;
+            statusDiv.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

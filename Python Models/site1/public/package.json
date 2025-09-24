@@ -1,0 +1,13 @@
+{
+    "name": "engineering-simulations-manifest",
+    "version": "1.0.0",
+    "description": "Site manifest generator for Engineering Simulations platform",
+    "type": "module",
+    "scripts": {
+      "generate-manifest": "node generate-manifest.js",
+      "update-manifest": "node generate-manifest.js"
+    },
+    "keywords": ["manifest", "site-config", "authorization"],
+    "author": "Engineering Team",
+    "license": "MIT"
+  }
