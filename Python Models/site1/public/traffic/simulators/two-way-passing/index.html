@@ -37,11 +37,11 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="arrivalRateA">Queue A Rate (cars/hr):</label>
-                                <input type="number" id="arrivalRateA" value="15" min="0" step="0.1" onchange="calculateSampleSize(); updateRuntimeDisplay(); updateUtilizationEstimate()">
+                                <input type="number" id="arrivalRateA" value="15" min="0" step="0.1" onchange="validateAndUpdate('arrivalRateA', 0); calculateSampleSize(); updateRuntimeDisplay(); updateUtilizationEstimate()">
                             </div>
                             <div class="form-group">
                                 <label for="arrivalRateB">Queue B Rate (cars/hr):</label>
-                                <input type="number" id="arrivalRateB" value="15" min="0" step="0.1" onchange="calculateSampleSize(); updateRuntimeDisplay(); updateUtilizationEstimate()">
+                                <input type="number" id="arrivalRateB" value="15" min="0" step="0.1" onchange="validateAndUpdate('arrivalRateB', 0); calculateSampleSize(); updateRuntimeDisplay(); updateUtilizationEstimate()">
                             </div>
                         </div>
                         <div class="validation-check">
@@ -51,7 +51,7 @@
                             <strong>Estimated Utilization:</strong> <span id="utilizationEstimateDisplay">45.0%</span>
                         </div>
                         <div id="followUpWarning" class="utilization-warning" style="display: none;">
-                            <span id="followUpMessage">Actual utilization will be slightly less due to follow-up time constraints</span>
+                            <span id="followUpMessage">Actual utilization will be slightly less due to follow-up time permitting additional efficiency</span>
                         </div>
                     </div>
 
@@ -68,7 +68,7 @@
                         <div id="fixedServiceGroup">
                             <div class="form-group">
                                 <label for="serviceTime">Service Time (seconds):</label>
-                                <input type="number" id="serviceTime" value="5.4" min="0.1" step="0.1" onchange="updateUtilizationEstimate()">
+                                <input type="number" id="serviceTime" value="5.4" min="0.1" step="0.1" onchange="validateAndUpdate('serviceTime', 0.1); updateUtilizationEstimate()">
                             </div>
                         </div>
 
@@ -76,11 +76,11 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="segmentDistance">Distance (meters):</label>
-                                    <input type="number" id="segmentDistance" value="30" min="1" step="0.1" onchange="calculateServiceTime(); updateUtilizationEstimate()">
+                                    <input type="number" id="segmentDistance" value="30" min="0.1" step="0.1" onchange="validateAndUpdate('segmentDistance', 0.1); calculateServiceTime(); updateUtilizationEstimate()">
                                 </div>
                                 <div class="form-group">
                                     <label for="vehicleSpeed">Speed (km/h):</label>
-                                    <input type="number" id="vehicleSpeed" value="20" min="1" step="0.1" onchange="calculateServiceTime(); updateUtilizationEstimate()">
+                                    <input type="number" id="vehicleSpeed" value="20" min="0.1" step="0.1" onchange="validateAndUpdate('vehicleSpeed', 0.1); calculateServiceTime(); updateUtilizationEstimate()">
                                 </div>
                             </div>
                         </div>
@@ -88,7 +88,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="minGap">Min Gap Between Arrivals (s):</label>
-                                <input type="number" id="minGap" value="0" min="0" step="0.1" onchange="updateUtilizationEstimate()">
+                                <input type="number" id="minGap" value="0" min="0" step="0.1" onchange="validateAndUpdate('minGap', 0); updateUtilizationEstimate()">
                             </div>
                             <div class="form-group">
                                 <label for="minFollowUp">Min Follow-up Time:</label>
@@ -103,7 +103,7 @@
 
                         <div class="form-group" id="customFollowUpGroup" style="display: none;">
                             <label for="customFollowUp">Custom Follow-up (seconds):</label>
-                            <input type="number" id="customFollowUp" value="2" min="0" max="60" step="0.1" onchange="updateUtilizationEstimate()">
+                            <input type="number" id="customFollowUp" value="2" min="0" max="60" step="0.1" onchange="validateAndUpdate('customFollowUp', 0, 60); updateUtilizationEstimate()">
                             <div class="help-text">Custom follow-up time</div>
                         </div>
                     </div>
@@ -113,7 +113,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="simulationHours">Simulation Hours:</label>
-                                <input type="number" id="simulationHours" value="1000" min="10" step="10" onchange="calculateSampleSize(); updateRuntimeDisplay()">
+                                <input type="number" id="simulationHours" value="1000" min="10" max="50000" step="10" onchange="validateAndUpdate('simulationHours', 1, 50000); calculateSampleSize(); updateRuntimeDisplay()">
                             </div>
                             <div class="form-group">
                                 <label for="priorityScheme">Priority Scheme:</label>
@@ -127,7 +127,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="numSeeds">Number of Seeds:</label>
-                                <input type="number" id="numSeeds" value="200" min="1" max="200" step="1" onchange="updateRuntimeDisplay(); calculateSampleSize()">
+                                <input type="number" id="numSeeds" value="130" min="1" max="10000" step="1" onchange="validateAndUpdate('numSeeds', 1, 10000); updateRuntimeDisplay(); calculateSampleSize()">
                             </div>
                             <div class="form-group">
                                 <label for="seedMode">Seed Mode:</label>
@@ -150,11 +150,11 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="confidenceLevel">Confidence Level (%):</label>
-                                <input type="number" id="confidenceLevel" value="99.9" min="85" max="99.99" step="0.01" onchange="calculateSampleSize()">
+                                <input type="number" id="confidenceLevel" value="99.9" min="85" max="99.99" step="0.01" onchange="validateAndUpdate('confidenceLevel', 85, 99.99); calculateSampleSize()">
                             </div>
                             <div class="form-group">
                                 <label for="marginError">Margin (trips/hour):</label>
-                                <input type="number" id="marginError" value="0.05" min="0.01" step="0.01" onchange="calculateSampleSize()">
+                                <input type="number" id="marginError" value="0.05" min="0.001" step="0.001" onchange="validateAndUpdate('marginError', 0.001); calculateSampleSize()">
                             </div>
                         </div>
                         
@@ -167,7 +167,7 @@
                                 Use Recommended Seeds
                             </button>
                             <div class="current-seeds-info">
-                                Current: <span id="currentSeedsDisplay">200</span>
+                                Current: <span id="currentSeedsDisplay">130</span>
                             </div>
                         </div>
                     </div>
@@ -354,6 +354,27 @@
             margin-right: 8px;
         }
 
+        /* Input Validation Styles */
+        .corrected-value {
+            border-color: #d4691e !important;
+            background-color: rgba(212, 105, 30, 0.1) !important;
+            transition: all 0.3s ease;
+        }
+        
+        .validation-warning {
+            color: #d4691e;
+            font-size: 0.8rem;
+            margin-top: 4px;
+            animation: fadeInOut 3s ease-in-out;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-5px); }
+            20% { opacity: 1; transform: translateY(0); }
+            80% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-5px); }
+        }
+
         @media (max-width: 768px) {
             .results-cards-container {
                 grid-template-columns: 1fr;
@@ -365,6 +386,107 @@
     <script>
         // Global variable to store recommended seeds
         let recommendedSeeds = 0;
+
+        /**
+         * Validates and corrects input values to prevent negative/invalid entries
+         * @param {string} inputId - The ID of the input element
+         * @param {number} minValue - Minimum allowed value (inclusive)
+         * @param {number} maxValue - Maximum allowed value (optional)
+         */
+        function validateAndUpdate(inputId, minValue, maxValue = null) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            
+            let value = parseFloat(input.value);
+            
+            // Handle NaN or empty values
+            if (isNaN(value) || input.value.trim() === '') {
+                value = minValue;
+            }
+            
+            // Apply minimum constraint
+            if (value < minValue) {
+                value = minValue;
+                showValidationWarning(inputId, `Value cannot be less than ${minValue}`);
+            }
+            
+            // Apply maximum constraint if specified
+            if (maxValue !== null && value > maxValue) {
+                value = maxValue;
+                showValidationWarning(inputId, `Value cannot be greater than ${maxValue}`);
+            }
+            
+            // Update input value if it was corrected
+            if (parseFloat(input.value) !== value) {
+                input.value = value;
+                input.classList.add('corrected-value');
+                
+                // Remove highlight after 2 seconds
+                setTimeout(() => {
+                    input.classList.remove('corrected-value');
+                }, 2000);
+            }
+        }
+
+        /**
+         * Show temporary validation warning
+         */
+        function showValidationWarning(inputId, message) {
+            // Remove existing warnings for this input
+            const existingWarning = document.getElementById(`warning-${inputId}`);
+            if (existingWarning) {
+                existingWarning.remove();
+            }
+            
+            // Create and show new warning
+            const input = document.getElementById(inputId);
+            const warning = document.createElement('div');
+            warning.id = `warning-${inputId}`;
+            warning.className = 'validation-warning';
+            warning.textContent = message;
+            
+            input.parentNode.appendChild(warning);
+            
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                if (warning.parentNode) {
+                    warning.parentNode.removeChild(warning);
+                }
+            }, 3000);
+        }
+
+        /**
+         * Validate all inputs before running simulation
+         */
+        function validateAllInputs() {
+            let isValid = true;
+            const validationRules = [
+                { id: 'arrivalRateA', min: 0, name: 'Queue A Rate' },
+                { id: 'arrivalRateB', min: 0, name: 'Queue B Rate' },
+                { id: 'serviceTime', min: 0.1, name: 'Service Time' },
+                { id: 'segmentDistance', min: 0.1, name: 'Distance' },
+                { id: 'vehicleSpeed', min: 0.1, name: 'Speed' },
+                { id: 'minGap', min: 0, name: 'Min Gap' },
+                { id: 'customFollowUp', min: 0, max: 60, name: 'Custom Follow-up' },
+                { id: 'simulationHours', min: 1, max: 50000, name: 'Simulation Hours' },
+                { id: 'numSeeds', min: 1, max: 10000, name: 'Number of Seeds' },
+                { id: 'confidenceLevel', min: 85, max: 99.99, name: 'Confidence Level' },
+                { id: 'marginError', min: 0.001, name: 'Margin Error' }
+            ];
+            
+            validationRules.forEach(rule => {
+                const input = document.getElementById(rule.id);
+                if (input && input.style.display !== 'none') {
+                    const value = parseFloat(input.value);
+                    if (isNaN(value) || value < rule.min || (rule.max && value > rule.max)) {
+                        showValidationWarning(rule.id, `${rule.name} must be valid`);
+                        isValid = false;
+                    }
+                }
+            });
+            
+            return isValid;
+        }
 
         // Authentication check on page load
         document.addEventListener('DOMContentLoaded', async () => {
@@ -401,10 +523,10 @@
 
         function updateUtilizationEstimate() {
             try {
-                const arrivalRateA = parseFloat(document.getElementById('arrivalRateA').value) || 0;
-                const arrivalRateB = parseFloat(document.getElementById('arrivalRateB').value) || 0;
+                const arrivalRateA = parseFloat(document.getElementById('arrivalRateA').value);
+                const arrivalRateB = parseFloat(document.getElementById('arrivalRateB').value);
                 const totalArrival = arrivalRateA + arrivalRateB;
-                const serviceTime = parseFloat(document.getElementById('serviceTime').value) || 5.4;
+                const serviceTime = parseFloat(document.getElementById('serviceTime').value) ;
                 const followUpTime = getMinFollowUpValue();
                 
                 // Update total arrival display
@@ -418,7 +540,7 @@
                 
                 // Show warning if follow-up time is less than service time
                 const warningDiv = document.getElementById('followUpWarning');
-                if (followUpTime < serviceTime && followUpTime > 0) {
+                if (followUpTime < serviceTime) {
                     warningDiv.style.display = 'block';
                 } else {
                     warningDiv.style.display = 'none';
@@ -432,17 +554,17 @@
         // Collect all parameters for runtime estimation and validation
         function collectParameters() {
             return {
-                arrivalRateA: parseFloat(document.getElementById('arrivalRateA').value) || 15,
-                arrivalRateB: parseFloat(document.getElementById('arrivalRateB').value) || 15,
-                arrivalRate: parseFloat(document.getElementById('arrivalRateA').value) + parseFloat(document.getElementById('arrivalRateB').value) || 30,
-                serviceTime: parseFloat(document.getElementById('serviceTime').value) || 5.4,
-                simulationTime: parseFloat(document.getElementById('simulationHours').value) * 3600 || 3600000,
-                simHours: parseFloat(document.getElementById('simulationHours').value) || 1000,
-                minGap: parseFloat(document.getElementById('minGap').value) || 0,
+                arrivalRateA: parseFloat(document.getElementById('arrivalRateA').value),
+                arrivalRateB: parseFloat(document.getElementById('arrivalRateB').value),
+                arrivalRate: parseFloat(document.getElementById('arrivalRateA').value) + parseFloat(document.getElementById('arrivalRateB').value),
+                serviceTime: parseFloat(document.getElementById('serviceTime').value),
+                simulationTime: parseFloat(document.getElementById('simulationHours').value) * 3600,
+                simHours: parseFloat(document.getElementById('simulationHours').value),
+                minGap: parseFloat(document.getElementById('minGap').value),
                 minFollowUp: getMinFollowUpValue(),
-                priorityScheme: document.getElementById('priorityScheme').value || 'FCFS',
-                numSeeds: parseInt(document.getElementById('numSeeds').value) || 200,
-                seedMode: document.getElementById('seedMode').value || 'fixed'
+                priorityScheme: document.getElementById('priorityScheme').value,
+                numSeeds: parseInt(document.getElementById('numSeeds').value),
+                seedMode: document.getElementById('seedMode').value
             };
         }
 
@@ -604,13 +726,13 @@
         }
 
         function generateValidationCheck(results, params) {
-            const expectedArrivalA = params.arrivalRateA || 0;
-            const expectedArrivalB = params.arrivalRateB || 0;
+            const expectedArrivalA = params.arrivalRateA;
+            const expectedArrivalB = params.arrivalRateB;
             
             const actualArrivalA = results.arrivalRates[0] ? results.arrivalRates[0].totalPerHour : 0;
             const actualArrivalB = results.arrivalRates[1] ? results.arrivalRates[1].totalPerHour : 0;
             
-            const marginError = parseFloat(document.getElementById('marginError').value) || 0.05;
+            const marginError = parseFloat(document.getElementById('marginError').value) ;
             const errorA = Math.abs(expectedArrivalA - actualArrivalA);
             const errorB = Math.abs(expectedArrivalB - actualArrivalB);
             const totalError = errorA + errorB;
@@ -629,6 +751,14 @@
         }
 
         function resetInputs() {
+            // Clear validation warnings
+            document.querySelectorAll('.validation-warning').forEach(warning => {
+                warning.remove();
+            });
+            document.querySelectorAll('.corrected-value').forEach(input => {
+                input.classList.remove('corrected-value');
+            });
+            
             document.getElementById('arrivalRateA').value = '15';
             document.getElementById('arrivalRateB').value = '15';
             document.getElementById('serviceMode').value = 'fixed';
@@ -641,7 +771,7 @@
             document.getElementById('priorityScheme').value = 'FCFS';
             document.getElementById('confidenceLevel').value = '99.9';
             document.getElementById('marginError').value = '0.05';
-            document.getElementById('numSeeds').value = '200';
+            document.getElementById('numSeeds').value = '130';
             document.getElementById('seedMode').value = 'fixed';
             document.getElementById('customFollowUp').value = '2';
             
@@ -759,8 +889,8 @@
             let maxCumulative = 0;
             
             for (const length of sortedLengthsA) {
-                const timePercent = queueA.lengthPercentages[length] || 0;
-                const maxPercent = queueA.maxPercentages[length] || 0;
+                const timePercent = queueA.lengthPercentages[length];
+                const maxPercent = queueA.maxPercentages[length];
                 
                 timeCumulative += timePercent;
                 maxCumulative += maxPercent;
@@ -832,8 +962,8 @@
             maxCumulative = 0;
             
             for (const length of sortedLengthsB) {
-                const timePercent = queueB.lengthPercentages[length] || 0;
-                const maxPercent = queueB.maxPercentages[length] || 0;
+                const timePercent = queueB.lengthPercentages[length];
+                const maxPercent = queueB.maxPercentages[length];
                 
                 timeCumulative += timePercent;
                 maxCumulative += maxPercent;
@@ -960,6 +1090,15 @@
 
             const runButton = document.getElementById('runSimulation');
             if (runButton.disabled) return;
+
+            // Validate all inputs before proceeding
+            if (!validateAllInputs()) {
+                const status = document.getElementById('status');
+                status.style.display = 'block';
+                status.className = 'status error';
+                status.textContent = 'Please correct the input validation errors before running simulation.';
+                return;
+            }
 
             const parameters = collectParameters();
             const estimatedMs = estimateSimulationRuntime(parameters);

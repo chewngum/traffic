@@ -1550,8 +1550,6 @@ function createRealisticProgress(estimatedMs, progressFill, progressPercentage, 
     let startTime = Date.now();
     
     const progressPhases = [
-        { start: 0, end: 10, message: 'Initializing simulation...' },
-        { start: 10, end: 85, message: 'Running simulation...' },
         { start: 85, end: 95, message: 'Calculating statistics...' },
         { start: 95, end: 100, message: 'Finalizing results...' }
     ];

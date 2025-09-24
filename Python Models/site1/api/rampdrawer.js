@@ -1,6 +1,4 @@
-// rampdrawer.js - Backend API for ramp drawing functionality
-// Place this file in /api/rampdrawer.js
-// Optimized for reliable SVG, AutoCAD, and DWF exports
+
 
 export default async function handler(req, res) {
     // Set headers for CORS and caching
@@ -90,11 +88,68 @@ function isValidToken(token) {
     }
 }
 
-function generateDrawings(params) {
-    const { segmentData, width, startingRL, startLabel, endLabel, gradeType } = params;
+/**
+ * Format distance value according to units setting and decimal places
+ */
+function formatDistance(value, units, precision) {
+    if (units === 'mm') {
+        return (value * 1000).toFixed(precision);
+    }
+    return value.toFixed(precision);
+}
+
+/**
+ * Get distance unit suffix
+ */
+function getDistanceUnit(units) {
+    return units === 'mm' ? 'mm' : 'm';
+}
+
+/**
+ * Format grade for display based on display setting and decimal places
+ */
+function formatGrade(gradePercent, displayType, precision = 1) {
+    if (displayType === 'ratio') {
+        if (gradePercent === 0) return '∞';
+        const ratio = Math.abs(100 / gradePercent);
+        return `1:${ratio.toFixed(precision)}`;
+    }
+    return `${gradePercent.toFixed(precision)}%`;
+}
+
+/**
+ * Format chainage label with proper positioning and decimal places
+ */
+function formatChainageLabel(value, units, precision, prefix, position) {
+    const formattedValue = formatDistance(value, units, precision);
+    const unit = getDistanceUnit(units);
     
-    const sectionSvg = generateSectionView(segmentData, width, startingRL, startLabel, endLabel, gradeType);
-    const planSvg = generatePlanView(segmentData, width, gradeType);
+    if (position === 'suffix') {
+        return `${formattedValue}${unit} ${prefix}`;
+    } else {
+        return `${prefix}${formattedValue}${unit}`;
+    }
+}
+
+function generateDrawings(params) {
+    const { 
+        segmentData, 
+        width, 
+        startingRL, 
+        startLabel, 
+        endLabel, 
+        gradeType,
+        chainagePrefix = 'CH',
+        chainagePosition = 'prefix',
+        chainageDecimalPlaces = 1,
+        rlDecimalPlaces = 3,
+        gradeDecimalPlaces = 1,
+        distanceUnits = 'm',
+        gradeDisplay = 'percent'
+    } = params;
+    
+    const sectionSvg = generateSectionView(segmentData, width, startingRL, startLabel, endLabel, gradeType, chainagePrefix, chainagePosition, chainageDecimalPlaces, rlDecimalPlaces, gradeDecimalPlaces, distanceUnits, gradeDisplay);
+    const planSvg = generatePlanView(segmentData, width, gradeType, chainageDecimalPlaces, gradeDecimalPlaces, distanceUnits, gradeDisplay);
     
     return {
         sectionSvg,
@@ -103,7 +158,7 @@ function generateDrawings(params) {
 }
 
 async function generateFileExport(params) {
-    const { type, format, segmentData, width, startingRL, startLabel, endLabel, gradeType } = params;
+    const { type, format } = params;
     
     switch (format) {
         case 'svg':
@@ -120,14 +175,36 @@ async function generateFileExport(params) {
 }
 
 function generateSVGExport(params) {
-    const { type, segmentData, width, startingRL, startLabel, endLabel, gradeType } = params;
+    const { type } = params;
     
     // Get the raw SVG content
     let svgContent;
     if (type === 'section') {
-        svgContent = generateSectionView(segmentData, width, startingRL, startLabel, endLabel, gradeType);
+        svgContent = generateSectionView(
+            params.segmentData, 
+            params.width, 
+            params.startingRL, 
+            params.startLabel, 
+            params.endLabel, 
+            params.gradeType,
+            params.chainagePrefix || 'CH',
+            params.chainagePosition || 'prefix',
+            params.chainageDecimalPlaces || 1,
+            params.rlDecimalPlaces || 3,
+            params.gradeDecimalPlaces || 1,
+            params.distanceUnits || 'm',
+            params.gradeDisplay || 'percent'
+        );
     } else {
-        svgContent = generatePlanView(segmentData, width, gradeType);
+        svgContent = generatePlanView(
+            params.segmentData, 
+            params.width, 
+            params.gradeType,
+            params.chainageDecimalPlaces || 1,
+            params.gradeDecimalPlaces || 1,
+            params.distanceUnits || 'm',
+            params.gradeDisplay || 'percent'
+        );
     }
     
     // Add XML declaration and make it a complete SVG file
@@ -139,14 +216,36 @@ ${svgContent}`;
 }
 
 async function generatePNGExport(params) {
-    const { type, segmentData, width, startingRL, startLabel, endLabel, gradeType } = params;
+    const { type } = params;
     
     // Get the SVG content
     let svgContent;
     if (type === 'section') {
-        svgContent = generateSectionView(segmentData, width, startingRL, startLabel, endLabel, gradeType);
+        svgContent = generateSectionView(
+            params.segmentData, 
+            params.width, 
+            params.startingRL, 
+            params.startLabel, 
+            params.endLabel, 
+            params.gradeType,
+            params.chainagePrefix || 'CH',
+            params.chainagePosition || 'prefix',
+            params.chainageDecimalPlaces || 1,
+            params.rlDecimalPlaces || 3,
+            params.gradeDecimalPlaces || 1,
+            params.distanceUnits || 'm',
+            params.gradeDisplay || 'percent'
+        );
     } else {
-        svgContent = generatePlanView(segmentData, width, gradeType);
+        svgContent = generatePlanView(
+            params.segmentData, 
+            params.width, 
+            params.gradeType,
+            params.chainageDecimalPlaces || 1,
+            params.gradeDecimalPlaces || 1,
+            params.distanceUnits || 'm',
+            params.gradeDisplay || 'percent'
+        );
     }
     
     let browser = null;
@@ -268,7 +367,7 @@ async function generatePNGExport(params) {
     }
 }
 
-function generateSectionView(segmentData, width, startingRL, startLabel, endLabel, gradeType) {
+function generateSectionView(segmentData, width, startingRL, startLabel, endLabel, gradeType, chainagePrefix = 'CH', chainagePosition = 'prefix', chainageDecimalPlaces = 1, rlDecimalPlaces = 3, gradeDecimalPlaces = 1, distanceUnits = 'm', gradeDisplay = 'percent') {
     const svgWidth = 1000;
     const svgHeight = 400;
     const margin = 80; // Increased margin to accommodate datum text
@@ -298,6 +397,7 @@ function generateSectionView(segmentData, width, startingRL, startLabel, endLabe
     
     // Base Y position (for minimum RL)
     const baseY = svgHeight - margin - 40;
+    const distanceUnit = getDistanceUnit(distanceUnits);
 
     let svgContent = `<svg width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}" xmlns="http://www.w3.org/2000/svg">`;
     
@@ -351,8 +451,8 @@ function generateSectionView(segmentData, width, startingRL, startLabel, endLabe
         // RL marker
         svgContent += `<circle cx="${x}" cy="${y}" r="4" class="rl-marker"/>`;
         
-        // RL label (positioned above the ramp node)
-        const rlText = `RL ${point.rl >= 0 ? '+' : ''}${point.rl.toFixed(3)}`;
+        // RL label (positioned above the ramp node) - format according to RL decimal places
+        const rlText = `RL ${point.rl >= 0 ? '+' : ''}${formatDistance(point.rl, distanceUnits, rlDecimalPlaces)}${distanceUnit}`;
         svgContent += `<text x="${x}" y="${y - 15}" class="dimension-text" font-weight="bold">${rlText}</text>`;
         
         // Vertical dashed green line from datum to ramp node
@@ -360,7 +460,8 @@ function generateSectionView(segmentData, width, startingRL, startLabel, endLabe
         
         // Chainage label positioned below datum line (skip first point which is at 0)
         if (index > 0) {
-            svgContent += `<text x="${x}" y="${datumY + 20}" class="chainage-text">CH${point.x.toFixed(1)}m</text>`;
+            const chainageLabel = formatChainageLabel(point.x, distanceUnits, chainageDecimalPlaces, chainagePrefix, chainagePosition);
+            svgContent += `<text x="${x}" y="${datumY + 20}" class="chainage-text">${chainageLabel}</text>`;
         }
     });
 
@@ -383,25 +484,15 @@ function generateSectionView(segmentData, width, startingRL, startLabel, endLabe
         svgContent += `<line x1="${currentX}" y1="${svgHeight - 30}" x2="${nextX}" y2="${svgHeight - 30}" class="dimension-line"/>`;
         svgContent += `<line x1="${currentX}" y1="${svgHeight - 35}" x2="${currentX}" y2="${svgHeight - 25}" class="dimension-line"/>`;
         svgContent += `<line x1="${nextX}" y1="${svgHeight - 35}" x2="${nextX}" y2="${svgHeight - 25}" class="dimension-line"/>`;
-        svgContent += `<text x="${(currentX + nextX) / 2}" y="${svgHeight - 38}" class="dimension-text">${segment.length}m</text>`;
+        svgContent += `<text x="${(currentX + nextX) / 2}" y="${svgHeight - 38}" class="dimension-text">${formatDistance(segment.length, distanceUnits, chainageDecimalPlaces)}${distanceUnit}</text>`;
         
-        // Add grade label below the ramp line
+        // Add grade label below the ramp line - format according to gradeDisplay setting and decimal places
         const midX = (currentX + nextX) / 2;
         const startY = baseY - (points[index].rl - minRL) * verticalScale;
         const endY = baseY - (points[index + 1].rl - minRL) * verticalScale;
         const midY = (startY + endY) / 2;
         
-        let gradeText;
-        if (segment.gradePercent === 0) {
-            gradeText = '0%';
-        } else {
-            if (gradeType === 'percent') {
-                gradeText = `${segment.gradePercent.toFixed(1)}%`;
-            } else {
-                const ratio = Math.abs(segment.gradePercent) > 0 ? (100 / Math.abs(segment.gradePercent)).toFixed(0) : '∞';
-                gradeText = `1:${ratio}`;
-            }
-        }
+        const gradeText = formatGrade(segment.gradePercent, gradeDisplay, gradeDecimalPlaces);
         svgContent += `<text x="${midX}" y="${midY + 20}" class="dimension-text" fill="#667eea" font-weight="bold">${gradeText}</text>`;
         
         currentX = nextX;
@@ -414,7 +505,7 @@ function generateSectionView(segmentData, width, startingRL, startLabel, endLabe
     return svgContent;
 }
 
-function generatePlanView(segmentData, width, gradeType) {
+function generatePlanView(segmentData, width, gradeType, chainageDecimalPlaces = 1, gradeDecimalPlaces = 1, distanceUnits = 'm', gradeDisplay = 'percent') {
     const svgWidth = 1000;
     const svgHeight = 400;
     const margin = 50;
@@ -422,6 +513,7 @@ function generatePlanView(segmentData, width, gradeType) {
     const totalLength = segmentData.reduce((sum, seg) => sum + seg.length, 0);
     const scale = Math.min((svgWidth - 2 * margin) / totalLength, (svgHeight - 2 * margin) / width);
     const widthScale = width * scale;
+    const distanceUnit = getDistanceUnit(distanceUnits);
 
     let svgContent = `<svg width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}" xmlns="http://www.w3.org/2000/svg">`;
     
@@ -479,18 +571,11 @@ function generatePlanView(segmentData, width, gradeType) {
             }
         }
 
-        // Add dimensions with grade information
+        // Add dimensions with grade information - format according to units and grade display with decimal places
         let dimensionText;
-        if (segment.gradePercent === 0) {
-            dimensionText = `${segment.length}m @ 0%`;
-        } else {
-            if (gradeType === 'percent') {
-                dimensionText = `${segment.length}m @ ${segment.gradePercent.toFixed(1)}%`;
-            } else {
-                const ratio = Math.abs(segment.gradePercent) > 0 ? (100 / Math.abs(segment.gradePercent)).toFixed(0) : '∞';
-                dimensionText = `${segment.length}m @ 1:${ratio}`;
-            }
-        }
+        const formattedLength = formatDistance(segment.length, distanceUnits, chainageDecimalPlaces);
+        const gradeText = formatGrade(segment.gradePercent, gradeDisplay, gradeDecimalPlaces);
+        dimensionText = `${formattedLength}${distanceUnit} @ ${gradeText}`;
         
         // Dimension line
         const dimY = centerY + widthScale/2 + 30;
@@ -502,32 +587,52 @@ function generatePlanView(segmentData, width, gradeType) {
         currentX = nextX;
     });
 
-    // Add width dimension
+    // Add width dimension - format according to distance units and decimal places
     const widthDimX = margin - 40;
     svgContent += `<line x1="${widthDimX}" y1="${centerY - widthScale/2}" x2="${widthDimX}" y2="${centerY + widthScale/2}" class="dimension-line"/>`;
     svgContent += `<line x1="${widthDimX - 5}" y1="${centerY - widthScale/2}" x2="${widthDimX + 5}" y2="${centerY - widthScale/2}" class="dimension-line"/>`;
     svgContent += `<line x1="${widthDimX - 5}" y1="${centerY + widthScale/2}" x2="${widthDimX + 5}" y2="${centerY + widthScale/2}" class="dimension-line"/>`;
-    svgContent += `<text x="${widthDimX + 15}" y="${centerY + 3}" class="dimension-text" text-anchor="start">${width}m</text>`;
+    svgContent += `<text x="${widthDimX + 15}" y="${centerY + 3}" class="dimension-text" text-anchor="start">${formatDistance(width, distanceUnits, chainageDecimalPlaces)}${distanceUnit}</text>`;
 
     svgContent += '</svg>';
     return svgContent;
 }
 
 function generateAutoCADScript(params) {
-    const { type, segmentData, width, startingRL, startLabel, endLabel, gradeType } = params;
+    const { type } = params;
     
     if (type === 'section') {
-        return generateSectionAutoCADScript(segmentData, width, startingRL, startLabel, endLabel, gradeType);
+        return generateSectionAutoCADScript(
+            params.segmentData, 
+            params.width, 
+            params.startingRL, 
+            params.startLabel, 
+            params.endLabel, 
+            params.gradeType,
+            params.chainagePrefix || 'CH',
+            params.chainagePosition || 'prefix',
+            params.chainageDecimalPlaces || 1,
+            params.rlDecimalPlaces || 3,
+            params.gradeDecimalPlaces || 1,
+            params.distanceUnits || 'm',
+            params.gradeDisplay || 'percent'
+        );
     } else if (type === 'plan') {
-        return generatePlanAutoCADScript(segmentData, width, gradeType);
+        return generatePlanAutoCADScript(
+            params.segmentData, 
+            params.width, 
+            params.gradeType,
+            params.chainageDecimalPlaces || 1,
+            params.gradeDecimalPlaces || 1,
+            params.distanceUnits || 'm',
+            params.gradeDisplay || 'percent'
+        );
     } else {
         throw new Error('Invalid export type');
     }
 }
 
 function generateDWFScript(params) {
-    const { type, segmentData, width, startingRL, startLabel, endLabel, gradeType } = params;
-    
     // DWF format is essentially a modified AutoCAD script with DWF-specific commands
     let script = generateAutoCADScript(params);
     
@@ -546,7 +651,7 @@ function generateDWFScript(params) {
     script += 'Y\n'; // Plot with plot styles
     script += 'Y\n'; // Plot paperspace last
     script += 'N\n'; // Do not hide paperspace objects
-    script += `ramp_${type}.dwf\n`; // Output filename
+    script += `ramp_${params.type}.dwf\n`; // Output filename
     script += 'Y\n'; // Save changes to page setup
     script += 'Y\n'; // Proceed with plot
     
@@ -554,14 +659,36 @@ function generateDWFScript(params) {
 }
 
 async function generatePDFExport(params) {
-    const { type, segmentData, width, startingRL, startLabel, endLabel, gradeType } = params;
+    const { type } = params;
     
     // Get the SVG content
     let svgContent;
     if (type === 'section') {
-        svgContent = generateSectionView(segmentData, width, startingRL, startLabel, endLabel, gradeType);
+        svgContent = generateSectionView(
+            params.segmentData, 
+            params.width, 
+            params.startingRL, 
+            params.startLabel, 
+            params.endLabel, 
+            params.gradeType,
+            params.chainagePrefix || 'CH',
+            params.chainagePosition || 'prefix',
+            params.chainageDecimalPlaces || 1,
+            params.rlDecimalPlaces || 3,
+            params.gradeDecimalPlaces || 1,
+            params.distanceUnits || 'm',
+            params.gradeDisplay || 'percent'
+        );
     } else {
-        svgContent = generatePlanView(segmentData, width, gradeType);
+        svgContent = generatePlanView(
+            params.segmentData, 
+            params.width, 
+            params.gradeType,
+            params.chainageDecimalPlaces || 1,
+            params.gradeDecimalPlaces || 1,
+            params.distanceUnits || 'm',
+            params.gradeDisplay || 'percent'
+        );
     }
     
     let browser = null;
@@ -700,24 +827,27 @@ async function generatePDFExport(params) {
                         <h3>Design Parameters</h3>
                         <table>
                             <tr><th>Parameter</th><th>Value</th></tr>
-                            <tr><td>Ramp Width</td><td>${width}m</td></tr>
-                            <tr><td>Starting RL</td><td>${startingRL.toFixed(3)}m</td></tr>
-                            <tr><td>Start Location</td><td>${startLabel}</td></tr>
-                            <tr><td>End Location</td><td>${endLabel}</td></tr>
-                            <tr><td>Total Length</td><td>${segmentData.reduce((sum, seg) => sum + seg.length, 0).toFixed(1)}m</td></tr>
-                            <tr><td>Number of Segments</td><td>${segmentData.length}</td></tr>
-                            <tr><td>Total Rise</td><td>${segmentData.reduce((sum, seg) => sum + seg.rise, 0).toFixed(3)}m</td></tr>
+                            <tr><td>Ramp Width</td><td>${formatDistance(params.width, params.distanceUnits)}${getDistanceUnit(params.distanceUnits)}</td></tr>
+                            <tr><td>Starting RL</td><td>${formatDistance(params.startingRL, params.distanceUnits)}${getDistanceUnit(params.distanceUnits)}</td></tr>
+                            <tr><td>Start Location</td><td>${params.startLabel}</td></tr>
+                            <tr><td>End Location</td><td>${params.endLabel}</td></tr>
+                            <tr><td>Total Length</td><td>${formatDistance(params.segmentData.reduce((sum, seg) => sum + seg.length, 0), params.distanceUnits)}${getDistanceUnit(params.distanceUnits)}</td></tr>
+                            <tr><td>Number of Segments</td><td>${params.segmentData.length}</td></tr>
+                            <tr><td>Total Rise</td><td>${formatDistance(params.segmentData.reduce((sum, seg) => sum + seg.rise, 0), params.distanceUnits)}${getDistanceUnit(params.distanceUnits)}</td></tr>
+                            <tr><td>Distance Units</td><td>${params.distanceUnits === 'mm' ? 'Millimeters' : 'Meters'}</td></tr>
+                            <tr><td>Grade Display</td><td>${params.gradeDisplay === 'ratio' ? 'Ratio (1:X)' : 'Percentage (%)'}</td></tr>
+                            <tr><td>Chainage Prefix</td><td>${params.chainagePrefix || 'CH'}</td></tr>
                         </table>
                         
                         <h3 style="margin-top: 5mm;">Segment Details</h3>
                         <table>
-                            <tr><th>Segment</th><th>Length (m)</th><th>Grade (%)</th><th>Rise (m)</th></tr>
-                            ${segmentData.map((seg, i) => `
+                            <tr><th>Segment</th><th>Length (${getDistanceUnit(params.distanceUnits)})</th><th>Grade</th><th>Rise (${getDistanceUnit(params.distanceUnits)})</th></tr>
+                            ${params.segmentData.map((seg, i) => `
                                 <tr>
                                     <td>${i + 1}</td>
-                                    <td>${seg.length.toFixed(1)}</td>
-                                    <td>${seg.gradePercent.toFixed(1)}%</td>
-                                    <td>${seg.rise.toFixed(3)}</td>
+                                    <td>${formatDistance(seg.length, params.distanceUnits)}</td>
+                                    <td>${formatGrade(seg.gradePercent, params.gradeDisplay)}</td>
+                                    <td>${formatDistance(seg.rise, params.distanceUnits)}</td>
                                 </tr>
                             `).join('')}
                         </table>
@@ -792,7 +922,7 @@ async function generatePDFExport(params) {
     }
 }
 
-function generateSectionAutoCADScript(segmentData, width, startingRL, startLabel, endLabel, gradeType) {
+function generateSectionAutoCADScript(segmentData, width, startingRL, startLabel, endLabel, gradeType, chainagePrefix = 'CH', chainagePosition = 'prefix', chainageDecimalPlaces = 1, rlDecimalPlaces = 3, gradeDecimalPlaces = 1, distanceUnits = 'm', gradeDisplay = 'percent') {
     const totalLength = segmentData.reduce((sum, seg) => sum + seg.length, 0);
     
     // Calculate points
@@ -806,21 +936,23 @@ function generateSectionAutoCADScript(segmentData, width, startingRL, startLabel
         points.push({x: cumulativeLength, rl: currentElevation});
     });
 
-    // Convert all measurements to mm for AutoCAD
-    const pointsMM = points.map(p => ({
-        x: p.x * 1000,
-        rl: p.rl * 1000
+    // Convert measurements to AutoCAD units (always use mm for precision)
+    const unitMultiplier = 1000; // Always use mm for AutoCAD for precision
+    const pointsCAD = points.map(p => ({
+        x: p.x * unitMultiplier,
+        rl: p.rl * unitMultiplier
     }));
-    const segmentsMM = segmentData.map(s => ({
+    const segmentsCAD = segmentData.map(s => ({
         ...s,
-        length: s.length * 1000,
-        rise: s.rise * 1000
+        length: s.length * unitMultiplier
     }));
 
     let script = '; AutoCAD Script File - Ramp Section View\n';
     script += '; Generated by Multi-Segment Ramp Design Tool\n';
     script += `; Generated: ${new Date().toISOString()}\n`;
-    script += '; All measurements in millimeters\n';
+    script += '; All measurements in millimeters for precision\n';
+    script += `; Original units: ${distanceUnits}, Chainage position: ${chainagePosition}, CH decimals: ${chainageDecimalPlaces}, RL decimals: ${rlDecimalPlaces}, Grade decimals: ${gradeDecimalPlaces}\n`;
+    script += `; Grade display: ${gradeDisplay}\n`;
     script += '\n';
     
     // Set units and precision
@@ -838,87 +970,83 @@ function generateSectionAutoCADScript(segmentData, width, startingRL, startLabel
     // Draw the main ramp profile line
     script += 'LAYER S RAMP-PROFILE\n';
     script += 'PLINE\n';
-    pointsMM.forEach((point, index) => {
+    pointsCAD.forEach((point, index) => {
         script += `${point.x.toFixed(1)},${point.rl.toFixed(1)}\n`;
     });
     script += '\n';
     script += '\n';
 
     // Add RL markers
-    pointsMM.forEach((point, index) => {
+    pointsCAD.forEach((point, index) => {
         script += `CIRCLE ${point.x.toFixed(1)},${point.rl.toFixed(1)} 100\n`;
     });
     script += '\n';
 
     // Add RL text labels
     script += 'LAYER S RAMP-TEXT\n';
-    pointsMM.forEach((point, index) => {
-        const rlText = `RL ${point.rl >= 0 ? '+' : ''}${point.rl.toFixed(1)}`;
+    pointsCAD.forEach((point, index) => {
+        // Convert back to original units for display with specified decimal places
+        const originalRL = point.rl / unitMultiplier;
+        const rlText = `RL ${originalRL >= 0 ? '+' : ''}${formatDistance(originalRL, distanceUnits, rlDecimalPlaces)}${getDistanceUnit(distanceUnits)}`;
         script += `TEXT ${point.x.toFixed(1)},${(point.rl + 300).toFixed(1)} 150 0 ${rlText}\n`;
         
         if (index > 0) {
-            script += `TEXT ${point.x.toFixed(1)},${(point.rl - 400).toFixed(1)} 120 0 ${point.x.toFixed(0)}mm\n`;
+            const originalLength = point.x / unitMultiplier;
+            const chainageLabel = formatChainageLabel(originalLength, distanceUnits, chainageDecimalPlaces, chainagePrefix, chainagePosition);
+            script += `TEXT ${point.x.toFixed(1)},${(point.rl - 400).toFixed(1)} 120 0 ${chainageLabel}\n`;
         }
     });
     script += '\n';
 
     // Add start and end labels
-    const startPoint = pointsMM[0];
-    const endPoint = pointsMM[pointsMM.length - 1];
+    const startPoint = pointsCAD[0];
+    const endPoint = pointsCAD[pointsCAD.length - 1];
     script += `TEXT ${startPoint.x.toFixed(1)},${(startPoint.rl + 600).toFixed(1)} 180 0 ${startLabel}\n`;
     script += `TEXT ${endPoint.x.toFixed(1)},${(endPoint.rl + 600).toFixed(1)} 180 0 ${endLabel}\n`;
     script += '\n';
 
-    // Add grade labels
-    segmentsMM.forEach((segment, index) => {
-        const startPoint = pointsMM[index];
-        const endPoint = pointsMM[index + 1];
+    // Add grade labels with specified decimal places
+    segmentsCAD.forEach((segment, index) => {
+        const startPoint = pointsCAD[index];
+        const endPoint = pointsCAD[index + 1];
         const midX = (startPoint.x + endPoint.x) / 2;
         const midRL = (startPoint.rl + endPoint.rl) / 2;
         
-        let gradeText;
-        if (segment.gradePercent === 0) {
-            gradeText = '0%';
-        } else {
-            if (gradeType === 'percent') {
-                gradeText = `${segment.gradePercent.toFixed(1)}%`;
-            } else {
-                const ratio = Math.abs(segment.gradePercent) > 0 ? (100 / Math.abs(segment.gradePercent)).toFixed(0) : '∞';
-                gradeText = `1:${ratio}`;
-            }
-        }
+        const gradeText = formatGrade(segment.gradePercent, gradeDisplay, gradeDecimalPlaces);
         script += `TEXT ${midX.toFixed(1)},${(midRL + 150).toFixed(1)} 120 0 ${gradeText}\n`;
     });
     script += '\n';
 
-    // Add horizontal dimension lines
+    // Add horizontal dimension lines with specified decimal places
     script += 'LAYER S RAMP-DIMENSIONS\n';
-    const dimY = Math.min(...pointsMM.map(p => p.rl)) - 1000;
+    const dimY = Math.min(...pointsCAD.map(p => p.rl)) - 1000;
     
-    segmentsMM.forEach((segment, index) => {
-        const startX = pointsMM[index].x;
-        const endX = pointsMM[index + 1].x;
+    segmentsCAD.forEach((segment, index) => {
+        const startX = pointsCAD[index].x;
+        const endX = pointsCAD[index + 1].x;
         
         script += `LINE ${startX.toFixed(1)},${dimY.toFixed(1)} ${endX.toFixed(1)},${dimY.toFixed(1)}\n`;
         script += `LINE ${startX.toFixed(1)},${(dimY - 100).toFixed(1)} ${startX.toFixed(1)},${(dimY + 100).toFixed(1)}\n`;
         script += `LINE ${endX.toFixed(1)},${(dimY - 100).toFixed(1)} ${endX.toFixed(1)},${(dimY + 100).toFixed(1)}\n`;
         
         const midX = (startX + endX) / 2;
-        script += `TEXT ${midX.toFixed(1)},${(dimY - 300).toFixed(1)} 120 0 ${segment.length.toFixed(0)}mm\n`;
+        // Convert back to original units for display with specified decimal places
+        const originalLength = segment.length / unitMultiplier;
+        script += `TEXT ${midX.toFixed(1)},${(dimY - 300).toFixed(1)} 120 0 ${formatDistance(originalLength, distanceUnits, chainageDecimalPlaces)}${getDistanceUnit(distanceUnits)}\n`;
     });
     script += '\n';
 
     // Add datum reference line
     script += 'LAYER S RAMP-REFERENCE\n';
-    const datumY = startingRL * 1000;
-    const totalLengthMM = totalLength * 1000;
-    const lineStart = -totalLengthMM * 0.1;
-    const lineEnd = totalLengthMM * 1.1;
+    const datumY = startingRL * unitMultiplier;
+    const totalLengthCAD = totalLength * unitMultiplier;
+    const lineStart = -totalLengthCAD * 0.1;
+    const lineEnd = totalLengthCAD * 1.1;
     script += `LINE ${lineStart.toFixed(1)},${datumY.toFixed(1)} ${lineEnd.toFixed(1)},${datumY.toFixed(1)}\n`;
     script += 'LINETYPE S DASHED\n';
     script += `LINE ${lineStart.toFixed(1)},${datumY.toFixed(1)} ${lineEnd.toFixed(1)},${datumY.toFixed(1)}\n`;
     script += 'LINETYPE S CONTINUOUS\n';
-    script += `TEXT ${lineStart.toFixed(1)},${(datumY + 150).toFixed(1)} 120 0 RL ${datumY.toFixed(1)}\n`;
+    script += `TEXT ${lineStart.toFixed(1)},${(datumY + 150).toFixed(1)} 120 0 RL ${formatDistance(startingRL, distanceUnits, rlDecimalPlaces)}${getDistanceUnit(distanceUnits)}\n`;
     script += '\n';
 
     script += 'ZOOM E\n';
@@ -927,19 +1055,24 @@ function generateSectionAutoCADScript(segmentData, width, startingRL, startLabel
     return script;
 }
 
-function generatePlanAutoCADScript(segmentData, width, gradeType) {
+function generatePlanAutoCADScript(segmentData, width, gradeType, chainageDecimalPlaces = 1, gradeDecimalPlaces = 1, distanceUnits = 'm', gradeDisplay = 'percent') {
     const totalLength = segmentData.reduce((sum, seg) => sum + seg.length, 0);
-    const totalLengthMM = totalLength * 1000;
-    const widthMM = width * 1000;
-    const segmentsMM = segmentData.map(s => ({
+    
+    // Convert measurements to AutoCAD units (always use mm for precision)
+    const unitMultiplier = 1000; // Always use mm for AutoCAD for precision
+    const totalLengthCAD = totalLength * unitMultiplier;
+    const widthCAD = width * unitMultiplier;
+    const segmentsCAD = segmentData.map(s => ({
         ...s,
-        length: s.length * 1000
+        length: s.length * unitMultiplier
     }));
 
     let script = '; AutoCAD Script File - Ramp Plan View\n';
     script += '; Generated by Multi-Segment Ramp Design Tool\n';
     script += `; Generated: ${new Date().toISOString()}\n`;
-    script += '; All measurements in millimeters\n';
+    script += '; All measurements in millimeters for precision\n';
+    script += `; Original units: ${distanceUnits}, CH decimals: ${chainageDecimalPlaces}, Grade decimals: ${gradeDecimalPlaces}\n`;
+    script += `; Grade display: ${gradeDisplay}\n`;
     script += '\n';
     
     script += 'UNITS 2 1 1 2 0 N\n';
@@ -958,9 +1091,9 @@ function generatePlanAutoCADScript(segmentData, width, gradeType) {
     let currentX = 0;
     const centerY = 0;
 
-    segmentsMM.forEach((segment, index) => {
-        const segmentWidthMM = segment.length;
-        const nextX = currentX + segmentWidthMM;
+    segmentsCAD.forEach((segment, index) => {
+        const segmentWidthCAD = segment.length;
+        const nextX = currentX + segmentWidthCAD;
 
         if (segment.gradePercent === 0) {
             script += 'LAYER S RAMP-LANDING\n';
@@ -968,7 +1101,7 @@ function generatePlanAutoCADScript(segmentData, width, gradeType) {
             script += 'LAYER S RAMP-OUTLINE\n';
         }
 
-        script += `RECTANG ${currentX.toFixed(1)},${(centerY - widthMM/2).toFixed(1)} ${nextX.toFixed(1)},${(centerY + widthMM/2).toFixed(1)}\n`;
+        script += `RECTANG ${currentX.toFixed(1)},${(centerY - widthCAD/2).toFixed(1)} ${nextX.toFixed(1)},${(centerY + widthCAD/2).toFixed(1)}\n`;
 
         // Add arrows for sloped segments
         if (segment.gradePercent !== 0) {
@@ -997,12 +1130,12 @@ function generatePlanAutoCADScript(segmentData, width, gradeType) {
     });
     script += '\n';
 
-    // Add longitudinal dimensions
+    // Add longitudinal dimensions with specified decimal places
     script += 'LAYER S RAMP-DIMENSIONS\n';
-    const dimY = centerY + widthMM/2 + 300;
+    const dimY = centerY + widthCAD/2 + 300;
     
     currentX = 0;
-    segmentsMM.forEach((segment, index) => {
+    segmentsCAD.forEach((segment, index) => {
         const nextX = currentX + segment.length;
         
         script += `LINE ${currentX.toFixed(1)},${dimY.toFixed(1)} ${nextX.toFixed(1)},${dimY.toFixed(1)}\n`;
@@ -1010,17 +1143,10 @@ function generatePlanAutoCADScript(segmentData, width, gradeType) {
         script += `LINE ${nextX.toFixed(1)},${(dimY - 50).toFixed(1)} ${nextX.toFixed(1)},${(dimY + 50).toFixed(1)}\n`;
         
         const midX = (currentX + nextX) / 2;
-        let dimensionText;
-        if (segment.gradePercent === 0) {
-            dimensionText = `${segment.length.toFixed(0)}mm @ 0%`;
-        } else {
-            if (gradeType === 'percent') {
-                dimensionText = `${segment.length.toFixed(0)}mm @ ${segment.gradePercent.toFixed(1)}%`;
-            } else {
-                const ratio = Math.abs(segment.gradePercent) > 0 ? (100 / Math.abs(segment.gradePercent)).toFixed(0) : '∞';
-                dimensionText = `${segment.length.toFixed(0)}mm @ 1:${ratio}`;
-            }
-        }
+        // Convert back to original units for display with specified decimal places
+        const originalLength = segment.length / unitMultiplier;
+        const gradeText = formatGrade(segment.gradePercent, gradeDisplay, gradeDecimalPlaces);
+        const dimensionText = `${formatDistance(originalLength, distanceUnits, chainageDecimalPlaces)}${getDistanceUnit(distanceUnits)} @ ${gradeText}`;
         
         script += `TEXT ${midX.toFixed(1)},${(dimY + 150).toFixed(1)} 120 0 ${dimensionText}\n`;
         
@@ -1028,21 +1154,21 @@ function generatePlanAutoCADScript(segmentData, width, gradeType) {
     });
     script += '\n';
 
-    // Add width dimension
+    // Add width dimension with specified decimal places
     script += 'LAYER S RAMP-DIMENSIONS\n';
     const widthDimX = -400;
     
-    script += `LINE ${widthDimX.toFixed(1)},${(centerY - widthMM/2).toFixed(1)} ${widthDimX.toFixed(1)},${(centerY + widthMM/2).toFixed(1)}\n`;
-    script += `LINE ${(widthDimX - 50).toFixed(1)},${(centerY - widthMM/2).toFixed(1)} ${(widthDimX + 50).toFixed(1)},${(centerY - widthMM/2).toFixed(1)}\n`;
-    script += `LINE ${(widthDimX - 50).toFixed(1)},${(centerY + widthMM/2).toFixed(1)} ${(widthDimX + 50).toFixed(1)},${(centerY + widthMM/2).toFixed(1)}\n`;
+    script += `LINE ${widthDimX.toFixed(1)},${(centerY - widthCAD/2).toFixed(1)} ${widthDimX.toFixed(1)},${(centerY + widthCAD/2).toFixed(1)}\n`;
+    script += `LINE ${(widthDimX - 50).toFixed(1)},${(centerY - widthCAD/2).toFixed(1)} ${(widthDimX + 50).toFixed(1)},${(centerY - widthCAD/2).toFixed(1)}\n`;
+    script += `LINE ${(widthDimX - 50).toFixed(1)},${(centerY + widthCAD/2).toFixed(1)} ${(widthDimX + 50).toFixed(1)},${(centerY + widthCAD/2).toFixed(1)}\n`;
     
-    script += `TEXT ${(widthDimX + 150).toFixed(1)},${centerY.toFixed(1)} 120 0 ${widthMM.toFixed(0)}mm\n`;
+    script += `TEXT ${(widthDimX + 150).toFixed(1)},${centerY.toFixed(1)} 120 0 ${formatDistance(width, distanceUnits, chainageDecimalPlaces)}${getDistanceUnit(distanceUnits)}\n`;
     script += '\n';
 
     // Add title
     script += 'LAYER S RAMP-TEXT\n';
-    script += `TEXT ${(totalLengthMM/2).toFixed(1)},${(centerY + widthMM/2 + 800).toFixed(1)} 200 0 RAMP PLAN VIEW\n`;
-    script += `TEXT ${(totalLengthMM/2).toFixed(1)},${(centerY + widthMM/2 + 1100).toFixed(1)} 150 0 Total Length: ${totalLengthMM.toFixed(0)}mm\n`;
+    script += `TEXT ${(totalLengthCAD/2).toFixed(1)},${(centerY + widthCAD/2 + 800).toFixed(1)} 200 0 RAMP PLAN VIEW\n`;
+    script += `TEXT ${(totalLengthCAD/2).toFixed(1)},${(centerY + widthCAD/2 + 1100).toFixed(1)} 150 0 Total Length: ${formatDistance(totalLength, distanceUnits, chainageDecimalPlaces)}${getDistanceUnit(distanceUnits)}\n`;
     script += '\n';
 
     script += 'ZOOM E\n';

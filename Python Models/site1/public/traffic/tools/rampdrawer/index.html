@@ -38,11 +38,11 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="widthInput">Ramp Width (m):</label>
-                                <input type="number" id="widthInput" value="3.6" min="0.001" onchange="updateSegmentOutputs()">
+                                <input type="number" id="widthInput" value="3.6" min="0.001" step="0.1" onchange="validateAndUpdate('widthInput', 0.001); updateSegmentOutputs()">
                             </div>
                             <div class="form-group">
                                 <label for="startingRLInput">Starting RL (m):</label>
-                                <input type="number" id="startingRLInput" value="0.000" onchange="updateSegmentOutputs()">
+                                <input type="number" id="startingRLInput" value="0.000" min="-1000" max="10000" step="0.001" onchange="validateAndUpdate('startingRLInput', -1000, 10000); updateSegmentOutputs()">
                             </div>
                         </div>
                         <div class="form-row">
@@ -53,6 +53,66 @@
                             <div class="form-group">
                                 <label for="endLabelInput">Right Label:</label>
                                 <input type="text" id="endLabelInput" value="Property Boundary" onchange="updateSegmentOutputs()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Drawing Details</div>
+                        <div class="subsection">
+                            <h4 class="subsection-title">Labels</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="chainagePrefixInput">Chainage Label:</label>
+                                    <input type="text" id="chainagePrefixInput" value="CH" placeholder="e.g. CH, CL, ST" onchange="updateSegmentOutputs()">
+                                </div>
+                                <div class="form-group">
+                                    <label for="chainagePositionSelect">Label Position:</label>
+                                    <select id="chainagePositionSelect" onchange="updateChainagePosition(this.value)" class="form-select">
+                                        <option value="prefix">Prefix (CH1.5m)</option>
+                                        <option value="suffix">Suffix (1.5m CH)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h4 class="subsection-title">Drawing Precision</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="chainageDecimalInput">CH Decimal Places:</label>
+                                    <input type="number" id="chainageDecimalInput" value="2" min="0" max="4" step="1" onchange="validateAndUpdate('chainageDecimalInput', 0, 3); updateSegmentOutputs()">
+                                </div>
+                                <div class="form-group">
+                                    <label for="rlDecimalInput">RL Decimal Places:</label>
+                                    <input type="number" id="rlDecimalInput" value="2" min="0" max="3" step="1" onchange="validateAndUpdate('rlDecimalInput', 0, 3); updateSegmentOutputs()">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="gradeDecimalInput">Grade Decimal Places:</label>
+                                    <input type="number" id="gradeDecimalInput" value="1" min="0" max="4" step="1" onchange="validateAndUpdate('gradeDecimalInput', 0, 2); updateSegmentOutputs()">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h4 class="subsection-title">Units</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="distanceUnitsSelect">Distance Units:</label>
+                                    <select id="distanceUnitsSelect" onchange="updateDistanceUnits(this.value)" class="form-select">
+                                        <option value="m">Metres (m)</option>
+                                        <option value="mm">Millimetres (mm)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="gradeDisplaySelect">Grade Display:</label>
+                                    <select id="gradeDisplaySelect" onchange="updateGradeDisplay(this.value)" class="form-select">
+                                        <option value="percent">Percentage (%)</option>
+                                        <option value="ratio">Ratio (1:X)</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -85,6 +145,7 @@
                                     <th>Chainage at End (m)</th>
                                     <th>RL at End (m)</th>
                                     <th>Add Below</th>
+                                    <th>Remove</th>
                                 </tr>
                             </thead>
                             <tbody id="segmentsTableBody">
@@ -244,6 +305,56 @@
             font-size: 0.75rem;
         }
 
+        /* Subsection Styles */
+        .subsection {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border: 1px solid #e3f1f7;
+            border-radius: 6px;
+        }
+
+        .subsection:last-child {
+            margin-bottom: 0;
+        }
+
+        .subsection-title {
+            margin: 0 0 12px 0;
+            padding: 0;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #354e8d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #a3c9e0;
+            padding-bottom: 6px;
+        }
+
+        /* Form Select Styles */
+        .form-select {
+            padding: 8px 12px;
+            border: 1px solid #a3c9e0;
+            border-radius: 4px;
+            background: white;
+            color: #2c2c2c;
+            font-size: 0.9rem;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            cursor: pointer;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #6b99c2;
+            box-shadow: 0 0 0 3px rgba(107, 153, 194, 0.1);
+        }
+
+        .form-select:hover {
+            border-color: #6b99c2;
+        }
+
         .drawing-section {
             margin-bottom: 20px;
             background: #f8f9fa;
@@ -356,7 +467,7 @@
         }
         
         .btn-export.loading::before {
-            content: '⳻ ';
+            content: '⟳ ';
             animation: spin 1s linear infinite;
         }
         
@@ -371,6 +482,27 @@
             cursor: not-allowed;
             transform: none !important;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* Input Validation Styles */
+        .corrected-value {
+            border-color: #d4691e !important;
+            background-color: rgba(212, 105, 30, 0.1) !important;
+            transition: all 0.3s ease;
+        }
+        
+        .validation-warning {
+            color: #d4691e;
+            font-size: 0.8rem;
+            margin-top: 4px;
+            animation: fadeInOut 3s ease-in-out;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-5px); }
+            20% { opacity: 1; transform: translateY(0); }
+            80% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-5px); }
         }
 
         /* Responsive adjustments */
@@ -423,8 +555,236 @@
     <script>
         let currentLengthInputType = 'length';
         let currentGradeInputType = 'percent';
+        let currentDistanceUnits = 'm';
+        let currentGradeDisplay = 'percent';
+        let currentChainagePosition = 'prefix';
+        let chainageDecimalPlaces = 1;
+        let rlDecimalPlaces = 3;
+        let gradeDecimalPlaces = 1;
         let segments = [];
         let segmentCounter = 0;
+
+        /**
+         * Handle chainage position change (prefix/suffix)
+         */
+        function updateChainagePosition(position) {
+            currentChainagePosition = position;
+            updateSegmentOutputs();
+        }
+
+        /**
+         * Format distance value with specified decimal places for drawings
+         */
+        function formatDistanceValueForDrawing(value, decimalPlaces) {
+            if (currentDistanceUnits === 'mm') {
+                const convertedValue = value * 1000;
+                return convertedValue.toFixed(decimalPlaces);
+            }
+            return value.toFixed(decimalPlaces);
+        }
+
+        /**
+         * Format chainage label with proper positioning and decimal places
+         */
+        function formatChainageLabel(value, prefix = 'CH') {
+            const formattedValue = formatDistanceValueForDrawing(value, chainageDecimalPlaces);
+            const unit = currentDistanceUnits;
+            
+            if (currentChainagePosition === 'suffix') {
+                return `${formattedValue}${unit} ${prefix}`;
+            } else {
+                return `${prefix}${formattedValue}${unit}`;
+            }
+        }
+
+        /**
+         * Handle distance units change (m/mm)
+         */
+        function updateDistanceUnits(units) {
+            currentDistanceUnits = units;
+            updateSegmentOutputs();
+            
+            // Update the ramp width label
+            const widthLabel = document.querySelector('label[for="widthInput"]');
+            if (widthLabel) {
+                widthLabel.textContent = `Ramp Width (${units}):`;
+            }
+            
+            // Update the starting RL label
+            const startingRLLabel = document.querySelector('label[for="startingRLInput"]');
+            if (startingRLLabel) {
+                startingRLLabel.textContent = `Starting RL (${units}):`;
+            }
+            
+            // Update table headers to show current units
+            const lengthHeader = document.querySelector('#lengthInputType');
+            if (lengthHeader) {
+                const selectedOption = lengthHeader.selectedOptions[0];
+                if (selectedOption.value === 'length') {
+                    selectedOption.textContent = `Length (${units})`;
+                } else {
+                    selectedOption.textContent = `Chainage (${units})`;
+                }
+                // Update all options
+                Array.from(lengthHeader.options).forEach(option => {
+                    if (option.value === 'length') {
+                        option.textContent = `Length (${units})`;
+                    } else {
+                        option.textContent = `Chainage (${units})`;
+                    }
+                });
+            }
+        }
+
+        /**
+         * Handle grade display change (%/1:x)
+         */
+        function updateGradeDisplay(displayType) {
+            currentGradeDisplay = displayType;
+            updateSegmentOutputs();
+        }
+
+        /**
+         * Get display value with proper units
+         */
+        function formatDistanceValue(value, precision = null) {
+            if (currentDistanceUnits === 'mm') {
+                // Use 0 decimal places for mm (whole numbers)
+                const actualPrecision = precision !== null ? precision : 0;
+                return (value * 1000).toFixed(actualPrecision);
+            }
+            // Use 3 decimal places formetres
+            const actualPrecision = precision !== null ? precision : 3;
+            return value.toFixed(actualPrecision);
+        }
+
+        /**
+         * Get grade display value based on current display setting
+         */
+        function formatGradeForDisplay(gradePercent) {
+            if (currentGradeDisplay === 'ratio') {
+                if (gradePercent === 0) return '∞';
+                const ratio = Math.abs(100 / gradePercent);
+                return `1:${ratio.toFixed(1)}`;
+            }
+            return `${gradePercent.toFixed(1)}%`;
+        }
+
+        /**
+         * Validates and corrects input values to prevent negative/invalid entries
+         * @param {string} inputId - The ID of the input element
+         * @param {number} minValue - Minimum allowed value (inclusive)
+         * @param {number} maxValue - Maximum allowed value (optional)
+         */
+        function validateAndUpdate(inputId, minValue, maxValue = null) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            
+            let value = parseFloat(input.value);
+            
+            // Handle NaN or empty values
+            if (isNaN(value) || input.value.trim() === '') {
+                value = minValue;
+            }
+            
+            // Apply minimum constraint
+            if (value < minValue) {
+                value = minValue;
+                showValidationWarning(inputId, `Value cannot be less than ${minValue}`);
+            }
+            
+            // Apply maximum constraint if specified
+            if (maxValue !== null && value > maxValue) {
+                value = maxValue;
+                showValidationWarning(inputId, `Value cannot be greater than ${maxValue}`);
+            }
+            
+            // Update input value if it was corrected
+            if (parseFloat(input.value) !== value) {
+                input.value = value;
+                input.classList.add('corrected-value');
+                
+                // Remove highlight after 2 seconds
+                setTimeout(() => {
+                    input.classList.remove('corrected-value');
+                }, 2000);
+            }
+        }
+
+        /**
+         * Show temporary validation warning
+         */
+        function showValidationWarning(inputId, message) {
+            // Remove existing warnings for this input
+            const existingWarning = document.getElementById(`warning-${inputId}`);
+            if (existingWarning) {
+                existingWarning.remove();
+            }
+            
+            // Create and show new warning
+            const input = document.getElementById(inputId);
+            const warning = document.createElement('div');
+            warning.id = `warning-${inputId}`;
+            warning.className = 'validation-warning';
+            warning.textContent = message;
+            
+            input.parentNode.appendChild(warning);
+            
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                if (warning.parentNode) {
+                    warning.parentNode.removeChild(warning);
+                }
+            }, 3000);
+        }
+
+        /**
+         * Validate all inputs before generating ramp design
+         */
+        function validateAllInputs() {
+            let isValid = true;
+            const validationRules = [
+                { id: 'widthInput', min: 0.001, name: 'Ramp Width' },
+                { id: 'startingRLInput', min: -1000, max: 10000, name: 'Starting RL' },
+                { id: 'chainageDecimalInput', min: 0, max: 3, name: 'CH Decimal Places' },
+                { id: 'rlDecimalInput', min: 0, max: 3, name: 'RL Decimal Places' },
+                { id: 'gradeDecimalInput', min: 0, max: 2, name: 'Grade Decimal Places' }
+            ];
+            
+            validationRules.forEach(rule => {
+                const input = document.getElementById(rule.id);
+                if (input) {
+                    const value = parseFloat(input.value);
+                    if (isNaN(value) || value < rule.min || (rule.max && value > rule.max)) {
+                        showValidationWarning(rule.id, `${rule.name} must be valid`);
+                        isValid = false;
+                    }
+                }
+            });
+            
+            // Validate segment lengths
+            segments.forEach(segment => {
+                const lengthInput = document.getElementById(`length-${segment.id}`);
+                if (lengthInput) {
+                    const value = parseFloat(lengthInput.value);
+                    if (isNaN(value) || value < 0.001) {
+                        showValidationWarning(`length-${segment.id}`, 'Length must be at least 0.001m');
+                        isValid = false;
+                    }
+                }
+            });
+            
+            return isValid;
+        }
+
+        /**
+         * Update decimal places from inputs
+         */
+        function updateDecimalPlaces() {
+            chainageDecimalPlaces = parseInt(document.getElementById('chainageDecimalInput').value);
+            rlDecimalPlaces = parseInt(document.getElementById('rlDecimalInput').value);
+            gradeDecimalPlaces = parseInt(document.getElementById('gradeDecimalInput').value);
+        }
 
         // Authentication check on page load
         document.addEventListener('DOMContentLoaded', () => {
@@ -483,10 +843,19 @@
                 const gradeInput = document.getElementById(`grade-${segment.id}`);
                 
                 if (lengthInput) {
-                    segment.length = parseFloat(lengthInput.value) || 0;
+                    // Validate length input
+                    const lengthValue = parseFloat(lengthInput.value);
+                    if (isNaN(lengthValue) || lengthValue < 0.001) {
+                        lengthInput.value = 0.001;
+                        segment.length = 0.001;
+                    } else {
+                        segment.length = lengthValue;
+                    }
                 }
                 if (gradeInput) {
-                    segment.grade = parseFloat(gradeInput.value) || 0;
+                    // Grade can be negative, so no minimum validation
+                    const gradeValue = parseFloat(gradeInput.value);
+                    segment.grade = isNaN(gradeValue) ? 0 : gradeValue;
                 }
             });
         }
@@ -538,7 +907,7 @@
                     convertedValue = chainageAtEnd;
                 } else if (fromType === 'chainage' && toType === 'length') {
                     const previousChainage = index === 0 ? 0 : currentValues[index - 1];
-                    convertedValue = Math.max(0, currentValue - previousChainage);
+                    convertedValue = Math.max(0.001, currentValue - previousChainage);
                 }
                 
                 if (convertedValue !== undefined) {
@@ -548,7 +917,7 @@
         }
 
         function convertAllGradeInputs(fromType, toType) {
-            let cumulativeRL = parseFloat(document.getElementById('startingRLInput').value) || 0;
+            let cumulativeRL = parseFloat(document.getElementById('startingRLInput').value);
             
             segments.forEach((segment, index) => {
                 const currentValue = segment.grade;
@@ -616,11 +985,11 @@
         function addSegment() {
             const segmentId = ++segmentCounter;
             
-            let defaultLength = 0;
+            let defaultLength = 1; // Default to 1m instead of 0
             let defaultGrade = 0;
             
             if (currentLengthInputType === 'chainage') {
-                defaultLength = segments.reduce((sum, seg) => sum + getSegmentActualLength(seg.id), 0);
+                defaultLength = segments.reduce((sum, seg) => sum + getSegmentActualLength(seg.id), 0) + 1;
             }
             
             if (currentGradeInputType === 'rl') {
@@ -647,7 +1016,7 @@
 
         function renderSegments() {
             const tableBody = document.getElementById('segmentsTableBody');
-            const startingRL = parseFloat(document.getElementById('startingRLInput').value) || 0;
+            const startingRL = parseFloat(document.getElementById('startingRLInput').value);
             
             let html = `
                 <tr class="starting-row">
@@ -667,11 +1036,11 @@
                         <td>${segment.id}</td>
                         <td>
                             <input type="number" id="length-${segment.id}" value="${segment.length.toFixed(3)}" 
-                                   min="0.001" step="0.001" onchange="updateSegmentOutputs()">
+                                   min="0.001" step="0.1" onchange="validateAndUpdate('length-${segment.id}', 0.001); updateSegmentOutputs()">
                         </td>
                         <td>
                             <input type="number" id="grade-${segment.id}" value="${segment.grade.toFixed(3)}" 
-                                   step="0.001" onchange="updateSegmentOutputs()">
+                                   step="0.1" onchange="updateSegmentOutputs()">
                         </td>
                         <td class="output-cell" id="chainage-output-${segment.id}">0.000</td>
                         <td class="output-cell" id="rl-output-${segment.id}">0.000</td>
@@ -694,7 +1063,7 @@
                 insertIndex = segments.findIndex(seg => seg.id === afterId) + 1;
             }
             
-            let defaultLength = 0;
+            let defaultLength = 1; // Default to 1m instead of 0
             let defaultGrade = 0;
             
             if (currentLengthInputType === 'chainage') {
@@ -702,7 +1071,7 @@
                 for (let i = 0; i < insertIndex; i++) {
                     cumulativeLength += getSegmentActualLength(segments[i].id);
                 }
-                defaultLength = cumulativeLength;
+                defaultLength = cumulativeLength + 1;
             }
             
             if (currentGradeInputType === 'rl') {
@@ -721,7 +1090,7 @@
         }
 
         function getSegmentStartingRL(segmentIndex) {
-            const startingRL = parseFloat(document.getElementById('startingRLInput').value) || 0;
+            const startingRL = parseFloat(document.getElementById('startingRLInput').value);
             let cumulativeRL = startingRL;
             
             for (let i = 0; i < segmentIndex; i++) {
@@ -746,6 +1115,14 @@
         }
 
         function resetSegments() {
+            // Clear validation warnings
+            document.querySelectorAll('.validation-warning').forEach(warning => {
+                warning.remove();
+            });
+            document.querySelectorAll('.corrected-value').forEach(input => {
+                input.classList.remove('corrected-value');
+            });
+            
             segments = [];
             segmentCounter = 0;
             initializeDefaultSegments();
@@ -755,23 +1132,43 @@
             segments = [];
             segmentCounter = 0;
 
+            // Reset basic parameters
             document.getElementById('widthInput').value = 3.6;
             document.getElementById('startingRLInput').value = 0.000;
             document.getElementById('startLabelInput').value = "Carpark";
             document.getElementById('endLabelInput').value = "Property Boundary";
 
+            // Reset drawing details
+            document.getElementById('chainagePrefixInput').value = "CH";
+            document.getElementById('chainagePositionSelect').value = "prefix";
+            document.getElementById('distanceUnitsSelect').value = "m";
+            document.getElementById('gradeDisplaySelect').value = "percent";
+            document.getElementById('chainageDecimalInput').value = 1;
+            document.getElementById('rlDecimalInput').value = 3;
+            document.getElementById('gradeDecimalInput').value = 1;
+            
+            // Update global variables
+            currentDistanceUnits = 'm';
+            currentGradeDisplay = 'percent';
+            currentChainagePosition = 'prefix';
+            chainageDecimalPlaces = 1;
+            rlDecimalPlaces = 3;
+            gradeDecimalPlaces = 1;
             currentLengthInputType = 'length';
             currentGradeInputType = 'percent';
             
             document.getElementById('lengthInputType').value = 'length';
             document.getElementById('gradeInputType').value = 'percent';
 
+            // Update labels to reflect current units
+            updateDistanceUnits('m');
+
             const defaults = [
                 { length: 2, grade: 12.5 },
                 { length: 12, grade: 25 },
                 { length: 2, grade: 17.5 },
                 { length: 6, grade: 5 },
-                { length: 0, grade: 0 }
+                { length: 6, grade: 0 }
             ];
 
             defaults.forEach(def => {
@@ -784,6 +1181,14 @@
         }
 
         function resetInputs() {
+            // Clear validation warnings
+            document.querySelectorAll('.validation-warning').forEach(warning => {
+                warning.remove();
+            });
+            document.querySelectorAll('.corrected-value').forEach(input => {
+                input.classList.remove('corrected-value');
+            });
+            
             initializeDefaultSegments();
         }
 
@@ -791,13 +1196,16 @@
             // Sync DOM values to segments array first
             syncSegmentDataFromDOM();
             
-            const startingRL = parseFloat(document.getElementById('startingRLInput').value) || 0;
+            // Update decimal places from inputs
+            updateDecimalPlaces();
+            
+            const startingRL = parseFloat(document.getElementById('startingRLInput').value) ;
             let cumulativeLength = 0;
             let cumulativeRL = startingRL;
             
             const startingRLCells = document.querySelectorAll('.starting-row td');
             if (startingRLCells.length > 4) {
-                startingRLCells[4].textContent = startingRL.toFixed(3);
+                startingRLCells[4].textContent = formatDistanceValue(startingRL);
             }
             
             segments.forEach((segment, index) => {
@@ -826,9 +1234,24 @@
                 const chainageOutput = document.getElementById(`chainage-output-${segment.id}`);
                 const rlOutput = document.getElementById(`rl-output-${segment.id}`);
                 
-                if (chainageOutput) chainageOutput.textContent = cumulativeLength.toFixed(3);
-                if (rlOutput) rlOutput.textContent = endRL.toFixed(3);
+                if (chainageOutput) chainageOutput.textContent = formatDistanceValue(cumulativeLength);
+                if (rlOutput) rlOutput.textContent = formatDistanceValue(endRL);
             });
+            
+            // Update table headers with current units
+            updateTableHeaders();
+        }
+
+        function updateTableHeaders() {
+            const chainageHeader = document.querySelector('th:nth-child(4)');
+            const rlHeader = document.querySelector('th:nth-child(5)');
+            
+            if (chainageHeader) {
+                chainageHeader.textContent = `Chainage at End (${currentDistanceUnits})`;
+            }
+            if (rlHeader) {
+                rlHeader.textContent = `RL at End (${currentDistanceUnits})`;
+            }
         }
 
         function getSegmentData() {
@@ -869,11 +1292,26 @@
                 return;
             }
 
+            // Validate all inputs before proceeding
+            if (!validateAllInputs()) {
+                status.style.display = 'block';
+                status.className = 'status error';
+                status.textContent = 'Please correct the input validation errors before generating.';
+                return;
+            }
+
+            // Update decimal places from inputs
+            updateDecimalPlaces();
+
+            // Update decimal places from inputs
+            updateDecimalPlaces();
+
             const segmentData = getSegmentData();
             const width = parseFloat(document.getElementById('widthInput').value);
-            const startingRL = parseFloat(document.getElementById('startingRLInput').value) || 0;
+            const startingRL = parseFloat(document.getElementById('startingRLInput').value) ;
             const startLabel = document.getElementById('startLabelInput').value || 'Start';
             const endLabel = document.getElementById('endLabelInput').value || 'End';
+            const chainagePrefix = document.getElementById('chainagePrefixInput').value || 'CH';
 
             if (!width || segmentData.length === 0) {
                 status.style.display = 'block';
@@ -903,6 +1341,13 @@
                             startingRL,
                             startLabel,
                             endLabel,
+                            chainagePrefix,
+                            chainagePosition: currentChainagePosition,
+                            chainageDecimalPlaces,
+                            rlDecimalPlaces,
+                            gradeDecimalPlaces,
+                            distanceUnits: currentDistanceUnits,
+                            gradeDisplay: currentGradeDisplay,
                             gradeType: 'percent'
                         }
                     })
@@ -997,9 +1442,10 @@
 
             const segmentData = getSegmentData();
             const width = parseFloat(document.getElementById('widthInput').value);
-            const startingRL = parseFloat(document.getElementById('startingRLInput').value) || 0;
+            const startingRL = parseFloat(document.getElementById('startingRLInput').value) ;
             const startLabel = document.getElementById('startLabelInput').value || 'Start';
             const endLabel = document.getElementById('endLabelInput').value || 'End';
+            const chainagePrefix = document.getElementById('chainagePrefixInput').value || 'CH';
 
             try {
                 const action = format === 'autocad' ? 'exportAutoCAD' : 'exportFile';
@@ -1019,6 +1465,13 @@
                             startingRL,
                             startLabel,
                             endLabel,
+                            chainagePrefix,
+                            chainagePosition: currentChainagePosition,
+                            chainageDecimalPlaces,
+                            rlDecimalPlaces,
+                            gradeDecimalPlaces,
+                            distanceUnits: currentDistanceUnits,
+                            gradeDisplay: currentGradeDisplay,
                             gradeType: 'percent'
                         }
                     })

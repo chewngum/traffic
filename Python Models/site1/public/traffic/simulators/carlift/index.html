@@ -88,7 +88,7 @@
                         
                         <div id="capacityWarning" class="capacity-warning" style="display: none;">
                             <strong>Warning:</strong> <span id="capacityMessage"></span>
-                            <br><small>Reduce traffic rates or improve elevator timing parameters</small>
+                            <br><small>Reduce traffic rates or improve lift timing parameters</small>
                         </div>
                     </div>
 
@@ -479,11 +479,11 @@
                         if (validation.capacityExceeded) {
                             runButton.classList.add('btn-disabled');
                             runButton.disabled = true;
-                            messageSpan.innerHTML = `Maximum elevator utilization would be ${validation.maximum.toFixed(1)}%<br>Minimum elevator utilization would be ${validation.minimum.toFixed(1)}%<br><strong>Even optimal dispatching cannot handle this traffic load</strong>`;
+                            messageSpan.innerHTML = `Maximum lift utilization would be ${validation.maximum.toFixed(1)}%<br>Minimum lift utilization would be ${validation.minimum.toFixed(1)}%<br><strong>Even optimal dispatching cannot handle this traffic load</strong>`;
                         } else {
                             runButton.classList.remove('btn-disabled');
                             runButton.disabled = false;
-                            messageSpan.innerHTML = `Maximum elevator utilization would be ${validation.maximum.toFixed(1)}%<br>Minimum elevator utilization: ${validation.minimum.toFixed(1)}%<br><strong>Traffic may be manageable with optimal dispatching</strong>`;
+                            messageSpan.innerHTML = `Maximum lift utilization would be ${validation.maximum.toFixed(1)}%<br>Minimum lift utilization: ${validation.minimum.toFixed(1)}%<br><strong>Traffic may be manageable with optimal dispatching</strong>`;
                         }
                     } else {
                         warningDiv.style.display = 'none';

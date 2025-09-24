@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       const results = await runMultipleCarLiftSimulations(parameters);
       res.json({ success: true, results });
     } else if (action === 'validateCapacity') {
-      const validation = validateElevatorCapacity(parameters);
+      const validation = validateliftCapacity(parameters);
       res.json({ success: true, validation });
     } else {
       res.status(400).json({ error: 'Invalid action' });
@@ -136,7 +136,7 @@ class FastRNG {
   }
 }
 
-function validateElevatorCapacity(parameters) {
+function validateliftCapacity(parameters) {
   const { numFloors, lobbyFloor, doorOpenTime, doorCloseTime, enterTime, 
           exitTime, verticalSpeed, bufferTime, arrivalRates, departureRates } = parameters;
 
@@ -194,7 +194,7 @@ async function runMultipleCarLiftSimulations(parameters) {
     const batchResults = [];
     
     for (let seed = start; seed < end; seed++) {
-      const result = simulateCarLiftOptimized(seed, parameters);
+      const result = simulateCarLiftoptimised(seed, parameters);
       batchResults.push(result);
     }
     
@@ -209,7 +209,7 @@ async function runMultipleCarLiftSimulations(parameters) {
   return averageCarLiftResults(results);
 }
 
-function simulateCarLiftOptimized(seed, parameters) {
+function simulateCarLiftoptimised(seed, parameters) {
   const { numFloors, lobbyFloor, simHours, doorOpenTime, enterTime, doorCloseTime, 
           verticalSpeed, exitTime, bufferTime, minHeadway, arrivalRates, departureRates } = parameters;
           
