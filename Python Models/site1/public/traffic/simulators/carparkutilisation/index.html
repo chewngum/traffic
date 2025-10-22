@@ -72,7 +72,7 @@
                             <strong>Theoretical Min Spaces:</strong> <span id="theoreticalSpaces">2.50</span>
                         </div>
                         <div class="validation-check utilization-check">
-                            <strong>Utilization Rate:</strong> <span id="utilizationDisplay">25.0%</span>
+                            <strong>Utilisation Rate:</strong> <span id="utilizationDisplay">25.0%</span>
                         </div>
                         
                         <div id="warningMessage" class="alert-warning" style="display: none; margin-top: 12px;">
@@ -154,14 +154,14 @@
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label for="marginOfError">Margin of Error (cars/hour):</label>
-                                        <input type="number" id="marginOfError" value="0.05" min="0.001" step="0.001" onchange="calculateSampleSize()">
+                                        <label for="marginOfError">Margin of Error (% of trips):</label>
+                                        <input type="number" id="marginOfError" value="0.5" min="0.001" step="0.01" onchange="calculateSampleSize()">
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label for="numSeeds">Number of Seeds:</label>
-                                        <input type="number" id="numSeeds" value="130" min="1" max="10000" step="1" onchange="updateRuntimeDisplay()">
+                                        <input type="number" id="numSeeds" value="15" min="1" max="10000" step="1" onchange="updateRuntimeDisplay()">
                                     </div>
                                     <div class="form-group">
                                         <label for="seedMode">Seed Mode:</label>
@@ -417,21 +417,21 @@
                     warningDiv.style.display = 'block';
                     warningDiv.style.borderColor = '#d4691e';
                     warningDiv.style.background = 'rgba(212, 105, 30, 0.1)';
-                    messageSpan.innerHTML = `⚠️ Utilization is ${utilizationPercent.toFixed(1)}%<br><strong>System overloaded - queues will grow indefinitely</strong>`;
+                    messageSpan.innerHTML = `⚠️ Utilisation is ${utilizationPercent.toFixed(1)}%<br><strong>System overloaded - queues will grow indefinitely</strong>`;
                     runButton.disabled = false; // Allow run to demonstrate overload
                     runButton.classList.remove('btn-disabled');
                 } else if (utilizationPercent >= 95) {
                     warningDiv.style.display = 'block';
                     warningDiv.style.borderColor = '#d4691e';
                     warningDiv.style.background = 'rgba(212, 105, 30, 0.1)';
-                    messageSpan.innerHTML = `⚠️ Utilization is ${utilizationPercent.toFixed(1)}%<br><strong>Very high utilization - expect long queues and delays</strong>`;
+                    messageSpan.innerHTML = `⚠️ Utilisation is ${utilizationPercent.toFixed(1)}%<br><strong>Very high utilisation - expect long queues and delays</strong>`;
                     runButton.disabled = false;
                     runButton.classList.remove('btn-disabled');
                 } else if (utilizationPercent >= 80) {
                     warningDiv.style.display = 'block';
                     warningDiv.style.borderColor = '#f39c12';
                     warningDiv.style.background = 'rgba(243, 156, 18, 0.1)';
-                    messageSpan.innerHTML = `⚠️ Utilization is ${utilizationPercent.toFixed(1)}%<br><strong>High utilization - moderate queuing expected</strong>`;
+                    messageSpan.innerHTML = `⚠️ Utilisation is ${utilizationPercent.toFixed(1)}%<br><strong>High utilisation - moderate queuing expected</strong>`;
                     runButton.disabled = false;
                     runButton.classList.remove('btn-disabled');
                 } else {
@@ -763,23 +763,29 @@
 
         function calculateSampleSize() {
             const confidenceLevel = parseFloat(document.getElementById('confidenceLevel').value);
-            const marginOfError = parseFloat(document.getElementById('marginOfError').value);
             const arrivalRate = parseFloat(document.getElementById('arrivalRate').value);
             const simulationHours = parseFloat(document.getElementById('simulationHours').value);
-            
+            const marginOfError = parseFloat(document.getElementById('marginOfError').value) * arrivalRate / 100;
+            const currentSeeds = parseInt(document.getElementById('numSeeds').value);
+
+            if (isNaN(simulationHours) || simulationHours <= 0) {
+                document.getElementById('sampleSizeResult').innerHTML = '<strong>Error: Invalid simulation hours</strong>';
+                return;
+            }
+
             const zScores = { 90: 1.645, 95: 1.96, 99: 2.576, 99.9: 3.291, 99.99: 3.891 };
             const z = zScores[confidenceLevel];
-            const estimatedSigma = Math.sqrt(arrivalRate / simulationHours);
-            const requiredSeeds = Math.ceil(Math.pow((z * estimatedSigma) / marginOfError, 2));
-            
+            const estimatedSigma = Math.sqrt(arrivalRate);
+            const minObservations = Math.pow((z * estimatedSigma) / marginOfError, 2);
+            const requiredSeeds = Math.ceil(minObservations / simulationHours);
+
             const resultDiv = document.getElementById('sampleSizeResult');
-            const currentSeeds = parseInt(document.getElementById('numSeeds').value);
-            
+
             resultDiv.innerHTML = `
                 <strong>Minimum ${requiredSeeds} seeds required</strong><br>
                 <small>(Z=${z}, Est. σ=${estimatedSigma.toFixed(3)})</small>
             `;
-            
+
             if (currentSeeds < requiredSeeds) {
                 resultDiv.style.borderColor = '#a3c9e0';
                 resultDiv.style.background = 'rgba(163, 201, 224, 0.1)';
@@ -792,15 +798,21 @@
 
         function applySampleSize() {
             const confidenceLevel = parseFloat(document.getElementById('confidenceLevel').value);
-            const marginOfError = parseFloat(document.getElementById('marginOfError').value);
             const arrivalRate = parseFloat(document.getElementById('arrivalRate').value);
+            const marginOfError = parseFloat(document.getElementById('marginOfError').value) * arrivalRate / 100;
             const simulationHours = parseFloat(document.getElementById('simulationHours').value);
-            
+
+            if (isNaN(simulationHours) || simulationHours <= 0) {
+                alert('Invalid simulation hours value');
+                return;
+            }
+
             const zScores = { 90: 1.645, 95: 1.96, 99: 2.576, 99.9: 3.291, 99.99: 3.891 };
             const z = zScores[confidenceLevel];
-            const estimatedSigma = Math.sqrt(arrivalRate / simulationHours);
-            const requiredSeeds = Math.ceil(Math.pow((z * estimatedSigma) / marginOfError, 2));
-            
+            const estimatedSigma = Math.sqrt(arrivalRate);
+            const minObservations = Math.pow((z * estimatedSigma) / marginOfError, 2);
+            const requiredSeeds = Math.ceil(minObservations / simulationHours);
+
             document.getElementById('numSeeds').value = requiredSeeds;
             document.getElementById('seedMode').value = 'fixed';
             calculateSampleSize();
@@ -839,9 +851,9 @@
             document.getElementById('queueLength').value = '1000';
             document.getElementById('minHeadway').value = '3';
             document.getElementById('simulationHours').value = '1000';
-            document.getElementById('numSeeds').value = '130';
+            document.getElementById('numSeeds').value = '15';
             document.getElementById('confidenceLevel').value = '99.9';
-            document.getElementById('marginOfError').value = '0.05';
+            document.getElementById('marginOfError').value = '0.5';
             document.getElementById('seedMode').value = 'fixed';
             
             calculateSampleSize();
@@ -853,7 +865,7 @@
 
         function generateValidationCheck(results, params) {
             const expectedRate = params.arrivalRate;
-            const marginError = parseFloat(document.getElementById('marginOfError').value);
+            const marginError = parseFloat(document.getElementById('marginOfError').value) * expectedRate / 100;
             
             const models = [
                 { key: 'infinite', name: 'Infinite Capacity' },
@@ -1075,7 +1087,7 @@
             const startTime = Date.now();
 
             try {
-                            const apiUrl = window.API_CONFIG?.endpoints?.carparkutilisation || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/carparutilisation';
+                            const apiUrl = window.API_CONFIG?.endpoints?.['carparkutilisation'] || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/carparkutilisation';
 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },

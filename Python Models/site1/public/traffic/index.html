@@ -88,7 +88,14 @@
                         <h3>Ramp Design</h3>
                         <p>Draw compliant car ramps in seconds with perfect annotation</p>
                     </div>
-                    
+
+                    <div class="compact-simulation-card" onclick="openSimulation('streetsection')" data-access-level="1">
+                        <div class="access-badge level-1" id="badge-streetsection">L1</div>
+                        <div class="compact-card-icon">🛣️</div>
+                        <h3>Street Section Designer</h3>
+                        <p>Design and visualize street cross-sections with lanes, medians, and dimensions</p>
+                    </div>
+
                     <div class="compact-simulation-card" onclick="openSimulation('network')" data-access-level="3">
                         <div class="access-badge level-3" id="badge-network">L3</div>
                         <div class="compact-card-icon">🗺️</div>
@@ -105,6 +112,7 @@
         const PAGE_ACCESS = {
             'boomgate': 1,
             'rampdrawer': 1,
+            'streetsection': 1,
             'two-way-passing': 1,
             'carparkutilisation': 1,
             'carlift': 1,
@@ -113,36 +121,19 @@
             'network': 3
         };
 
-        // Authentication check on page load
+        // Page initialization
         document.addEventListener('DOMContentLoaded', async () => {
             // Give common.js time to load manifest and handle authentication
             await new Promise(resolve => setTimeout(resolve, 100));
-            
-            // Check authentication using common.js functions
-            const token = localStorage.getItem('authToken');
-            if (!token || !isValidToken(token)) {
-                window.location.href = '/login/';
-                return;
-            }
-            
+
+            // Auth check is now handled by common.js checkPageAccess()
             // Update card accessibility based on user level
             updateCardAccessibility();
-            
+
             // Show the app
             document.getElementById('loading').style.display = 'none';
             document.getElementById('app').classList.remove('hidden');
         });
-
-        function isValidToken(token) {
-            try {
-                const decoded = atob(token);
-                const [timestamp, username, accessLevel] = decoded.split(':');
-                const tokenAge = Date.now() - parseInt(timestamp);
-                return tokenAge < 24 * 60 * 60 * 1000; // 24 hours
-            } catch {
-                return false;
-            }
-        }
 
         function getUserAccessLevel() {
             try {
@@ -187,15 +178,9 @@
         }
 
         function openSimulation(type) {
-            const token = localStorage.getItem('authToken');
             const userLevel = getUserAccessLevel();
             const requiredLevel = PAGE_ACCESS[type];
-            
-            if (!token || !isValidToken(token)) {
-                window.location.href = '/login/';
-                return;
-            }
-            
+
             // Check access level
             if (userLevel < requiredLevel) {
                 alert(`This feature requires Level ${requiredLevel} access. You currently have Level ${userLevel} access.`);
@@ -220,10 +205,13 @@
                     window.location.href = '/traffic/simulators/mechanical/';
                     break;
                 case 'schoolpickup':
-                    window.location.href = '/schoolpickup/';
+                    window.location.href = '/traffic/simulators/schoolpickup/';
                     break;
                 case 'rampdrawer':
                     window.location.href = '/traffic/tools/rampdrawer/';
+                    break;
+                case 'streetsection':
+                    window.location.href = '/traffic/tools/streetsection/';
                     break;
                 case 'network':
                     window.location.href = '/traffic/tools/network/';

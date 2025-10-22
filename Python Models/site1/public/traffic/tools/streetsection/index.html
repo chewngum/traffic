@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Labb - Street Section Designer</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script type="module" src="/common.js"></script>
+    <script src="/utils/api-config.js"></script>
+    <script src="/utils/street-section-renderer.js"></script>
+</head>
+<body>
+    <div id="loading" class="loading">
+        <h2>Verifying access...</h2>
+    </div>
+
+    <div id="app" class="container hidden">
+        <div class="dashboard-header">
+            <div class="header-left">
+                <div class="header-title">
+                    <h1>Street Section Designer</h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Cross-Section View -->
+            <div class="results-container" style="margin-bottom: 20px;">
+                <div id="drawingsContent">
+                    <div class="no-results">
+                        <h4>Cross-section will appear here</h4>
+                        <p>Configure zones below and click "Generate Cross-Section"</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zone Configuration -->
+            <div class="glass-card" style="padding: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div style="display: flex; gap: 20px; align-items: center;">
+                        <div>
+                            <strong style="color: #354e8d; font-size: 1.1rem;">Total Width:</strong>
+                            <span id="totalWidthDisplay" style="color: #2c2c2c; font-size: 1.1rem;">0.0m</span>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <label for="diagramTitle" style="color: #354e8d; font-weight: 600;">Title:</label>
+                            <input type="text" id="diagramTitle" placeholder="Optional diagram title"
+                                   style="padding: 6px 10px; border: 1px solid #a3c9e0; border-radius: 4px; width: 200px;"
+                                   oninput="updateCrossSection()">
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <label for="leftSetback" style="color: #354e8d; font-weight: 600;">Left Setback (m):</label>
+                            <input type="number" id="leftSetback" value="0" min="0" max="50" step="0.1"
+                                   style="padding: 6px 10px; border: 1px solid #a3c9e0; border-radius: 4px; width: 60px;"
+                                   oninput="updateCrossSection()">
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <label for="rightSetback" style="color: #354e8d; font-weight: 600;">Right Setback (m):</label>
+                            <input type="number" id="rightSetback" value="0" min="0" max="50" step="0.1"
+                                   style="padding: 6px 10px; border: 1px solid #a3c9e0; border-radius: 4px; width: 60px;"
+                                   oninput="updateCrossSection()">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-reset" onclick="resetToDefaults()">Reset</button>
+                    </div>
+                </div>
+
+                <div class="table-section">
+                    <table class="table horizontal-table" id="zonesTable">
+                        <thead>
+                            <tr id="headerRow">
+                                <!-- Headers will be added dynamically -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr id="colourRow" class="zone-row">
+                                <td class="row-label">Colour</td>
+                            </tr>
+                            <tr id="labelRow" class="zone-row">
+                                <td class="row-label">Label</td>
+                            </tr>
+                            <tr id="iconRow" class="zone-row">
+                                <td class="row-label">Icon</td>
+                            </tr>
+                            <tr id="positionRow" class="zone-row">
+                                <td class="row-label">Position</td>
+                            </tr>
+                            <tr id="widthRow" class="zone-row">
+                                <td class="row-label">Width (m)</td>
+                            </tr>
+                            <tr id="aboveRoadRow" class="zone-row">
+                                <td class="row-label">Above Road</td>
+                            </tr>
+                            <tr id="parentRow" class="zone-row">
+                                <td class="row-label">Parent Zone</td>
+                            </tr>
+                            <tr id="actionsRow" class="zone-row">
+                                <td class="row-label">Actions</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <button class="btn btn-run" onclick="addZone()" style="margin-top: 10px;">+ Add Zone</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Colour Picker Modal -->
+    <div id="colourPickerModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0;">Select Colour</h3>
+                <button onclick="closeColourPicker()" style="border: none; background: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+            </div>
+            <div id="colourPalette" class="colour-palette"></div>
+            <button class="btn btn-run" onclick="applyColour()" style="width: 100%; margin-top: 15px;">Apply</button>
+        </div>
+    </div>
+
+    <!-- Icon Selector Modal -->
+    <div id="iconPickerModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 380px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="margin: 0; font-size: 1.1rem;">Select Icon</h3>
+                <button onclick="closeIconPicker()" style="border: none; background: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+            </div>
+            <div class="icon-category-tabs">
+                <button class="icon-category-tab active" data-category="none" onclick="switchIconCategory('none')">None</button>
+                <button class="icon-category-tab" data-category="people" onclick="switchIconCategory('people')">People</button>
+                <button class="icon-category-tab" data-category="cyclists" onclick="switchIconCategory('cyclists')">Cyclists</button>
+                <button class="icon-category-tab" data-category="vehicles" onclick="switchIconCategory('vehicles')">Vehicles</button>
+                <button class="icon-category-tab" data-category="trees" onclick="switchIconCategory('trees')">Trees</button>
+                <button class="icon-category-tab" data-category="street_furniture" onclick="switchIconCategory('street_furniture')">Furniture</button>
+            </div>
+            <div id="iconGallery" class="icon-gallery"></div>
+            <button class="btn btn-run" onclick="applyIcon()" style="width: 100%; margin-top: 12px;">Apply</button>
+        </div>
+    </div>
+
+    <style>
+        /* Hide user welcome and logout */
+        .header-right {
+            display: none !important;
+        }
+
+        /* Compact styling */
+        .main-content {
+            padding: 10px;
+        }
+
+        .glass-card {
+            padding: 15px !important;
+        }
+
+        .table-section {
+            max-height: none;
+            overflow-x: auto;
+        }
+
+        .horizontal-table {
+            width: auto;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: white;
+            border: 1px solid #a3c9e0;
+            border-radius: 6px;
+        }
+
+        .horizontal-table .row-label {
+            position: sticky;
+            left: 0;
+            background: #e3f1f7;
+            color: #354e8d;
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 600;
+            border-right: 2px solid #a3c9e0;
+            font-size: 0.85rem;
+            z-index: 10;
+            min-width: 100px;
+        }
+
+        .horizontal-table thead th {
+            position: sticky;
+            top: 0;
+            background: #e3f1f7;
+            color: #354e8d;
+            padding: 8px 10px;
+            text-align: center;
+            font-weight: 600;
+            border-bottom: 2px solid #a3c9e0;
+            font-size: 0.85rem;
+            min-width: 120px;
+            max-width: 150px;
+            z-index: 9;
+        }
+
+        .horizontal-table thead th.row-label {
+            z-index: 11;
+        }
+
+        .horizontal-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e3f1f7;
+            border-right: 1px solid #e3f1f7;
+            text-align: center;
+            font-size: 0.85rem;
+            min-width: 120px;
+            max-width: 150px;
+        }
+
+        .horizontal-table tr:hover td:not(.row-label) {
+            background: #f8f9fa;
+        }
+
+        .horizontal-table input[type="text"],
+        .horizontal-table input[type="number"],
+        .horizontal-table select {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #a3c9e0;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            box-sizing: border-box;
+        }
+
+        .horizontal-table input:focus,
+        .horizontal-table select:focus {
+            outline: none;
+            border-color: #6b99c2;
+        }
+
+        .colour-swatch {
+            width: 100%;
+            height: 35px;
+            border-radius: 4px;
+            border: 2px solid #a3c9e0;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .colour-swatch:hover {
+            transform: scale(1.05);
+            border-color: #6b99c2;
+        }
+
+        .zone-actions {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+        }
+
+        .btn-action {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-add-left {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-add-left:hover {
+            background: #0056b3;
+        }
+
+        .btn-add-right {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-add-right:hover {
+            background: #138496;
+        }
+
+        .btn-remove {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-remove:hover {
+            background: #c82333;
+        }
+
+        .drag-handle {
+            cursor: move;
+            font-size: 18px;
+            color: #6b7280;
+        }
+
+        .sortable-ghost {
+            opacity: 0.4;
+            background: #e3f1f7;
+        }
+
+        .sortable-drag {
+            opacity: 1;
+        }
+
+        /* Highlight entire column when dragging */
+        .column-dragging {
+            background: #d1e7f5 !important;
+            opacity: 0.6 !important;
+        }
+
+        .column-ghost {
+            background: #e3f1f7 !important;
+            opacity: 0.4 !important;
+        }
+
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 18px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            margin: 20px;
+        }
+
+        .colour-palette {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .colour-option {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .colour-option:hover {
+            transform: scale(1.1);
+            border-color: #354e8d;
+        }
+
+        .colour-option.selected {
+            border-color: #354e8d;
+            border-width: 3px;
+            transform: scale(1.15);
+        }
+
+        /* Icon selector styles */
+        .icon-selector-button {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #a3c9e0;
+            border-radius: 4px;
+            cursor: pointer;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 50px;
+            transition: all 0.2s;
+        }
+
+        .icon-selector-button:hover {
+            border-color: #6b99c2;
+            background: #f8f9fa;
+        }
+
+        .icon-selector-button img {
+            max-width: 100%;
+            max-height: 40px;
+            object-fit: contain;
+        }
+
+        .icon-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 6px;
+            margin-top: 12px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .icon-option {
+            width: 100%;
+            aspect-ratio: 1;
+            border: 2px solid #e3f1f7;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 6px;
+            background: white;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-option img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .icon-option:hover {
+            transform: scale(1.05);
+            border-color: #6b99c2;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .icon-option.selected {
+            border-color: #354e8d;
+            border-width: 3px;
+            transform: scale(1.08);
+            background: #e3f1f7;
+        }
+
+        .icon-category-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #e3f1f7;
+            flex-wrap: wrap;
+        }
+
+        .icon-category-tab {
+            padding: 6px 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .icon-category-tab:hover {
+            color: #354e8d;
+        }
+
+        .icon-category-tab.active {
+            color: #354e8d;
+            border-bottom-color: #354e8d;
+        }
+
+        .position-selector {
+            display: flex;
+            gap: 2px;
+            justify-content: center;
+        }
+
+        .position-button {
+            flex: 1;
+            padding: 4px 6px;
+            border: 1px solid #a3c9e0;
+            background: white;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            min-width: 24px;
+        }
+
+        .position-button:first-child {
+            border-radius: 4px 0 0 4px;
+        }
+
+        .position-button:last-child {
+            border-radius: 0 4px 4px 0;
+        }
+
+        .position-button.active {
+            background: #354e8d;
+            color: white;
+            border-color: #354e8d;
+        }
+
+        .position-button:hover:not(.active) {
+            background: #e3f1f7;
+        }
+
+        /* Results container */
+        .results-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        #drawingsContent {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* Drawing section */
+        .drawing-section {
+            margin-bottom: 0;
+            background: #f8f9fa;
+            border: 1px solid #e3f1f7;
+            border-radius: 8px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .drawing-header {
+            background: #354e8d;
+            color: white;
+            padding: 10px 16px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1rem;
+        }
+
+        .drawing-content {
+            padding: 20px;
+            background: white;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+        }
+
+        .drawing-content svg {
+            max-width: 100%;
+            width: 100%;
+            height: auto;
+            background: white;
+            border: 1px solid #a3c9e0;
+            border-radius: 4px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-export {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 70px;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-export.png {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-export.png:hover {
+            background: #059669;
+        }
+
+        .btn-export.jpeg {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-export.jpeg:hover {
+            background: #d97706;
+        }
+
+        .btn-export.svg {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-export.svg:hover {
+            background: #2563eb;
+        }
+
+        .btn-export.loading {
+            opacity: 0.8;
+            cursor: wait;
+        }
+
+        @media (max-width: 768px) {
+            .horizontal-table th,
+            .horizontal-table td {
+                padding: 4px 6px;
+                font-size: 0.75rem;
+                min-width: 100px;
+            }
+
+            .colour-palette {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+    </style>
+
+    <script>
+        let zones = [];
+        let zoneCounter = 0;
+        let sortable = null;
+        let currentEditingZoneId = null;
+        let selectedColour = null;
+        let currentEditingIconZoneId = null;
+        let selectedIcon = null;
+        let currentIconCategory = 'people';
+        const renderer = new StreetSectionRenderer();
+
+        // Rainbow colours with 3 lighter and 3 darker shades each
+        const COLOUR_PALETTE = generateRainbowPalette();
+
+        function generateRainbowPalette() {
+            // Base rainbow colours
+            const baseColours = [
+                '#FF0000', // Red
+                '#FF7F00', // Orange
+                '#FFFF00', // Yellow
+                '#00FF00', // Green
+                '#0000FF', // Blue
+                '#4B0082', // Indigo
+                '#9400D3'  // Violet
+            ];
+
+            const palette = [];
+
+            baseColours.forEach(baseColour => {
+                // Convert hex to RGB
+                const r = parseInt(baseColour.substr(1,2), 16);
+                const g = parseInt(baseColour.substr(3,2), 16);
+                const b = parseInt(baseColour.substr(5,2), 16);
+
+                // 3 darker shades
+                for (let i = 3; i >= 1; i--) {
+                    const factor = i * 0.25;
+                    const dr = Math.round(r * (1 - factor));
+                    const dg = Math.round(g * (1 - factor));
+                    const db = Math.round(b * (1 - factor));
+                    palette.push(`#${toHex(dr)}${toHex(dg)}${toHex(db)}`);
+                }
+
+                // Base colour
+                palette.push(baseColour);
+
+                // 3 lighter shades
+                for (let i = 1; i <= 3; i++) {
+                    const factor = i * 0.25;
+                    const lr = Math.round(r + (255 - r) * factor);
+                    const lg = Math.round(g + (255 - g) * factor);
+                    const lb = Math.round(b + (255 - b) * factor);
+                    palette.push(`#${toHex(lr)}${toHex(lg)}${toHex(lb)}`);
+                }
+            });
+
+            return palette;
+        }
+
+        function toHex(n) {
+            const hex = n.toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        }
+
+        // Icon library organized by category
+        const ICON_LIBRARY = {
+            people: [
+                { id: 'man', name: 'Man', file: 'man.png' },
+                { id: 'woman', name: 'Woman', file: 'woman.png' },
+                { id: 'wheelchair', name: 'Wheelchair', file: 'wheelchair.png' },
+                { id: 'roadworker', name: 'Road Worker', file: 'roadworker.png' },
+                { id: 'alfresco-dining', name: 'Outdoor Dining', file: 'alfresco-dining.png' },
+                { id: 'pram', name: 'Pram', file: 'pram.png' }
+            ],
+            cyclists: [
+                { id: 'cyclist', name: 'Cyclist', file: 'cyclist.png' }
+            ],
+            vehicles: [
+                { id: 'car1', name: 'Car 1', file: 'car1.png' },
+                { id: 'car-small', name: 'Small Car', file: 'car-small.png' },
+                { id: 'bus', name: 'Bus', file: 'bus.png' },
+                { id: 'truck', name: 'Truck', file: 'truck.png' },
+                { id: 'concrete-truck', name: 'Concrete Truck', file: 'concrete-truck.png' }
+            ],
+            trees: [
+                { id: 'tree-big', name: 'Large Tree', file: 'tree-big.png' },
+                { id: 'tree-small', name: 'Small Tree', file: 'tree-small.png' },
+                { id: 'flowerbed', name: 'Flowerbed', file: 'flowerbed.png' }
+            ],
+            street_furniture: [
+                { id: 'bench', name: 'Bench', file: 'bench.png' },
+                { id: 'busstop', name: 'Bus Stop', file: 'busstop.png' },
+                { id: 'food-cart', name: 'Food Cart', file: 'food-cart.png' }
+            ]
+        };
+
+        // Get icon path
+        function getIconPath(category, filename) {
+            return `/assets/streetscape_icons/${category}/${filename}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('authToken');
+
+            if (!token || !isValidToken(token)) {
+                window.location.href = '/';
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('app').classList.remove('hidden');
+
+            resetToDefaults();
+            initializeSortable();
+        });
+
+        function initializeSortable() {
+            const headerRow = document.getElementById('headerRow');
+            if (sortable) {
+                sortable.destroy();
+            }
+
+            sortable = Sortable.create(headerRow, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                onStart: function(evt) {
+                    // Highlight the entire column being dragged
+                    highlightColumn(evt.oldIndex, 'column-dragging');
+                },
+                onEnd: function(evt) {
+                    // Remove highlighting from all columns
+                    removeColumnHighlight();
+                    reorderZones();
+                }
+            });
+        }
+
+        function highlightColumn(columnIndex, className) {
+            // columnIndex from Sortable is the index of the dragged header within the sortable container
+            // Since Sortable only operates on the th elements (not the row-label), columnIndex matches directly
+            const headerRow = document.getElementById('headerRow');
+            const allHeaders = Array.from(headerRow.querySelectorAll('th'));
+
+            // columnIndex corresponds to position in allHeaders array (which includes row-label at 0)
+            const actualColumnIndex = columnIndex;
+
+            if (actualColumnIndex >= 0 && actualColumnIndex < allHeaders.length) {
+                const header = allHeaders[actualColumnIndex];
+                const zoneId = header.dataset.zoneId;
+
+                // Get all rows in the table
+                const table = document.getElementById('zonesTable');
+                const rows = table.querySelectorAll('tr');
+
+                // Highlight the column across all rows
+                rows.forEach(row => {
+                    const cells = Array.from(row.querySelectorAll('th, td'));
+                    // Highlight the cell at the same position
+                    if (cells[actualColumnIndex]) {
+                        cells[actualColumnIndex].classList.add(className);
+                    }
+                });
+            }
+        }
+
+        function removeColumnHighlight() {
+            // Remove highlight classes from all cells
+            const table = document.getElementById('zonesTable');
+            const allCells = table.querySelectorAll('th, td');
+            allCells.forEach(cell => {
+                cell.classList.remove('column-dragging', 'column-ghost');
+            });
+        }
+
+        function reorderZones() {
+            const headers = Array.from(document.getElementById('headerRow').querySelectorAll('th'));
+            const newOrder = [];
+
+            headers.forEach(header => {
+                const zoneId = parseInt(header.dataset.zoneId);
+                const zone = zones.find(z => z.id === zoneId);
+                if (zone) {
+                    newOrder.push(zone);
+                }
+            });
+
+            zones = newOrder;
+            renderZones();
+            updateTotalWidth();
+        }
+
+        function addZone() {
+            // Default to adding to the right end
+            const zone = {
+                id: ++zoneCounter,
+                label: `Zone ${zoneCounter}`,
+                type: 'driving-lane',
+                width: 3.5,
+                colour: COLOUR_PALETTE[21], // Default to base green
+                aboveRoadLevel: false,
+                parentId: null,
+                icon: 'car1', // Default icon
+                iconCategory: 'vehicles',
+                iconPosition: 50 // Default position (center)
+            };
+            zones.push(zone);
+            renderZones();
+            updateTotalWidth();
+        }
+
+        function addSegmentLeft(id) {
+            const targetZone = zones.find(z => z.id === id);
+            if (!targetZone) return;
+
+            // Find the index of the target zone (only among parent zones)
+            const parentZones = zones.filter(z => !z.parentId);
+            const targetIndex = parentZones.findIndex(z => z.id === id);
+
+            // Determine if this is at the left boundary (first segment)
+            const isAtLeftBoundary = targetIndex === 0;
+
+            // Create default segment based on position
+            const newZone = {
+                id: ++zoneCounter,
+                label: isAtLeftBoundary ? 'Verge' : 'Travel Lane',
+                type: isAtLeftBoundary ? 'verge' : 'driving-lane',
+                width: isAtLeftBoundary ? 2.0 : 3.5,
+                colour: isAtLeftBoundary ? '#7FFF7F' : '#7F7F7F',
+                aboveRoadLevel: isAtLeftBoundary,
+                parentId: null,
+                icon: isAtLeftBoundary ? 'tree-big' : 'car1',
+                iconCategory: isAtLeftBoundary ? 'trees' : 'vehicles',
+                iconPosition: 50
+            };
+
+            // Find actual index in zones array and insert before it
+            const actualIndex = zones.findIndex(z => z.id === id);
+            zones.splice(actualIndex, 0, newZone);
+
+            renderZones();
+            updateTotalWidth();
+        }
+
+        function addSegmentRight(id) {
+            const targetZone = zones.find(z => z.id === id);
+            if (!targetZone) return;
+
+            // Find the index of the target zone (only among parent zones)
+            const parentZones = zones.filter(z => !z.parentId);
+            const targetIndex = parentZones.findIndex(z => z.id === id);
+
+            // Determine if this is at the right boundary (last segment)
+            const isAtRightBoundary = targetIndex === parentZones.length - 1;
+
+            // Create default segment based on position
+            const newZone = {
+                id: ++zoneCounter,
+                label: isAtRightBoundary ? 'Verge' : 'Travel Lane',
+                type: isAtRightBoundary ? 'verge' : 'driving-lane',
+                width: isAtRightBoundary ? 2.0 : 3.5,
+                colour: isAtRightBoundary ? '#7FFF7F' : '#7F7F7F',
+                aboveRoadLevel: isAtRightBoundary,
+                parentId: null,
+                icon: isAtRightBoundary ? 'tree-big' : 'car1',
+                iconCategory: isAtRightBoundary ? 'trees' : 'vehicles',
+                iconPosition: 50
+            };
+
+            // Find actual index in zones array
+            const actualIndex = zones.findIndex(z => z.id === id);
+
+            // Insert after target zone and any of its children
+            let insertIndex = actualIndex + 1;
+            // Skip any children of the target zone
+            while (insertIndex < zones.length && zones[insertIndex].parentId === id) {
+                insertIndex++;
+            }
+
+            zones.splice(insertIndex, 0, newZone);
+
+            renderZones();
+            updateTotalWidth();
+        }
+
+        function removeZone(id) {
+            zones = zones.filter(z => z.id !== id);
+            renderZones();
+            updateTotalWidth();
+        }
+
+        function updateZone(id, field, value) {
+            const zone = zones.find(z => z.id === id);
+            if (!zone) return;
+
+            // Handle parent change
+            if (field === 'parentId') {
+                const newParentId = value;
+                const oldParentId = zone.parentId;
+
+                // If setting a new parent (not null)
+                if (newParentId) {
+                    // Check if parent already has a child
+                    const parentHasChild = zones.some(z => z.id !== id && z.parentId === newParentId);
+                    if (parentHasChild) {
+                        alert('Each parent can only have one child segment. This parent already has a child.');
+                        renderZones(); // Re-render to reset the dropdown
+                        return;
+                    }
+
+                    // Move this zone to immediately after its parent
+                    const parentIndex = zones.findIndex(z => z.id === newParentId);
+                    if (parentIndex !== -1) {
+                        // Remove zone from current position
+                        const currentIndex = zones.findIndex(z => z.id === id);
+                        const [movedZone] = zones.splice(currentIndex, 1);
+                        // Insert after parent
+                        zones.splice(parentIndex + 1, 0, movedZone);
+                    }
+                }
+
+                zone.parentId = newParentId;
+            } else {
+                zone[field] = value;
+            }
+
+            updateTotalWidth();
+            renderZones();
+        }
+
+        // Icon position control functions
+        function moveIconLeft(id) {
+            const zone = zones.find(z => z.id === id);
+            if (!zone) return;
+
+            const currentPosition = typeof zone.iconPosition === 'number' ? zone.iconPosition : 50;
+            zone.iconPosition = Math.max(10, currentPosition - 10);
+
+            renderZones();
+        }
+
+        function centerIcon(id) {
+            const zone = zones.find(z => z.id === id);
+            if (!zone) return;
+
+            zone.iconPosition = 50;
+
+            renderZones();
+        }
+
+        function moveIconRight(id) {
+            const zone = zones.find(z => z.id === id);
+            if (!zone) return;
+
+            const currentPosition = typeof zone.iconPosition === 'number' ? zone.iconPosition : 50;
+            zone.iconPosition = Math.min(90, currentPosition + 10);
+
+            renderZones();
+        }
+
+        function openColourPicker(id) {
+            currentEditingZoneId = id;
+            const zone = zones.find(z => z.id === id);
+            selectedColour = zone ? zone.colour : COLOUR_PALETTE[21];
+
+            const palette = document.getElementById('colourPalette');
+            palette.innerHTML = COLOUR_PALETTE.map(colour =>
+                `<div class="colour-option ${colour === selectedColour ? 'selected' : ''}"
+                      style="background-color: ${colour}"
+                      onclick="selectColour('${colour}')"></div>`
+            ).join('');
+
+            document.getElementById('colourPickerModal').style.display = 'flex';
+        }
+
+        function selectColour(colour) {
+            selectedColour = colour;
+            document.querySelectorAll('.colour-option').forEach(el => {
+                const elColour = rgbToHex(el.style.backgroundColor);
+                el.classList.toggle('selected', elColour.toUpperCase() === colour.toUpperCase());
+            });
+        }
+
+        function rgbToHex(rgb) {
+            const result = rgb.match(/\d+/g);
+            if (!result) return rgb;
+            return '#' + result.map(x => {
+                const hex = parseInt(x).toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+        }
+
+        function applyColour() {
+            if (currentEditingZoneId !== null && selectedColour) {
+                const zone = zones.find(z => z.id === currentEditingZoneId);
+                if (zone) {
+                    zone.colour = selectedColour;
+                    renderZones();
+                    updateCrossSection();
+                }
+            }
+            closeColourPicker();
+        }
+
+        function closeColourPicker() {
+            document.getElementById('colourPickerModal').style.display = 'none';
+            currentEditingZoneId = null;
+        }
+
+        // Icon picker functions
+        function openIconPicker(id) {
+            currentEditingIconZoneId = id;
+            const zone = zones.find(z => z.id === id);
+            selectedIcon = zone && zone.icon ? zone.icon : null;
+            currentIconCategory = zone && zone.iconCategory ? zone.iconCategory : (selectedIcon ? 'people' : 'none');
+
+            // Reset to current category
+            switchIconCategory(currentIconCategory);
+            document.getElementById('iconPickerModal').style.display = 'flex';
+        }
+
+        function switchIconCategory(category) {
+            currentIconCategory = category;
+
+            // Update active tab
+            document.querySelectorAll('.icon-category-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.category === category);
+            });
+
+            // Render icons for this category
+            const gallery = document.getElementById('iconGallery');
+
+            if (category === 'none') {
+                // Show "No Icon" option
+                const isSelected = selectedIcon === null || selectedIcon === 'none';
+                gallery.innerHTML = `
+                    <div class="icon-option ${isSelected ? 'selected' : ''}"
+                         data-icon-id="none"
+                         data-category="none"
+                         onclick="selectIcon(null, 'none')"
+                         style="display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 600; color: #64748b; border: 2px dashed #cbd5e1;">
+                        No Icon
+                    </div>
+                `;
+            } else {
+                const icons = ICON_LIBRARY[category] || [];
+                gallery.innerHTML = icons.map(icon => {
+                    const iconPath = getIconPath(category, icon.file);
+                    const isSelected = selectedIcon === icon.id;
+                    return `<div class="icon-option ${isSelected ? 'selected' : ''}"
+                                 data-icon-id="${icon.id}"
+                                 data-category="${category}"
+                                 onclick="selectIcon('${icon.id}', '${category}')">
+                        <img src="${iconPath}" alt="${icon.name}" title="${icon.name}">
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        function selectIcon(iconId, category) {
+            selectedIcon = iconId;
+            currentIconCategory = category;
+            document.querySelectorAll('.icon-option').forEach(el => {
+                el.classList.toggle('selected', el.dataset.iconId === iconId);
+            });
+        }
+
+        function applyIcon() {
+            if (currentEditingIconZoneId !== null) {
+                const zone = zones.find(z => z.id === currentEditingIconZoneId);
+                if (zone) {
+                    zone.icon = selectedIcon;
+                    zone.iconCategory = selectedIcon ? currentIconCategory : null;
+                    renderZones();
+                    updateCrossSection();
+                }
+            }
+            closeIconPicker();
+        }
+
+        function closeIconPicker() {
+            document.getElementById('iconPickerModal').style.display = 'none';
+            currentEditingIconZoneId = null;
+        }
+
+        function renumberAndReorderZones() {
+            // Create a new array with proper ordering: parents followed by their children
+            const orderedZones = [];
+            let displayCounter = 0;
+
+            // First pass: add all parent zones (zones without parentId)
+            zones.forEach(zone => {
+                if (!zone.parentId) {
+                    displayCounter++;
+                    zone.displayNumber = displayCounter;
+                    orderedZones.push(zone);
+
+                    // Find all children of this parent
+                    let childCounter = 1;
+                    zones.forEach(childZone => {
+                        if (childZone.parentId === zone.id) {
+                            childZone.displayNumber = `${displayCounter}.${childCounter}`;
+                            orderedZones.push(childZone);
+                            childCounter++;
+                        }
+                    });
+                }
+            });
+
+            // Update zones array with the new order
+            zones = orderedZones;
+        }
+
+        function renderZones() {
+            // Renumber zones with x.y notation for children and reorder
+            renumberAndReorderZones();
+
+            // Render headers with proper alignment
+            const headerRow = document.getElementById('headerRow');
+            headerRow.innerHTML = '<th class="row-label" style="background: #e3f1f7;"></th>' + zones.map(zone => `
+                <th data-zone-id="${zone.id}">
+                    <span class="drag-handle">☰</span> ${zone.displayNumber || zone.id}
+                </th>
+            `).join('');
+
+            // Render colour row
+            const colourRow = document.getElementById('colourRow');
+            colourRow.innerHTML = '<td class="row-label">Colour</td>' + zones.map(zone => `
+                <td>
+                    <div class="colour-swatch"
+                         style="background-color: ${zone.colour}"
+                         onclick="openColourPicker(${zone.id})"></div>
+                </td>
+            `).join('');
+
+            // Render label row
+            const labelRow = document.getElementById('labelRow');
+            labelRow.innerHTML = '<td class="row-label">Label</td>' + zones.map(zone => `
+                <td>
+                    <input type="text" value="${zone.label}"
+                           onchange="updateZone(${zone.id}, 'label', this.value)">
+                </td>
+            `).join('');
+
+            // Render icon row
+            const iconRow = document.getElementById('iconRow');
+            iconRow.innerHTML = '<td class="row-label">Icon</td>' + zones.map(zone => {
+                const iconPath = zone.icon && zone.iconCategory ? getIconPath(zone.iconCategory, ICON_LIBRARY[zone.iconCategory]?.find(i => i.id === zone.icon)?.file || '') : '';
+                const displayText = iconPath ? '' : (zone.icon === null ? 'No Icon' : 'Select Icon');
+                return `<td>
+                    <button class="icon-selector-button" onclick="openIconPicker(${zone.id})">
+                        ${iconPath ? `<img src="${iconPath}" alt="Selected icon">` : `<span style="color: #94a3b8; font-size: 0.85rem;">${displayText}</span>`}
+                    </button>
+                </td>`;
+            }).join('');
+
+            // Render position row (visible for all zones)
+            const positionRow = document.getElementById('positionRow');
+            positionRow.innerHTML = '<td class="row-label">Position</td>' + zones.map(zone => {
+                const position = zone.iconPosition || 50;
+                const isCenter = position === 'center' || position === 50;
+                const currentPos = typeof position === 'number' ? position : 50;
+                return `<td>
+                    <div class="position-selector">
+                        <button class="position-button"
+                                onclick="moveIconLeft(${zone.id})"
+                                title="Move left (current: ${currentPos}%)">◄</button>
+                        <button class="position-button ${isCenter ? 'active' : ''}"
+                                onclick="centerIcon(${zone.id})"
+                                title="Center (50%)">●</button>
+                        <button class="position-button"
+                                onclick="moveIconRight(${zone.id})"
+                                title="Move right (current: ${currentPos}%)">►</button>
+                    </div>
+                </td>`;
+            }).join('');
+
+            // Render width row
+            const widthRow = document.getElementById('widthRow');
+            widthRow.innerHTML = '<td class="row-label">Width (m)</td>' + zones.map(zone => `
+                <td>
+                    <input type="number" value="${zone.width}" step="0.1" min="0.1"
+                           onchange="updateZone(${zone.id}, 'width', parseFloat(this.value) || 0.1)">
+                </td>
+            `).join('');
+
+            // Render above road level row
+            const aboveRoadRow = document.getElementById('aboveRoadRow');
+            aboveRoadRow.innerHTML = '<td class="row-label">Above Road</td>' + zones.map(zone => `
+                <td>
+                    <input type="checkbox" ${zone.aboveRoadLevel ? 'checked' : ''}
+                           onchange="updateZone(${zone.id}, 'aboveRoadLevel', this.checked)"
+                           style="width: auto; cursor: pointer;">
+                </td>
+            `).join('');
+
+            // Render parent zone row
+            const parentRow = document.getElementById('parentRow');
+            parentRow.innerHTML = '<td class="row-label">Parent Zone</td>' + zones.map(zone => {
+                // Filter potential parents: exclude self, exclude zones that already have children (unless it's this zone's current parent), and exclude zones that are themselves children
+                const availableParents = zones.filter(z => {
+                    if (z.id === zone.id) return false; // Can't be its own parent
+                    if (z.parentId) return false; // Can't select a child as a parent
+                    const hasChild = zones.some(child => child.id !== zone.id && child.parentId === z.id);
+                    if (hasChild) return false; // Already has a different child
+                    return true;
+                });
+
+                return `<td>
+                    <select onchange="updateZone(${zone.id}, 'parentId', parseInt(this.value) || null)">
+                        <option value="">None</option>
+                        ${availableParents.map(z =>
+                            `<option value="${z.id}" ${z.id === zone.parentId ? 'selected' : ''}>${z.displayNumber || z.id}. ${z.label}</option>`
+                        ).join('')}
+                    </select>
+                </td>`;
+            }).join('');
+
+            // Render actions row
+            const actionsRow = document.getElementById('actionsRow');
+            actionsRow.innerHTML = '<td class="row-label">Actions</td>' + zones.map(zone => `
+                <td>
+                    <div class="zone-actions">
+                        <button class="btn-action btn-add-left" onclick="addSegmentLeft(${zone.id})" title="Add Left">←</button>
+                        <button class="btn-action btn-add-right" onclick="addSegmentRight(${zone.id})" title="Add Right">→</button>
+                        <button class="btn-action btn-remove" onclick="removeZone(${zone.id})" title="Remove">×</button>
+                    </div>
+                </td>
+            `).join('');
+
+            initializeSortable();
+            updateCrossSection();
+        }
+
+        function updateTotalWidth() {
+            // Only count parent zones (child zones don't add to total width)
+            const total = zones.reduce((sum, z) => {
+                if (!z.parentId) {
+                    return sum + z.width;
+                }
+                return sum;
+            }, 0);
+            document.getElementById('totalWidthDisplay').textContent = `${total.toFixed(1)}m`;
+        }
+
+        function resetToDefaults() {
+            // Create verge with child footpath, parking lane, travel lane, travel lane, parking lane, verge with child footpath
+            const verge1Id = ++zoneCounter;
+            const verge2Id = ++zoneCounter;
+
+            zones = [
+                // Left verge (parent)
+                { id: verge1Id, label: 'Verge', type: 'verge', width: 3.0, colour: '#7FFF7F', aboveRoadLevel: true, parentId: null, icon: 'tree-big', iconCategory: 'trees', iconPosition: 50 },
+                // Left footpath (child of left verge)
+                { id: ++zoneCounter, label: 'Footpath', type: 'footpath', width: 2.0, colour: '#BFBFBF', aboveRoadLevel: true, parentId: verge1Id, icon: 'man', iconCategory: 'people', iconPosition: 50 },
+                // Left parking lane
+                { id: ++zoneCounter, label: 'Parking', type: 'parking', width: 2.5, colour: '#FFBF7F', aboveRoadLevel: false, parentId: null, icon: 'car1', iconCategory: 'vehicles', iconPosition: 50 },
+                // Travel lane 1
+                { id: ++zoneCounter, label: 'Travel Lane', type: 'driving-lane', width: 3.5, colour: '#7F7F7F', aboveRoadLevel: false, parentId: null, icon: 'car-small', iconCategory: 'vehicles', iconPosition: 50 },
+                // Travel lane 2
+                { id: ++zoneCounter, label: 'Travel Lane', type: 'driving-lane', width: 3.5, colour: '#7F7F7F', aboveRoadLevel: false, parentId: null, icon: 'car1', iconCategory: 'vehicles', iconPosition: 50 },
+                // Right parking lane
+                { id: ++zoneCounter, label: 'Parking', type: 'parking', width: 2.5, colour: '#FFBF7F', aboveRoadLevel: false, parentId: null, icon: 'car1', iconCategory: 'vehicles', iconPosition: 50 },
+                // Right verge (parent)
+                { id: verge2Id, label: 'Verge', type: 'verge', width: 3.0, colour: '#7FFF7F', aboveRoadLevel: true, parentId: null, icon: 'tree-big', iconCategory: 'trees', iconPosition: 50 },
+                // Right footpath (child of right verge)
+                { id: ++zoneCounter, label: 'Footpath', type: 'footpath', width: 2.0, colour: '#BFBFBF', aboveRoadLevel: true, parentId: verge2Id, icon: 'woman', iconCategory: 'people', iconPosition: 50 }
+            ];
+            renderZones();
+            updateTotalWidth();
+        }
+
+        function updateCrossSection() {
+            // Only count parent zones for total width (child zones don't add to width)
+            const totalWidth = zones.reduce((sum, z) => {
+                if (!z.parentId) {
+                    return sum + z.width;
+                }
+                return sum;
+            }, 0);
+            if (zones.length === 0) {
+                document.getElementById('drawingsContent').innerHTML = `
+                    <div class="no-results">
+                        <h4>Cross-section will appear here</h4>
+                        <p>Add zones below to see the cross-section</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const title = document.getElementById('diagramTitle')?.value || '';
+            const leftSetback = parseFloat(document.getElementById('leftSetback')?.value || 0);
+            const rightSetback = parseFloat(document.getElementById('rightSetback')?.value || 0);
+
+            renderer.setDiagramTitle(title);
+            renderer.setSetbacks(leftSetback, rightSetback);
+            const svgContent = renderer.generateCrossSection(zones, totalWidth);
+            displayCrossSection(svgContent);
+        }
+
+        function displayCrossSection(svgContent) {
+            const container = document.getElementById('drawingsContent');
+            container.innerHTML = `
+                <div class="drawing-section">
+                    <div class="drawing-header">
+                        <span>Street Cross-Section View</span>
+                        <div class="export-buttons">
+                            <button class="btn-export png" onclick="exportImage('png')">PNG</button>
+                            <button class="btn-export jpeg" onclick="exportImage('jpeg')">JPEG</button>
+                            <button class="btn-export svg" onclick="exportSVG()">SVG</button>
+                        </div>
+                    </div>
+                    <div class="drawing-content">
+                        ${svgContent}
+                    </div>
+                </div>
+            `;
+        }
+
+        function exportSVG() {
+            const svgElement = document.querySelector('.drawing-content svg');
+            if (!svgElement) return;
+
+            const svgData = new XMLSerializer().serializeToString(svgElement);
+            const blob = new Blob([svgData], { type: 'image/svg+xml' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'street_section.svg';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        function exportImage(format) {
+            const svgElement = document.querySelector('.drawing-content svg');
+            if (!svgElement) return;
+
+            const button = event.target;
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.classList.add('loading');
+            button.textContent = 'Exporting...';
+
+            // Clone SVG and ensure it has proper dimensions
+            const svgClone = svgElement.cloneNode(true);
+            const bbox = svgElement.getBoundingClientRect();
+
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = bbox.width * 2; // Higher resolution
+            canvas.height = bbox.height * 2;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Convert SVG to data URL
+            const svgData = new XMLSerializer().serializeToString(svgClone);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const svgUrl = URL.createObjectURL(svgBlob);
+
+            // Load SVG into image
+            const img = new Image();
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                URL.revokeObjectURL(svgUrl);
+
+                // Export as PNG or JPEG
+                canvas.toBlob(function(blob) {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `street_section.${format}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    button.disabled = false;
+                    button.classList.remove('loading');
+                    button.textContent = originalText;
+                }, format === 'png' ? 'image/png' : 'image/jpeg', 0.95);
+            };
+            img.onerror = function() {
+                alert('Error exporting image');
+                button.disabled = false;
+                button.classList.remove('loading');
+                button.textContent = originalText;
+            };
+            img.src = svgUrl;
+        }
+
+        async function trackUsage(simulationType, parameters, runtimeMs, success) {
+            const token = localStorage.getItem('authToken');
+            if (!token) return;
+
+            try {
+                const apiUrl = window.API_CONFIG?.endpoints?.['track-usage'] || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/track-usage';
+                await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        simulationType,
+                        parameters,
+                        runtimeMs,
+                        success,
+                        timestamp: new Date().toISOString(),
+                        pageUrl: window.location.href
+                    })
+                });
+            } catch (error) {
+                console.error('Usage tracking error:', error);
+            }
+        }
+
+        function isValidToken(token) {
+            try {
+                const decoded = atob(token);
+                const [timestamp] = decoded.split(':');
+                const tokenAge = Date.now() - parseInt(timestamp);
+                return tokenAge < 24 * 60 * 60 * 1000;
+            } catch {
+                return false;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,286 @@
+service: traffic-labb
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  timeout: 29
+  # Optimize Lambda deployments
+  deploymentMethod: direct
+  versionFunctions: false
+  environment:
+    DATABASE_URL: ${env:DATABASE_URL, 'placeholder'}
+    # Mailgun Email Service
+    MAILGUN_API_KEY: ${env:MAILGUN_API_KEY, 'placeholder'}
+    MAILGUN_DOMAIN: ${env:MAILGUN_DOMAIN, 'placeholder'}
+    MAILGUN_API_URL: ${env:MAILGUN_API_URL, 'https://api.mailgun.net'}
+    FROM_EMAIL: ${env:FROM_EMAIL, 'placeholder'}
+    FROM_NAME: ${env:FROM_NAME, 'Traffic Lab'}
+    SUPPORT_EMAIL: ${env:SUPPORT_EMAIL, 'placeholder'}
+    REPLY_TO_EMAIL: ${env:REPLY_TO_EMAIL, 'placeholder'}
+    APP_URL: ${env:APP_URL, 'placeholder'}
+    # Legacy EmailJS (can be removed)
+    EMAILJS_PRIVATE_KEY: ${env:EMAILJS_PRIVATE_KEY, 'placeholder'}
+    EMAILJS_PUBLIC_KEY: ${env:EMAILJS_PUBLIC_KEY, 'placeholder'}
+    EMAILJS_SERVICE_ID: ${env:EMAILJS_SERVICE_ID, 'placeholder'}
+    EMAILJS_TEMPLATE_CONTACT: ${env:EMAILJS_TEMPLATE_CONTACT, 'placeholder'}
+    EMAILJS_TEMPLATE_FEEDBACK: ${env:EMAILJS_TEMPLATE_FEEDBACK, 'placeholder'}
+    EMAILJS_USER_ID: ${env:EMAILJS_USER_ID, 'placeholder'}
+  httpApi:
+    cors:
+      allowedOrigins:
+        - '*'
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+        - X-Requested-With
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      allowCredentials: false
+
+functions:
+  # Compute-intensive simulation functions (1769 MB = 1 vCPU equivalent)
+  mechanical:
+    handler: lambda-api/handlers/mechanical.main
+    memorySize: 1769
+    timeout: 29
+    events:
+      - httpApi:
+          path: /api/mechanical
+          method: ANY
+
+  boomgate:
+    handler: lambda-api/handlers/boomgate.main
+    memorySize: 1769
+    timeout: 29
+    events:
+      - httpApi:
+          path: /api/boomgate
+          method: ANY
+
+  carparkutilisation:
+    handler: lambda-api/handlers/carparkutilisation.main
+    memorySize: 1769
+    timeout: 29
+    events:
+      - httpApi:
+          path: /api/carparkutilisation
+          method: ANY
+
+  carlift:
+    handler: lambda-api/handlers/carlift.main
+    memorySize: 1769
+    timeout: 29
+    events:
+      - httpApi:
+          path: /api/carlift
+          method: ANY
+
+  two-way-passing:
+    handler: lambda-api/handlers/two-way-passing.main
+    memorySize: 1769
+    timeout: 29
+    events:
+      - httpApi:
+          path: /api/two-way-passing
+          method: ANY
+
+  rampdrawer:
+    handler: lambda-api/handlers/rampdrawer.main
+    memorySize: 1769
+    timeout: 29
+    events:
+      - httpApi:
+          path: /api/rampdrawer
+          method: ANY
+
+  streetsection:
+    handler: lambda-api/handlers/streetsection.main
+    memorySize: 512
+    timeout: 15
+    events:
+      - httpApi:
+          path: /api/streetsection
+          method: ANY
+
+  # Lightweight API functions (512 MB for fast response)
+  track-usage:
+    handler: lambda-api/handlers/track-usage.main
+    memorySize: 512
+    timeout: 10
+    events:
+      - httpApi:
+          path: /api/track-usage
+          method: ANY
+
+  sendform:
+    handler: lambda-api/handlers/sendform.main
+    memorySize: 512
+    timeout: 15
+    events:
+      - httpApi:
+          path: /api/sendform
+          method: ANY
+
+  signup:
+    handler: lambda-api/handlers/signup.main
+    memorySize: 512
+    timeout: 15
+    events:
+      - httpApi:
+          path: /api/signup
+          method: ANY
+
+  login:
+    handler: lambda-api/handlers/login.main
+    memorySize: 512
+    timeout: 10
+    events:
+      - httpApi:
+          path: /api/login
+          method: ANY
+
+  account:
+    handler: lambda-api/handlers/account.main
+    memorySize: 512
+    timeout: 10
+    events:
+      - httpApi:
+          path: /api/account
+          method: ANY
+
+  account-password:
+    handler: lambda-api/handlers/account-password.main
+    memorySize: 512
+    timeout: 10
+    events:
+      - httpApi:
+          path: /api/account/password
+          method: ANY
+
+  password-reset-request:
+    handler: lambda-api/handlers/password-reset-request.main
+    memorySize: 512
+    timeout: 10
+    events:
+      - httpApi:
+          path: /api/password-reset-request
+          method: ANY
+
+  password-reset-confirm:
+    handler: lambda-api/handlers/password-reset-confirm.main
+    memorySize: 512
+    timeout: 10
+    events:
+      - httpApi:
+          path: /api/password-reset-confirm
+          method: ANY
+
+plugins:
+   - serverless-offline
+
+build:
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap: false
+    exclude:
+      - aws-sdk
+    external:
+      - '@aws-sdk/client-ses'
+      - pg
+      - pg-native
+    format: esm
+    platform: node
+    target: node18
+
+package:
+  individually: true
+  excludeDevDependencies: true
+  patterns:
+    # Include only essential files
+    - 'lambda-api/handlers/**'
+    - 'lambda-api/middleware/**'
+    - 'lambda-api/lib/**'
+    - 'api/**'
+    - 'lib/**'
+    - 'node_modules/**'
+    - 'package.json'
+    
+    # Exclude everything else
+    - '!lambda-api/package.json'
+    - '!lambda-api/package-lock.json'
+    - '!lambda-api/workers/**'
+    - '!node_modules/aws-sdk/**'
+    - '!node_modules/**/.cache/**'
+    - '!node_modules/**/test/**'
+    - '!node_modules/**/tests/**'
+    - '!node_modules/**/__tests__/**'
+    - '!node_modules/**/*.md'
+    - '!node_modules/**/*.txt'
+    - '!node_modules/**/LICENSE*'
+    - '!node_modules/**/README*'
+    - '!node_modules/**/CHANGELOG*'
+    - '!node_modules/**/HISTORY*'
+    - '!node_modules/**/.bin/**'
+    - '!node_modules/**/*.map'
+    - '!node_modules/**/*.d.ts'
+    - '!node_modules/**/*.d.mts'
+    - '!node_modules/**/example/**'
+    - '!node_modules/**/examples/**'
+    - '!node_modules/**/docs/**'
+    - '!node_modules/**/.github/**'
+    - '!node_modules/**/.npmignore'
+    - '!node_modules/**/.travis.yml'
+    - '!node_modules/**/.eslintrc*'
+    - '!node_modules/**/tsconfig.json'
+    
+    # Exclude dev files
+    - '!.git/**'
+    - '!.serverless/**'
+    - '!.DS_Store'
+    - '!public/**'
+    - '!*.md'
+    - '!*.txt'
+    - '!*.sh'
+    - '!.env*'
+    - '!.gitignore'
+    - '!deploy-*.sh'
+    - '!migrate-*.js'
+    - '!simple-migrate.js'
+    - '!cleanup-*.sh'
+    - '!ensure-*.sh'
+    - '!dev-server.js'
+    - '!generate-tree.sh'
+    - '!update-package-json.sh'
+    - '!serverless.yml'
+    - '!project-structure.txt'
+    
+    # Exclude dev dependencies packages
+    - '!node_modules/express/**'
+    - '!node_modules/http-proxy-middleware/**'
+    - '!node_modules/serverless/**'
+    - '!node_modules/serverless-offline/**'
+    - '!node_modules/dotenv-cli/**'
+    - '!node_modules/@types/**'
+
+    # Exclude large unused packages (not needed at runtime)
+    - '!node_modules/java-invoke-local/**'
+    - '!node_modules/@esbuild/**'
+    - '!node_modules/web-streams-polyfill/**'
+    - '!node_modules/luxon/**'
+    - '!node_modules/xml2js/**'
+    - '!node_modules/axios/**'
+    - '!node_modules/@hapi/**'
+    - '!node_modules/jose/**'
+    - '!node_modules/jszip/**'
+    - '!node_modules/pako/**'
+    - '!node_modules/lru-cache/**'
+    - '!node_modules/fast-xml-parser/**'

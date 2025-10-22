@@ -3,9 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Traffic Labb - Under Construction</title>
+    <title>Traffic Labb - Support Center</title>
     <link rel="stylesheet" href="/style.css">
     <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
+    <style>
+        .contact-section {
+            margin-top: 60px;
+            padding: 40px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid #dee2e6;
+        }
+        .contact-section h3 {
+            color: #354e8d;
+            margin-bottom: 16px;
+            font-size: 1.5rem;
+        }
+        .contact-section p {
+            color: #666;
+            margin-bottom: 24px;
+            font-size: 1.1rem;
+        }
+        .contact-button {
+            display: inline-block;
+            padding: 14px 32px;
+            background: #6b99c2;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .contact-button:hover {
+            background: #354e8d;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+    </style>
 </head>
 <body>
     <div id="loading" class="loading">
@@ -16,68 +53,164 @@
         <div class="dashboard-header">
             <div class="header-left">
                 <div class="header-title">
-                    <h1>Traffic Labb</h1>
+                    <h1>Support Center</h1>
                 </div>
             </div>
         </div>
 
-        <div class="main-content">
-            <div class="glass-card">
-                <div style="text-align: center; padding: 60px 40px;">
-                    <div style="font-size: 4rem; margin-bottom: 20px;">🚧</div>
-                    <h2 style="color: #354e8d; margin-bottom: 16px; font-size: 2.2rem;">Under Construction</h2>
-                    <p style="color: #666; font-size: 1.1rem; margin-bottom: 30px; max-width: 500px; margin-left: auto; margin-right: auto; line-height: 1.6;">
-                        We're working hard to bring you something amazing. This page will be available soon!
-                    </p>
-                    
-                    <div style="background: #e3f1f7; padding: 20px; border-radius: 8px; margin: 30px auto; max-width: 400px; border: 1px solid #a3c9e0;">
-                        <div style="font-size: 0.9rem; margin-bottom: 8px; font-weight: 600; color: #354e8d;">Expected Completion</div>
-                        <div style="font-size: 1.3rem; color: #354e8d; font-weight: bold;">Coming Soon</div>
-                        <div style="font-size: 0.8rem; color: #666; margin-top: 8px;">Check back later for updates</div>
+        <div class="content">
+            <div class="page-description">
+                <h2>Help & Resources</h2>
+                <p>Find answers to common questions, learn about traffic engineering concepts, and explore example scenarios.</p>
+            </div>
+
+            <!-- Support Resources Section -->
+            <div class="category-section">
+                <h2 class="category-title">
+                    <span class="category-icon">📚</span>
+                    Available Resources
+                </h2>
+                <div class="compact-simulation-grid">
+                    <div class="compact-simulation-card" onclick="openSupportPage('faq')" data-access-level="3">
+                        <div class="access-badge level-3" id="badge-faq">L3</div>
+                        <div class="compact-card-icon">❓</div>
+                        <h3>FAQ</h3>
+                        <p>Frequently asked questions about our simulations and tools</p>
                     </div>
 
-                    <div style="margin-top: 40px;">
-                        <button class="btn btn-run" onclick="window.history.back()" style="margin-right: 12px;">
-                            ← Go Back
-                        </button>
-                        <button class="btn btn-reset" onclick="window.location.href='/'">
-                            Home Page
-                        </button>
+                    <div class="compact-simulation-card" onclick="openSupportPage('glossary')" data-access-level="1">
+                        <div class="access-badge level-1" id="badge-glossary">L1</div>
+                        <div class="compact-card-icon">📖</div>
+                        <h3>Glossary</h3>
+                        <p>Traffic engineering terms and concepts explained</p>
+                    </div>
+
+                    <div class="compact-simulation-card" onclick="openSupportPage('scenarios')" data-access-level="3">
+                        <div class="access-badge level-3" id="badge-scenarios">L3</div>
+                        <div class="compact-card-icon">📋</div>
+                        <h3>Scenarios</h3>
+                        <p>Example scenarios and use cases for our simulations</p>
                     </div>
                 </div>
+            </div>
+
+            <!-- Contact Section -->
+            <div class="contact-section">
+                <h3>Still can't find what you're looking for?</h3>
+                <p>Send us a support request and we'll get back to you as soon as possible.</p>
+                <a href="/contact/" class="contact-button">Send Support Request →</a>
             </div>
         </div>
     </div>
 
     <script>
+        // Page access configuration
+        const PAGE_ACCESS = {
+            'faq': 3,
+            'glossary': 1,
+            'scenarios': 3
+        };
+
+        // Page initialization
         document.addEventListener('DOMContentLoaded', async () => {
             // Give common.js time to load manifest and handle authentication
             await new Promise(resolve => setTimeout(resolve, 100));
-            
-            // Check authentication using common.js functions
-            const token = localStorage.getItem('authToken');
-            if (!token || !isValidToken(token)) {
-                window.location.href = '/login/';
-                return;
-            }
-            
+
+            // Auth check is now handled by common.js checkPageAccess()
+            // Update card accessibility based on user level
+            updateCardAccessibility();
+
             // Show the app
             document.getElementById('loading').style.display = 'none';
             document.getElementById('app').classList.remove('hidden');
         });
 
+        function getUserAccessLevel() {
+            try {
+                const token = localStorage.getItem('authToken');
+                if (!token) return 0;
+
+                const decoded = atob(token);
+                const [timestamp, username, accessLevel] = decoded.split(':');
+                return parseInt(accessLevel) || 0;
+            } catch {
+                return 0;
+            }
+        }
+
+        function updateCardAccessibility() {
+            const userLevel = getUserAccessLevel();
+
+            // Update each card based on access level
+            Object.keys(PAGE_ACCESS).forEach(pageKey => {
+                const requiredLevel = PAGE_ACCESS[pageKey];
+                const card = document.querySelector(`[onclick="openSupportPage('${pageKey}')"]`);
+                const badge = document.getElementById(`badge-${pageKey}`);
+
+                if (card) {
+                    if (userLevel < requiredLevel) {
+                        card.classList.add('card-disabled');
+                        card.style.pointerEvents = 'none';
+                        if (badge) {
+                            badge.style.background = '#dc3545';
+                            badge.textContent = `L${requiredLevel}`;
+                            badge.title = `Requires Level ${requiredLevel} access`;
+                        }
+                    } else {
+                        card.classList.remove('card-disabled');
+                        card.style.pointerEvents = 'auto';
+                        if (badge) {
+                            badge.title = `Available with your Level ${userLevel} access`;
+                        }
+                    }
+                }
+            });
+        }
+
+        function openSupportPage(type) {
+            const token = localStorage.getItem('authToken');
+            const userLevel = getUserAccessLevel();
+            const requiredLevel = PAGE_ACCESS[type];
+
+            if (!token || !isValidToken(token)) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Check access level
+            if (userLevel < requiredLevel) {
+                alert(`This resource requires Level ${requiredLevel} access. You currently have Level ${userLevel} access.`);
+                return;
+            }
+
+            // Navigate to the specific support page
+            switch(type) {
+                case 'faq':
+                    window.location.href = '/support/FAQ/';
+                    break;
+                case 'glossary':
+                    window.location.href = '/support/glossary/';
+                    break;
+                case 'scenarios':
+                    window.location.href = '/support/scenarios/';
+                    break;
+                default:
+                    alert('Page not found');
+            }
+        }
+
         function isValidToken(token) {
             try {
                 const decoded = atob(token);
                 const [timestamp, username, accessLevel] = decoded.split(':');
-                const tokenAge = Date.now() - parseInt(timestamp);
-                
-                // Use 24 hours as default, or get from manifest if available
-                let expiryHours = 24;
-                if (window.SITE_MANIFEST?.settings?.tokenExpiry) {
-                    expiryHours = window.SITE_MANIFEST.settings.tokenExpiry;
+
+                if (!timestamp || !username || accessLevel === undefined) {
+                    return false;
                 }
-                
+
+                const tokenAge = Date.now() - parseInt(timestamp);
+                const expiryHours = 24;
+
                 return tokenAge < expiryHours * 60 * 60 * 1000;
             } catch {
                 return false;

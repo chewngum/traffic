@@ -22,10 +22,6 @@
             </div>
             <div class="header-center">
             </div>
-            <div class="header-right">
-                <span class="username" id="welcomeUser">Welcome, User</span>
-                <button class="logout-btn" onclick="logout()">Logout</button>
-            </div>
         </div>
 
         <div class="main-content">
@@ -807,13 +803,12 @@
         // Authentication check on page load
         document.addEventListener('DOMContentLoaded', () => {
             const token = localStorage.getItem('authToken');
-            
+
             if (!token || !isValidToken(token)) {
                 window.location.href = '/';
                 return;
             }
-            
-            updateWelcomeMessage();
+
             document.getElementById('loading').style.display = 'none';
             document.getElementById('app').classList.remove('hidden');
             initializeDefaultSegments();
@@ -1352,7 +1347,7 @@
             status.textContent = 'Generating ramp design drawings...';
 
             try {
-                const apiUrl = window.API_CONFIG?.endpoints?.rampdrawer || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/rampdrawer';
+                const apiUrl = window.API_CONFIG?.endpoints?.['rampdrawer'] || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/rampdrawer';
 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
@@ -1477,7 +1472,7 @@ const response = await fetch(apiUrl, {
 
             try {
                 const action = format === 'autocad' ? 'exportAutoCAD' : 'exportFile';
-                const apiUrl = window.API_CONFIG?.endpoints?.rampdrawer || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/rampdrawer';
+                const apiUrl = window.API_CONFIG?.endpoints?.['rampdrawer'] || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/rampdrawer';
 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {

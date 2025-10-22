@@ -53,36 +53,12 @@
         document.addEventListener('DOMContentLoaded', async () => {
             // Give common.js time to load manifest and handle authentication
             await new Promise(resolve => setTimeout(resolve, 100));
-            
-            // Check authentication using common.js functions
-            const token = localStorage.getItem('authToken');
-            if (!token || !isValidToken(token)) {
-                window.location.href = '/login/';
-                return;
-            }
-            
+
+            // Auth check is now handled by common.js checkPageAccess()
             // Show the app
             document.getElementById('loading').style.display = 'none';
             document.getElementById('app').classList.remove('hidden');
         });
-
-        function isValidToken(token) {
-            try {
-                const decoded = atob(token);
-                const [timestamp, username, accessLevel] = decoded.split(':');
-                const tokenAge = Date.now() - parseInt(timestamp);
-                
-                // Use 24 hours as default, or get from manifest if available
-                let expiryHours = 24;
-                if (window.SITE_MANIFEST?.settings?.tokenExpiry) {
-                    expiryHours = window.SITE_MANIFEST.settings.tokenExpiry;
-                }
-                
-                return tokenAge < expiryHours * 60 * 60 * 1000;
-            } catch {
-                return false;
-            }
-        }
     </script>
 </body>
 </html>

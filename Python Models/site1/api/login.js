@@ -70,11 +70,13 @@ export default async function handler(req, res) {
     const tokenData = `${Date.now()}:${user.username}:${user.access_level}`;
     const token = Buffer.from(tokenData).toString('base64');
     
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       token: token,
       accessLevel: user.access_level,
       displayName: user.display_name,
+      email: user.email,
+      company: user.company,
       accessLevelName: user.access_level_name,
       accessLevelColor: user.access_level_color,
       description: user.description,

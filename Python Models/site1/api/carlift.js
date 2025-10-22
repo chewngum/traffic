@@ -6,12 +6,12 @@ export default async function handler(req, res) {
   }
 
   const token = authHeader.split(' ')[1];
-  
+
   try {
     // Simple token validation (decode base64)
     const decoded = Buffer.from(token, 'base64').toString();
     const [timestamp, username] = decoded.split(':');
-    
+
     // Check if token is less than 24 hours old
     const tokenAge = Date.now() - parseInt(timestamp);
     if (tokenAge > 24 * 60 * 60 * 1000) {
@@ -29,8 +29,12 @@ export default async function handler(req, res) {
 
   try {
     if (action === 'runSimulation') {
+      const startTime = Date.now();
       const results = await runMultipleCarLiftSimulations(parameters);
-      res.json({ success: true, results });
+      const executionTimeMs = Date.now() - startTime;
+
+      console.log(`Car Lift simulation completed in ${executionTimeMs}ms`);
+      res.json({ success: true, results, executionTimeMs });
     } else if (action === 'validateCapacity') {
       const validation = validateElevatorCapacity(parameters);
       res.json({ success: true, validation });

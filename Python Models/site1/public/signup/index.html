@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Labb - Sign Up</title>
+    <link rel="stylesheet" href="/style.css">
+    <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
+    
+    <style>
+        /* Signup page specific styles only - common auth styles now in style.css */
+        body {
+            margin-top: 0;
+        }
+
+        .error {
+            color: #dc3545;
+            text-align: center;
+            margin-top: 15px;
+            padding: 12px;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .success {
+            color: #155724;
+            text-align: center;
+            margin-top: 15px;
+            padding: 12px;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .login-link {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.8rem;
+        }
+
+        .login-link a {
+            color: #6b99c2;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-link a:hover {
+            color: #354e8d;
+            text-decoration: underline;
+        }
+
+        .spinner {
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation will be injected by common.js -->
+
+    <div class="container">
+        <main class="auth-main">
+            <div class="auth-container">
+                <!-- Left side - Welcome/Marketing -->
+                <div class="auth-sidebar">
+                    <div class="welcome-section">
+                        <h2>Join Traffic Labb</h2>
+                        <p>Create your account to access advanced traffic simulation and analysis tools.</p>
+                        
+                        <ul class="feature-list">
+                            <li>Professional simulation tools</li>
+                            <li>Data export capabilities</li>
+                            <li>Result history tracking</li>
+                            <li>Advanced analytics</li>
+                            <li>Priority support</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Right side - Signup Form -->
+                <div class="auth-form-area">
+                    <h1 class="auth-title">Create Account</h1>
+                    <p class="auth-subtitle">Start your engineering simulation journey</p>
+
+                    <form id="signupForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName">First Name</label>
+                                <input type="text" id="firstName" name="firstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName">Last Name</label>
+                                <input type="text" id="lastName" name="lastName" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" required placeholder="This will be your username">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="company">Company (Optional)</label>
+                            <input type="text" id="company" name="company" placeholder="Your organization or company name">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm Password</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" required>
+                        </div>
+                        
+                        <div class="password-requirements">
+                            <h4>Password Requirements:</h4>
+                            <div class="requirement" id="req-length">At least 8 characters</div>
+                            <div class="requirement" id="req-uppercase">One uppercase letter</div>
+                            <div class="requirement" id="req-lowercase">One lowercase letter</div>
+                            <div class="requirement" id="req-number">One number</div>
+                            <div class="requirement" id="req-match">Passwords match</div>
+                        </div>
+                        
+                        <button type="submit" class="signup-btn" id="signupBtn">
+                            <span id="signupBtnText">Create Account</span>
+                        </button>
+                        
+                        <div class="error" id="error"></div>
+                        <div class="success" id="success"></div>
+                    </form>
+                    
+                    <div class="login-link">
+                        Already have an account? <a href="/login/">Sign in</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const signupForm = document.getElementById('signupForm');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const signupBtn = document.getElementById('signupBtn');
+            const signupBtnText = document.getElementById('signupBtnText');
+            const errorDiv = document.getElementById('error');
+            const successDiv = document.getElementById('success');
+
+            // Real-time password validation
+            passwordInput.addEventListener('input', validatePassword);
+            confirmPasswordInput.addEventListener('input', validatePassword);
+            
+            // Real-time field validation
+            document.getElementById('email').addEventListener('blur', validateEmail);
+            
+            signupForm.addEventListener('submit', handleSignup);
+            
+            function validatePassword() {
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                
+                // Length check
+                const lengthValid = password.length >= 8;
+                updateRequirement('req-length', lengthValid);
+                
+                // Uppercase check
+                const uppercaseValid = /[A-Z]/.test(password);
+                updateRequirement('req-uppercase', uppercaseValid);
+                
+                // Lowercase check
+                const lowercaseValid = /[a-z]/.test(password);
+                updateRequirement('req-lowercase', lowercaseValid);
+                
+                // Number check
+                const numberValid = /\d/.test(password);
+                updateRequirement('req-number', numberValid);
+                
+                // Password match check
+                const matchValid = password && confirmPassword && password === confirmPassword;
+                updateRequirement('req-match', matchValid);
+                
+                // Update input styling - removed to prevent disappearing fields
+                // Visual feedback now only through password requirements
+                
+                return lengthValid && uppercaseValid && lowercaseValid && numberValid && matchValid;
+            }
+            
+            function updateRequirement(id, isValid) {
+                const element = document.getElementById(id);
+                if (isValid) {
+                    element.classList.add('valid');
+                } else {
+                    element.classList.remove('valid');
+                }
+            }
+            
+            function validateEmail() {
+                const email = document.getElementById('email').value;
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                const isValid = emailRegex.test(email);
+                
+                // Remove all validation styling to prevent disappearing fields
+                return isValid;
+            }
+            
+            async function handleSignup(e) {
+                e.preventDefault();
+                
+                // Validate all fields
+                const firstName = document.getElementById('firstName').value.trim();
+                const lastName = document.getElementById('lastName').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const company = document.getElementById('company').value.trim();
+                const password = document.getElementById('password').value;
+
+                if (!firstName || !lastName || !email || !password) {
+                    showError('Please fill in all required fields');
+                    return;
+                }
+
+                if (!validateEmail()) {
+                    showError('Please enter a valid email address');
+                    return;
+                }
+
+                if (!validatePassword()) {
+                    showError('Please ensure your password meets all requirements');
+                    return;
+                }
+
+                // Show loading state
+                signupBtn.disabled = true;
+                signupBtnText.innerHTML = `<div class="spinner"></div>Creating account...`;
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+
+                try {
+                    const response = await fetch('/api/signup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            firstName,
+                            lastName,
+                            email,
+                            company,
+                            password
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showSuccess('Account created successfully! Redirecting to login...');
+                        signupBtnText.innerHTML = '✓ Account Created!';
+                        
+                        setTimeout(() => {
+                            window.location.href = '/login/';
+                        }, 2000);
+                    } else {
+                        showError(data.error || 'Failed to create account');
+                    }
+                    
+                } catch (error) {
+                    console.error('Signup error:', error);
+                    showError('Network error. Please check your connection and try again.');
+                }
+                
+                // Reset button after delay
+                setTimeout(() => {
+                    signupBtn.disabled = false;
+                    signupBtnText.textContent = 'Create Account';
+                }, 3000);
+            }
+            
+            function showError(message) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            }
+            
+            function showSuccess(message) {
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

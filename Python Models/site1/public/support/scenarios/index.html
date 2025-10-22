@@ -12,7 +12,6 @@
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 25px;
             margin: 25px 0;
-        }
         
         .scenario-card {
             background: white;
@@ -21,32 +20,27 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             border: 2px solid transparent;
             transition: all 0.3s ease;
-        }
         
         .scenario-card:hover {
             transform: translateY(-3px);
             box-shadow: 0 8px 20px rgba(53, 78, 141, 0.15);
             border-color: #6b99c2;
-        }
         
         .scenario-header {
             display: flex;
             align-items: center;
             margin-bottom: 15px;
-        }
         
         .scenario-icon {
             font-size: 2rem;
             margin-right: 15px;
             color: #6b99c2;
-        }
         
         .scenario-title {
             color: #354e8d;
             font-size: 1.3rem;
             font-weight: 600;
             margin: 0;
-        }
         
         .scenario-tool {
             background: #e3f1f7;
@@ -56,13 +50,11 @@
             font-size: 0.8rem;
             font-weight: 600;
             margin-left: auto;
-        }
         
         .scenario-description {
             color: #6c757d;
             line-height: 1.6;
             margin-bottom: 15px;
-        }
         
         .scenario-examples {
             background: #f8f9fa;
@@ -70,32 +62,27 @@
             padding: 12px 15px;
             margin: 15px 0;
             border-radius: 0 6px 6px 0;
-        }
         
         .scenario-examples h5 {
             color: #354e8d;
             margin-bottom: 8px;
             font-size: 0.9rem;
             font-weight: 600;
-        }
         
         .scenario-examples ul {
             margin: 0;
             padding-left: 18px;
-        }
         
         .scenario-examples li {
             color: #5a6c7d;
             font-size: 0.85rem;
             margin-bottom: 4px;
-        }
         
         .scenario-metrics {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin-top: 15px;
-        }
         
         .metric-tag {
             background: #6b99c2;
@@ -104,11 +91,9 @@
             border-radius: 12px;
             font-size: 0.75rem;
             font-weight: 500;
-        }
         
         .category-section {
             margin-bottom: 50px;
-        }
         
         .category-title {
             color: #354e8d;
@@ -123,11 +108,9 @@
             align-items: center;
             gap: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
         
         .category-icon {
             font-size: 1.6rem;
-        }
         
         .intro-section {
             background: linear-gradient(135deg, #e3f1f7 0%, #f8fbff 100%);
@@ -136,13 +119,11 @@
             margin-bottom: 40px;
             border: 1px solid #a3c9e0;
             text-align: center;
-        }
         
         .intro-section h2 {
             color: #354e8d;
             margin-bottom: 15px;
             font-size: 1.6rem;
-        }
         
         .intro-section p {
             color: #6c757d;
@@ -150,7 +131,6 @@
             line-height: 1.6;
             max-width: 800px;
             margin: 0 auto;
-        }
     </style>
 </head>
 <body>
@@ -205,7 +185,7 @@
                             </ul>
                         </div>
                         <div class="scenario-metrics">
-                            <span class="metric-tag">Utilization %</span>
+                            <span class="metric-tag">Utilisation %</span>
                             <span class="metric-tag">Queue Length</span>
                             <span class="metric-tag">Block Rate</span>
                         </div>
@@ -255,7 +235,7 @@
                             </ul>
                         </div>
                         <div class="scenario-metrics">
-                            <span class="metric-tag">Utilization Rate</span>
+                            <span class="metric-tag">Utilisation Rate</span>
                             <span class="metric-tag">Wait Times</span>
                             <span class="metric-tag">Delay Probability</span>
                         </div>
@@ -280,7 +260,7 @@
                             </ul>
                         </div>
                         <div class="scenario-metrics">
-                            <span class="metric-tag">Floor Utilization</span>
+                            <span class="metric-tag">Floor Utilisation</span>
                             <span class="metric-tag">Service Time</span>
                             <span class="metric-tag">Queue Distribution</span>
                         </div>
@@ -314,7 +294,7 @@
                             </ul>
                         </div>
                         <div class="scenario-metrics">
-                            <span class="metric-tag">Directional Utilization</span>
+                            <span class="metric-tag">Directional Utilisation</span>
                             <span class="metric-tag">Average Delay</span>
                             <span class="metric-tag">Queue Formation</span>
                         </div>
@@ -460,12 +440,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const token = localStorage.getItem('authToken');
-            
-            if (!token || !isValidToken(token)) {
-                window.location.href = '/';
-                return;
-            }
+            // Auth check is now handled by common.js checkPageAccess()
             
             updateWelcomeMessage();
             
@@ -473,16 +448,7 @@
             document.getElementById('app').classList.remove('hidden');
         });
 
-        function isValidToken(token) {
-            try {
-                const decoded = atob(token);
-                const [timestamp, username] = decoded.split(':');
-                const tokenAge = Date.now() - parseInt(timestamp);
-                return tokenAge < 24 * 60 * 60 * 1000;
-            } catch {
-                return false;
-            }
-        }
+        
 
         function getUsernameFromToken() {
             try {
@@ -494,18 +460,14 @@
                 return username || 'User';
             } catch {
                 return 'User';
-            }
-        }
 
         function updateWelcomeMessage() {
             const username = getUsernameFromToken();
             document.getElementById('welcomeUser').textContent = `Welcome, ${username}`;
-        }
 
         function logout() {
             localStorage.removeItem('authToken');
             window.location.href = '/';
-        }
     </script>
 </body>
 </html>

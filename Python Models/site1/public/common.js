@@ -25,7 +25,8 @@ import {
     injectFavicons 
 } from './utils/ui_utilities.js';
 import { injectContactForm, setupContactForm } from './utils/contact_form.js';
-import { 
+import { initializeFooter } from './utils/footer.js';
+import {
     formatScientific,
     formatTime,
     getZScoreForConfidence,
@@ -34,7 +35,7 @@ import {
     formatEstimatedTime,
     createRealisticProgress
 } from './utils/simulation_utils.js';
-import { 
+import {
     estimateSimulationRuntime,
     updateRuntimeEstimateDisplay
 } from './utils/runtime_estimation.js';
@@ -97,18 +98,20 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     const pageType = getCurrentPageType();
     const isAuthenticated = isUserAuthenticated();
-    
-    // Check access for dashboard pages only
-    if (pageType === 'dashboard' && isAuthenticated) {
-        checkPageAccess();
-    }
+
+    // Check page access for all pages (auth.js will skip public pages)
+    checkPageAccess();
     
     // Always inject unified top navigation
     injectTopNavigation();
-    
-    // Only inject contact form for dashboard pages with authenticated users
-    if (pageType === 'dashboard' && isAuthenticated) {
+
+    // Inject contact/feedback form on all pages except homepage (which has its own)
+    const isHomepage = window.location.pathname === '/' || window.location.pathname === '/index.html';
+    if (!isHomepage) {
         injectContactForm();
         setupContactForm();
     }
+
+    // Inject footer sitemap on all pages
+    initializeFooter();
 });

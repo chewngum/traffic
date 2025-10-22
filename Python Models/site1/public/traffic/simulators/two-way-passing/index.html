@@ -48,10 +48,10 @@
                             <strong>Total Arrival Rate:</strong> <span id="totalArrivalDisplay">30.0</span> cars/hr
                         </div>
                         <div class="validation-check">
-                            <strong>Estimated Utilization:</strong> <span id="utilizationEstimateDisplay">45.0%</span>
+                            <strong>Estimated Utilisation:</strong> <span id="utilizationEstimateDisplay">45.0%</span>
                         </div>
                         <div id="followUpWarning" class="validation-check warning" style="display: none;">
-                            <span id="followUpMessage">Actual utilization will be slightly less due to follow-up time permitting additional efficiency</span>
+                            <span id="followUpMessage">Actual utilisation will be slightly less due to follow-up time permitting additional efficiency</span>
                         </div>
                     </div>
 
@@ -127,7 +127,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="numSeeds">Number of Seeds:</label>
-                                <input type="number" id="numSeeds" value="130" min="1" max="10000" step="1" onchange="validateAndUpdate('numSeeds', 1, 10000); updateRuntimeDisplay(); calculateSampleSize()">
+                                <input type="number" id="numSeeds" value="15" min="1" max="10000" step="1" onchange="validateAndUpdate('numSeeds', 1, 10000); updateRuntimeDisplay(); calculateSampleSize()">
                             </div>
                             <div class="form-group">
                                 <label for="seedMode">Seed Mode:</label>
@@ -153,8 +153,8 @@
                                 <input type="number" id="confidenceLevel" value="99.9" min="85" max="99.99" step="0.01" onchange="validateAndUpdate('confidenceLevel', 85, 99.99); calculateSampleSize()">
                             </div>
                             <div class="form-group">
-                                <label for="marginError">Margin (trips/hour):</label>
-                                <input type="number" id="marginError" value="0.05" min="0.001" step="0.001" onchange="validateAndUpdate('marginError', 0.001); calculateSampleSize()">
+                                <label for="marginError">Margin of Error (% of trips):</label>
+                                <input type="number" id="marginError" value="0.5" min="0.0001" step="0.01" onchange="validateAndUpdate('marginError', 0.001); calculateSampleSize()">
                             </div>
                         </div>
                         
@@ -167,7 +167,7 @@
                                 Use Recommended Seeds
                             </button>
                             <div style="font-size: 0.75rem; color: #666; text-align: right; flex: 1;">
-                                Current: <span id="currentSeedsDisplay" style="font-weight: 600; color: #354e8d;">130</span>
+                                Current: <span id="currentSeedsDisplay" style="font-weight: 600; color: #354e8d;">10</span>
                             </div>
                         </div>
                     </div>
@@ -385,7 +385,7 @@
                 { id: 'simulationHours', min: 1, max: 50000, name: 'Simulation Hours' },
                 { id: 'numSeeds', min: 1, max: 10000, name: 'Number of Seeds' },
                 { id: 'confidenceLevel', min: 85, max: 99.99, name: 'Confidence Level' },
-                { id: 'marginError', min: 0.001, name: 'Margin Error' }
+                { id: 'marginError', min: 0.001, name: 'Margin Of Error' }
             ];
             
             validationRules.forEach(rule => {
@@ -464,7 +464,7 @@
                 minGap: safeNumber(document.getElementById('minGap').value, 0),
                 minFollowUp: getMinFollowUpValue(),
                 priorityScheme: document.getElementById('priorityScheme').value,
-                numSeeds: parseInt(document.getElementById('numSeeds').value) || 1,
+                numSeeds: parseInt(document.getElementById('numSeeds').value) || 15,
                 seedMode: document.getElementById('seedMode').value
             };
         }
@@ -481,9 +481,9 @@
         function calculateSampleSize() {
             try {
                 const confidenceLevel = safeNumber(document.getElementById('confidenceLevel').value, 95);
-                const marginError = safeNumber(document.getElementById('marginError').value, 0.05);
+                
                 const simHours = safeNumber(document.getElementById('simulationHours').value, 1000);
-                const currentSeeds = parseInt(document.getElementById('numSeeds').value) || 130;
+                const currentSeeds = parseInt(document.getElementById('numSeeds').value) || 15;
                 
                 const zScores = {
                     90: 1.645,
@@ -509,10 +509,10 @@
                 
                 if (!zScore) zScore = 1.96;
                 
-                const totalArrivalRate = safeNumber(document.getElementById('arrivalRateA').value, 0) + 
+                const totalArrivalRate = safeNumber(document.getElementById('arrivalRateA').value, 0) +
                                        safeNumber(document.getElementById('arrivalRateB').value, 0);
                 const estimatedStdDev = Math.sqrt(totalArrivalRate);
-                
+                const marginError = safeNumber(document.getElementById('marginError').value, 0.5) * (totalArrivalRate)/100;
                 const minSampleSize = Math.ceil(Math.pow((zScore * estimatedStdDev) / marginError, 2));
                 const observationsPerRun = simHours;
                 const adjustedSampleSize = Math.ceil(minSampleSize / observationsPerRun);
@@ -620,7 +620,7 @@
             const actualArrivalA = results.arrivalRates && results.arrivalRates[0] ? safeNumber(results.arrivalRates[0].totalPerHour, 0) : 0;
             const actualArrivalB = results.arrivalRates && results.arrivalRates[1] ? safeNumber(results.arrivalRates[1].totalPerHour, 0) : 0;
             
-            const marginError = safeNumber(document.getElementById('marginError').value, 0.05);
+            const marginError = safeNumber(document.getElementById('marginError').value, 0.5) * (expectedArrivalA + expectedArrivalB) / 100;
             const errorA = Math.abs(expectedArrivalA - actualArrivalA);
             const errorB = Math.abs(expectedArrivalB - actualArrivalB);
             const totalError = errorA + errorB;
@@ -653,8 +653,8 @@
             document.getElementById('minFollowUp').value = 'serviceTime';
             document.getElementById('priorityScheme').value = 'FCFS';
             document.getElementById('confidenceLevel').value = '99.9';
-            document.getElementById('marginError').value = '0.05';
-            document.getElementById('numSeeds').value = '130';
+            document.getElementById('marginError').value = '0.5';
+            document.getElementById('numSeeds').value = '15';
             document.getElementById('seedMode').value = 'fixed';
             document.getElementById('customFollowUp').value = '2';
             
@@ -733,12 +733,12 @@
                 </div>
                 
                 <div class="metrics-section">
-                    <h4 style="color: #354e8d; margin-bottom: 8px; font-size: 1rem; font-weight: 600; text-align: center;">Utilization Analysis</h4>
+                    <h4 style="color: #354e8d; margin-bottom: 8px; font-size: 1rem; font-weight: 600; text-align: center;">Utilisation Analysis</h4>
                     <table class="metrics-table">
                         <thead>
                             <tr>
                                 <th>Metric</th>
-                                <th>Utilization %</th>
+                                <th>Utilisation %</th>
                                 <th>Delay Probability</th>
                             </tr>
                         </thead>

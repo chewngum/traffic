@@ -92,7 +92,7 @@
                             <div class="help-text">Minimum time between exit arrivals</div>
                         </div>
                         <div class="validation-check utilization-check">
-                            <strong>Estimated Utilization:</strong> <span id="utilizationDisplay">N/A</span>
+                            <strong>Estimated Utilisation:</strong> <span id="utilizationDisplay">N/A</span>
                         </div>
                         <div id="utilizationWarning" class="utilization-warning" style="display: none;">
                             <span id="utilizationMessage"></span>
@@ -108,7 +108,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="numSeeds">Number of Seeds:</label>
-                                <input type="number" id="numSeeds" value="130" min="1" step="1" onchange="updateRuntimeDisplay(); calculateSampleSize()">
+                                <input type="number" id="numSeeds" value="15" min="1" step="1" onchange="updateRuntimeDisplay(); calculateSampleSize()">
                             </div>
                         </div>
                         <div class="form-row single">
@@ -142,8 +142,8 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="marginError">Error Margin (trips/hour):</label>
-                                <input type="number" id="marginError" value="0.05" min="0.01" step="0.01" onchange="calculateSampleSize()">
+                                <label for="marginOfError">Margin of Error (% of trips):</label>
+                                <input type="number" id="marginOfError" value="0.5" min="0.001" step="0.1" onchange="calculateSampleSize()">
                             </div>
                         </div>
                         
@@ -156,7 +156,7 @@
                                 Use Minimum Seeds
                             </button>
                             <div class="current-seeds-info">
-                                Current: <span id="currentSeedsDisplay">130</span>
+                                Current: <span id="currentSeedsDisplay">15</span>
                             </div>
                         </div>
                     </div>
@@ -457,21 +457,21 @@
                     warningDiv.style.display = 'block';
                     warningDiv.style.borderColor = '#d4691e';
                     warningDiv.style.background = 'rgba(212, 105, 30, 0.1)';
-                    messageSpan.innerHTML = `System overloaded at ${utilizationPercent.toFixed(1)}% utilization<br><strong>Queues will grow indefinitely</strong>`;
+                    messageSpan.innerHTML = `System overloaded at ${utilizationPercent.toFixed(1)}% utilisation<br><strong>Queues will grow indefinitely</strong>`;
                     runButton.disabled = true;
                     runButton.classList.add('btn-disabled');
                 } else if (utilizationPercent >= 95) {
                     warningDiv.style.display = 'block';
                     warningDiv.style.borderColor = '#d4691e';
                     warningDiv.style.background = 'rgba(212, 105, 30, 0.1)';
-                    messageSpan.innerHTML = `Very high utilization at ${utilizationPercent.toFixed(1)}%<br><strong>Expect long queues and delays</strong>`;
+                    messageSpan.innerHTML = `Very high utilisation at ${utilizationPercent.toFixed(1)}%<br><strong>Expect long queues and delays</strong>`;
                     runButton.disabled = false;
                     runButton.classList.remove('btn-disabled');
                 } else if (utilizationPercent >= 80) {
                     warningDiv.style.display = 'block';
                     warningDiv.style.borderColor = '#f39c12';
                     warningDiv.style.background = 'rgba(243, 156, 18, 0.1)';
-                    messageSpan.innerHTML = `High utilization at ${utilizationPercent.toFixed(1)}%<br><strong>Moderate queuing expected</strong>`;
+                    messageSpan.innerHTML = `High utilisation at ${utilizationPercent.toFixed(1)}%<br><strong>Moderate queuing expected</strong>`;
                     runButton.disabled = false;
                     runButton.classList.remove('btn-disabled');
                 } else {
@@ -519,11 +519,11 @@
         function calculateSampleSize() {
             try {
                 const confidenceLevel = validateAndParseFloat('confidenceLevel');
-                const marginError = validateAndParseFloat('marginError', 0.01);
+
                 const simHours = validateAndParseFloat('simulationHours', 1);
                 const entryRate = validateAndParseFloat('entryRate', 0);
                 const exitRate = validateAndParseFloat('exitRate', 0);
-                const currentSeeds = parseInt(document.getElementById('numSeeds').value) || 130;
+                const currentSeeds = parseInt(document.getElementById('numSeeds').value) || 15;
                 
                 const totalTripsPerHour = entryRate + exitRate;
                 
@@ -550,10 +550,11 @@
                     }
                     return;
                 }
+                const marginOfError = validateAndParseFloat('marginOfError', 0.001) * totalTripsPerHour / 100;
                 
                 const zScore = getZScoreForConfidence(confidenceLevel);
                 const estimatedStdDev = Math.sqrt(totalTripsPerHour);
-                const minSampleSize = Math.ceil(Math.pow((zScore * estimatedStdDev) / marginError, 2));
+                const minSampleSize = Math.ceil(Math.pow((zScore * estimatedStdDev) / marginOfError, 2));
                 const adjustedSampleSize = Math.ceil(minSampleSize / simHours);
                 recommendedSeeds = Math.max(adjustedSampleSize, 10);
                 
@@ -657,9 +658,9 @@
             document.getElementById('exitHeadwayMode').value = 'same';
             document.getElementById('priority').value = 'FCFS';
             document.getElementById('simulationHours').value = '1000';
-            document.getElementById('numSeeds').value = '130';
+            document.getElementById('numSeeds').value = '15';
             document.getElementById('confidenceLevel').value = '99.9';
-            document.getElementById('marginError').value = '0.05';
+            document.getElementById('marginOfError').value = '0.5';
             document.getElementById('seedMode').value = 'fixed';
             
             document.querySelectorAll('input').forEach(input => {
@@ -690,8 +691,8 @@
                 totalError = entryError + exitError;
             }
             
-            const marginError = parseFloat(document.getElementById('marginError').value) || 0.05;
-            const validationPassed = canValidate ? totalError <= marginError : null;
+            const marginOfError = parseFloat(document.getElementById('marginOfError').value) || 0.05 * (expectedEntryRate + expectedExitRate) / 100;
+            const validationPassed = canValidate ? totalError <= marginOfError : null;
             
             return `
                 <h4>${validationPassed === null ? '⚠️' : validationPassed ? '✅' : '❌'} Arrival Rate Validation</h4>
@@ -700,7 +701,7 @@
                     <li><strong>Expected:</strong> Entry=${expectedEntryRate.toFixed(2)}, Exit=${expectedExitRate.toFixed(2)}</li>
                     <li><strong>Actual:</strong> Entry=${actualEntryRate.toFixed(2)}, Exit=${actualExitRate.toFixed(2)}</li>
                     <li><strong>Error:</strong> ${totalError.toFixed(3)} (Entry=${entryError.toFixed(3)} + Exit=${exitError.toFixed(3)})</li>
-                    <li><strong>Status:</strong> ${validationPassed ? 'Rates validated successfully' : 'Rates outside margin'} (±${marginError})</li>
+                    <li><strong>Status:</strong> ${validationPassed ? 'Rates validated successfully' : 'Rates outside margin'} (±${marginOfError})</li>
                 </ul>
                 ` : `
                 <ul class="validation-list">
@@ -953,7 +954,7 @@
             const startTime = Date.now();
 
             try {
-                            const apiUrl = window.API_CONFIG?.endpoints?.mechanical || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/mechanical';
+                            const apiUrl = window.API_CONFIG?.endpoints?.['mechanical'] || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/mechanical';
 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -976,13 +977,19 @@ const response = await fetch(apiUrl, {
                 if (!data.success) throw new Error(data.error || 'Simulation failed');
 
                 const actualTime = Date.now() - startTime;
-                
+                const serverTime = data.executionTimeMs || actualTime;
+
                 elements.progressFill.style.width = '100%';
                 elements.progressPercentage.textContent = '100%';
-                elements.progressDetails.textContent = 'Complete!';
+                elements.progressDetails.textContent = `Complete! (${(serverTime/1000).toFixed(2)}s)`;
                 elements.status.className = 'status complete';
-                elements.status.textContent = `Completed!`;
-                
+                elements.status.textContent = `Completed in ${(serverTime/1000).toFixed(2)}s`;
+
+                // Explicitly track usage (automatic tracking via fetch wrapper should also fire)
+                if (window.recordSimulationUsage) {
+                    window.recordSimulationUsage('mechanical', parameters, startTime, true);
+                }
+
                 displayResults(data.results, parameters);
 
                 setTimeout(() => {

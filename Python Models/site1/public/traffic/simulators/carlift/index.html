@@ -132,7 +132,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="numSeeds">Number of Seeds:</label>
-                                <input type="number" id="numSeeds" min="1" max="10000" value="130" onchange="calculateSampleSize(); updateRuntimeDisplay()">
+                                <input type="number" id="numSeeds" min="1" max="10000" value="15" onchange="calculateSampleSize(); updateRuntimeDisplay()">
                             </div>
                         </div>
                         <div class="form-row">
@@ -165,8 +165,8 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="marginError">Error Margin (cars/hour):</label>
-                                    <input type="number" id="marginError" value="0.05" min="0.01" step="0.01" onchange="calculateSampleSize()">
+                                    <label for="marginOfError">Margin of Error (% of trips):</label>
+                                    <input type="number" id="marginOfError" value="0.5" min="0.0001" step="0.11" onchange="calculateSampleSize()">
                                 </div>
                             </div>
                             
@@ -179,7 +179,7 @@
                                     Use Minimum Seeds
                                 </button>
                                 <div class="current-seeds-info">
-                                    Current: <span id="currentSeedsDisplay">130</span>
+                                    Current: <span id="currentSeedsDisplay">10</span>
                                 </div>
                             </div>
                         </div>
@@ -462,11 +462,12 @@
         function calculateSampleSize() {
             try {
                 const confidenceLevel = validateAndParseFloat('confidenceLevel');
-                const marginError = validateAndParseFloat('marginError', 0.01);
+
                 const simHours = validateAndParseFloat('simHours', 1);
                 const numFloors = validateAndParseInt('numFloors', 2, 10);
                 const lobbyFloor = validateAndParseInt('lobbyFloor', 1, numFloors);
-                const currentSeeds = parseInt(document.getElementById('numSeeds').value) || 130;
+                const currentSeeds = parseInt(document.getElementById('numSeeds').value) || 15;
+                
                 
                 // Calculate total traffic rate
                 let totalTrafficRate = 0;
@@ -502,10 +503,11 @@
                     }
                     return;
                 }
-                
+                const marginOfError = validateAndParseFloat('marginOfError', 0.001) * totalTrafficRate / 100;
+
                 const zScore = getZScoreForConfidence(confidenceLevel);
                 const estimatedStdDev = Math.sqrt(totalTrafficRate);
-                const minSampleSize = Math.ceil(Math.pow((zScore * estimatedStdDev) / marginError, 2));
+                const minSampleSize = Math.ceil(Math.pow((zScore * estimatedStdDev) / marginOfError, 2));
                 const adjustedSampleSize = Math.ceil(minSampleSize / simHours);
                 recommendedSeeds = Math.max(adjustedSampleSize, 1);
                 
@@ -591,7 +593,7 @@
             const parameters = collectParameters();
             
             try {
-                const apiUrl = window.API_CONFIG?.endpoints?.carlift || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/carlift';
+                const apiUrl = window.API_CONFIG?.endpoints?.['carlift'] || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/carlift';
 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
@@ -623,7 +625,7 @@ const response = await fetch(apiUrl, {
                     theoreticalMinUtilization = validation.minimum;
                     theoreticalMaxUtilization = validation.maximum;
                     
-                    // Update utilization display
+                    // Update utilisation display
                     utilizationDisplay.textContent = `${validation.minimum.toFixed(1)}% - ${validation.maximum.toFixed(1)}%`;
                     
                     if (validation.maxExceedsCapacity) {
@@ -695,9 +697,9 @@ const response = await fetch(apiUrl, {
                 inputTrafficRate += parameters.departureRates[f] || 0;
             }
             
-            const marginError = parseFloat(document.getElementById('marginError').value) || 0.05;
+            const marginOfError = parseFloat(document.getElementById('marginOfError').value) || 0.05;
             const error = Math.abs(inputTrafficRate - result.actualArrivalRate);
-            const validationPassed = error <= marginError;
+            const validationPassed = error <= marginOfError;
             
             return `
                 <h4>${validationPassed ? '✅' : '⚠️'} Traffic Rate Validation</h4>
@@ -705,7 +707,7 @@ const response = await fetch(apiUrl, {
                     <li><strong>Expected:</strong> ${inputTrafficRate.toFixed(2)} cars/hr</li>
                     <li><strong>Actual:</strong> ${result.actualArrivalRate.toFixed(2)} cars/hr</li>
                     <li><strong>Error:</strong> ${error.toFixed(3)} cars/hr</li>
-                    <li><strong>Status:</strong> ${validationPassed ? 'Rate validated successfully' : 'Rate outside margin'} (±${marginError})</li>
+                    <li><strong>Status:</strong> ${validationPassed ? 'Rate validated successfully' : 'Rate outside margin'} (±${marginOfError})</li>
                 </ul>
             `;
         }
@@ -1066,8 +1068,8 @@ const response = await fetch(apiUrl, {
             try {
                 
                 const startTime = Date.now();
-                
-                            const apiUrl = window.API_CONFIG?.endpoints?.carlift || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/carlift';
+
+                            const apiUrl = window.API_CONFIG?.endpoints?.['carlift'] || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/carlift';
 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
@@ -1152,9 +1154,9 @@ const response = await fetch(apiUrl, {
             document.getElementById('numFloors').value = 2;
             document.getElementById('lobbyFloor').value = 1;
             document.getElementById('simHours').value = 1000;
-            document.getElementById('numSeeds').value = 130;
+            document.getElementById('numSeeds').value = 15;
             document.getElementById('confidenceLevel').value = '99.9';
-            document.getElementById('marginError').value = 0.05;
+            document.getElementById('marginOfError').value = 0.5;
             document.getElementById('seedMode').value = 'fixed';
             
             document.getElementById('doorOpenTime').value = 5;

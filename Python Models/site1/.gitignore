@@ -9,7 +9,6 @@ package-lock.json.backup
 
 # Build artifacts
 .serverless/
-.vercel/
 dist/
 build/
 

@@ -6,11 +6,11 @@ export default async function handler(req, res) {
     }
   
     const token = authHeader.split(' ')[1];
-    
+
     try {
       const decoded = Buffer.from(token, 'base64').toString();
       const [timestamp, username] = decoded.split(':');
-      
+
       const tokenAge = Date.now() - parseInt(timestamp);
       if (tokenAge > 24 * 60 * 60 * 1000) {
         return res.status(401).json({ error: 'Token expired' });
@@ -31,9 +31,13 @@ export default async function handler(req, res) {
         if (!validation.valid) {
           return res.status(400).json({ error: validation.error });
         }
-        
+
+        const startTime = Date.now();
         const results = await runMultipleSimulations(parameters);
-        res.json({ success: true, results });
+        const executionTimeMs = Date.now() - startTime;
+
+        console.log(`Two-Way Passing simulation completed in ${executionTimeMs}ms`);
+        res.json({ success: true, results, executionTimeMs });
       } else {
         res.status(400).json({ error: 'Invalid action' });
       }

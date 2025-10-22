@@ -11,7 +11,97 @@
       "category": "landing",
       "pageId": "landing",
       "type": "landing",
-      "accessLevel": 1,
+      "accessLevel": 0,
+      "hasIndex": true
+    },
+    "/login/": {
+      "path": "/login/",
+      "name": "Login",
+      "category": "auth",
+      "pageId": "login",
+      "type": "auth",
+      "accessLevel": 0,
+      "hasIndex": true
+    },
+    "/signup/": {
+      "path": "/signup/",
+      "name": "Sign Up",
+      "category": "auth",
+      "pageId": "signup",
+      "type": "auth",
+      "accessLevel": 0,
+      "hasIndex": true
+    },
+    "/forgot-password/": {
+      "path": "/forgot-password/",
+      "name": "Forgot Password",
+      "category": "auth",
+      "pageId": "forgot-password",
+      "type": "auth",
+      "accessLevel": 0,
+      "hasIndex": true
+    },
+    "/reset-password/": {
+      "path": "/reset-password/",
+      "name": "Reset Password",
+      "category": "auth",
+      "pageId": "reset-password",
+      "type": "auth",
+      "accessLevel": 0,
+      "hasIndex": true
+    },
+    "/login-required/": {
+      "path": "/login-required/",
+      "name": "Login Required",
+      "category": "auth",
+      "pageId": "login-required",
+      "type": "auth",
+      "accessLevel": 0,
+      "hasIndex": true
+    },
+    "/upgrade-required/": {
+      "path": "/upgrade-required/",
+      "name": "Upgrade Required",
+      "category": "auth",
+      "pageId": "upgrade-required",
+      "type": "auth",
+      "accessLevel": 0,
+      "hasIndex": true
+    },
+    "/about/": {
+      "path": "/about/",
+      "name": "About",
+      "category": "info",
+      "pageId": "about",
+      "type": "page",
+      "accessLevel": 0,
+      "hasIndex": true
+    },
+    "/terms/": {
+      "path": "/terms/",
+      "name": "Terms of Service",
+      "category": "legal",
+      "pageId": "terms",
+      "type": "page",
+      "accessLevel": 0,
+      "hasIndex": true
+    },
+    "/privacy/": {
+      "path": "/privacy/",
+      "name": "Privacy Policy",
+      "category": "legal",
+      "pageId": "privacy",
+      "type": "page",
+      "accessLevel": 0,
+      "hasIndex": true
+    },
+    "/contact/": {
+      "path": "/contact/",
+      "name": "Contact Us",
+      "category": "contact",
+      "pageId": "contact",
+      "type": "page",
+      "accessLevel": 0,
       "hasIndex": true
     },
     "/traffic/": {
@@ -113,6 +203,15 @@
       "accessLevel": 3,
       "hasIndex": true
     },
+    "/traffic/tools/streetsection/": {
+      "path": "/traffic/tools/streetsection/",
+      "name": "Street Section Designer",
+      "category": "tools",
+      "pageId": "streetsection",
+      "type": "tool",
+      "accessLevel": 1,
+      "hasIndex": true
+    },
     "/support/": {
       "path": "/support/",
       "name": "Support Center",
@@ -137,7 +236,7 @@
       "category": "support",
       "pageId": "glossary",
       "type": "support",
-      "accessLevel": 3,
+      "accessLevel": 0,
       "hasIndex": true
     },
     "/support/scenarios/": {
@@ -220,6 +319,12 @@
           "accessLevel": 1
         },
         {
+          "label": "Street Section",
+          "path": "/traffic/tools/streetsection/",
+          "pageId": "streetsection",
+          "accessLevel": 1
+        },
+        {
           "label": "Traffic Network",
           "path": "/traffic/tools/network/",
           "pageId": "network",
@@ -242,7 +347,7 @@
           "label": "Glossary",
           "path": "/support/glossary/",
           "pageId": "glossary",
-          "accessLevel": 3
+          "accessLevel": 0
         },
         {
           "label": "Scenarios",
@@ -262,7 +367,13 @@
   "settings": {
     "tokenExpiry": 24,
     "defaultAccessLevel": 1,
-    "siteName": "Engineering Simulations",
-    "adminEmail": "admin@example.com"
+    "siteName": "Traffic Labb",
+    "adminEmail": "traffic@thelabb.com.au"
+  },
+  "accessLevels": {
+    "0": { "name": "Public", "color": "#95a5a6" },
+    "1": { "name": "Guest", "color": "#6c757d" },
+    "2": { "name": "Standard", "color": "#6b99c2" },
+    "3": { "name": "Premium", "color": "#354e8d" }
   }
 }

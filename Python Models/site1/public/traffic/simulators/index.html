@@ -67,7 +67,7 @@
                         <div class="access-badge level-1" id="badge-mechanical">L1</div>
                         <div class="compact-card-icon">🏢</div>
                         <h3>Mechanical Parking</h3>
-                        <p>Mechanical parking structure analysis based on average service times and utilization rates</p>
+                        <p>Mechanical parking structure analysis based on average service times and utilisation rates</p>
                     </div>
                     <div class="compact-simulation-card" onclick="openSimulation('schoolpickup')" data-access-level="3">
                         <div class="access-badge level-3" id="badge-schoolpickup">L3</div>
@@ -91,36 +91,19 @@
             'schoolpickup': 3
         };
 
-        // Authentication check on page load
+        // Page initialization
         document.addEventListener('DOMContentLoaded', async () => {
             // Give common.js time to load manifest and handle authentication
             await new Promise(resolve => setTimeout(resolve, 100));
-            
-            // Check authentication using common.js functions
-            const token = localStorage.getItem('authToken');
-            if (!token || !isValidToken(token)) {
-                window.location.href = '/';
-                return;
-            }
-            
+
+            // Auth check is now handled by common.js checkPageAccess()
             // Update card accessibility based on user level
             updateCardAccessibility();
-            
+
             // Show the app
             document.getElementById('loading').style.display = 'none';
             document.getElementById('app').classList.remove('hidden');
         });
-
-        function isValidToken(token) {
-            try {
-                const decoded = atob(token);
-                const [timestamp, username, accessLevel] = decoded.split(':');
-                const tokenAge = Date.now() - parseInt(timestamp);
-                return tokenAge < 24 * 60 * 60 * 1000; // 24 hours
-            } catch {
-                return false;
-            }
-        }
 
         function getUserAccessLevel() {
             try {

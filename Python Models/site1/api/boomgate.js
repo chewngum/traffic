@@ -1,5 +1,5 @@
 // /api/boomgate.js
-// Boom Gate Simulation Backend API for Vercel with First Seed Timing
+// Boom Gate Simulation Backend API
 
 // Authentication validation (using atob instead of Buffer for browser compatibility)
 function isValidToken(token) {
@@ -66,138 +66,208 @@ function createSeededRandom(seed) {
     };
 }
 
-// Run a single simulation
+// Run a single simulation (MEMORY-OPTIMIZED: Uses counters instead of storing all events)
 function runSingleSimulation(params, seedValue = null) {
     // Create random function (seeded or normal)
     const random = seedValue !== null ? createSeededRandom(seedValue) : Math.random;
-    
+
     const simulationTime = params.simulationHours * 3600; // in seconds
-    let arrivals = [];
     let constrainedArrivals = 0;
-    
-    // Handle zero arrival rate case
-    if (params.arrivalRate <= 0) {
-        arrivals = [];
-    } else {
-        const arrivalRate = params.arrivalRate / 3600; // per second
-        const targetInterArrivalTime = 1 / arrivalRate;
-        const minHeadway = params.minHeadway;
-        
-        // Find adjusted rate for minimum headway
-        const adjustedRate = findAdjustedRate(targetInterArrivalTime, minHeadway);
-        
-        // Generate arrivals
-        let currentTime = 0;
-        
-        while (currentTime < simulationTime) {
-            const rawInterArrival = exponentialRandom(adjustedRate, random);
-            const actualInterArrival = Math.max(rawInterArrival, minHeadway);
-            
-            if (rawInterArrival < minHeadway) {
-                constrainedArrivals++;
-            }
-            
-            currentTime += actualInterArrival;
-            if (currentTime < simulationTime) {
-                arrivals.push(currentTime);
-            }
-        }
-    }
-    
-    // Generate service times and process queue
-    let events = [];
+    let totalCustomers = 0;
+
+    // Optimized: Use counters instead of arrays
+    let totalWaitingTime = 0;
+    let totalWaitingTimeForWaiters = 0;
+    let customersWhoWaited = 0;
+    let totalServiceTime = 0;
     let serverFreeTime = 0;
-    let waitingTimes = [];
-    let serviceTimes = [];
-    
-    for (let i = 0; i < arrivals.length; i++) {
-        const arrivalTime = arrivals[i];
-        
-        // Generate two-part service time
-        const part1Time = generateServiceTime(params.servicePart1, params.part1IsExp, random);
-        const part2Time = generateServiceTime(params.servicePart2, params.part2IsExp, random);
-        const totalServiceTime = part1Time + part2Time;
-        serviceTimes.push(totalServiceTime);
-        
-        const serviceStartTime = Math.max(arrivalTime, serverFreeTime);
-        const waitingTime = serviceStartTime - arrivalTime;
-        const departureTime = serviceStartTime + totalServiceTime;
-        
-        events.push({type: 'arrival', time: arrivalTime});
-        events.push({type: 'departure', time: departureTime});
-        
-        waitingTimes.push(waitingTime);
-        serverFreeTime = departureTime;
-    }
-    
-    // Sort events and track system state
-    events.sort((a, b) => a.time - b.time);
-    
+
+    // Track system state over time (still needed for queue length distribution)
     let systemState = 0;
     let lastEventTime = 0;
     let stateTimeAccumulator = {};
     let hourlyMaximums = new Array(params.simulationHours).fill(0);
-    
-    for (let i = 0; i <= arrivals.length; i++) {
-        stateTimeAccumulator[i] = 0;
+    let maxStateObserved = 0;
+
+    // Initialize state 0
+    stateTimeAccumulator[0] = 0;
+
+    // Handle zero arrival rate case
+    if (params.arrivalRate <= 0) {
+        return {
+            totalCustomers: 0,
+            avgArrivalsPerHour: 0,
+            serverUtilization: 0,
+            avgWaitTimePerArrival: 0,
+            avgWaitTimePerWaiter: 0,
+            probabilityOfWaiting: 0,
+            systemStatePercentages: {0: 100},
+            hourlyMaxDistribution: {0: 100},
+            constrainedArrivals: 0,
+            avgServiceTime: 0
+        };
     }
-    
-    for (let event of events) {
-        const timeDiff = event.time - lastEventTime;
-        stateTimeAccumulator[systemState] += timeDiff;
-        
-        const currentHour = Math.floor(event.time / 3600);
+
+    const arrivalRate = params.arrivalRate / 3600; // per second
+    const targetInterArrivalTime = 1 / arrivalRate;
+    const minHeadway = params.minHeadway;
+
+    // Find adjusted rate for minimum headway
+    const adjustedRate = findAdjustedRate(targetInterArrivalTime, minHeadway);
+
+    // Optimized: Process arrivals and departures in a single pass without storing events
+    // We'll use a min-heap for departure events only
+    const departureHeap = [];
+
+    function heapPush(heap, time) {
+        heap.push(time);
+        let i = heap.length - 1;
+        while (i > 0) {
+            const parent = Math.floor((i - 1) / 2);
+            if (heap[parent] <= heap[i]) break;
+            [heap[parent], heap[i]] = [heap[i], heap[parent]];
+            i = parent;
+        }
+    }
+
+    function heapPop(heap) {
+        if (heap.length === 0) return null;
+        if (heap.length === 1) return heap.pop();
+        const result = heap[0];
+        heap[0] = heap.pop();
+        let i = 0;
+        while (true) {
+            let smallest = i;
+            const left = 2 * i + 1;
+            const right = 2 * i + 2;
+            if (left < heap.length && heap[left] < heap[smallest]) smallest = left;
+            if (right < heap.length && heap[right] < heap[smallest]) smallest = right;
+            if (smallest === i) break;
+            [heap[i], heap[smallest]] = [heap[smallest], heap[i]];
+            i = smallest;
+        }
+        return result;
+    }
+
+    function updateSystemState(newTime, delta) {
+        // Record time in current state
+        const timeDiff = newTime - lastEventTime;
+        if (timeDiff > 0) {
+            stateTimeAccumulator[systemState] = (stateTimeAccumulator[systemState] || 0) + timeDiff;
+
+            // Track hourly maximum
+            const currentHour = Math.floor(lastEventTime / 3600);
+            if (currentHour < params.simulationHours) {
+                hourlyMaximums[currentHour] = Math.max(hourlyMaximums[currentHour], systemState);
+            }
+        }
+
+        // Update state
+        systemState += delta;
+        maxStateObserved = Math.max(maxStateObserved, systemState);
+        lastEventTime = newTime;
+
+        // Initialize new state if needed
+        if (!(systemState in stateTimeAccumulator)) {
+            stateTimeAccumulator[systemState] = 0;
+        }
+    }
+
+    // Generate arrivals and process queue
+    let currentTime = 0;
+
+    while (currentTime < simulationTime) {
+        // Generate next arrival
+        const rawInterArrival = exponentialRandom(adjustedRate, random);
+        const actualInterArrival = Math.max(rawInterArrival, minHeadway);
+
+        if (rawInterArrival < minHeadway) {
+            constrainedArrivals++;
+        }
+
+        currentTime += actualInterArrival;
+        if (currentTime >= simulationTime) break;
+
+        // Process any departures that happen before this arrival
+        while (departureHeap.length > 0 && departureHeap[0] <= currentTime) {
+            const departureTime = heapPop(departureHeap);
+            updateSystemState(departureTime, -1);
+        }
+
+        // Process arrival
+        totalCustomers++;
+
+        // Generate service time
+        const part1Time = generateServiceTime(params.servicePart1, params.part1IsExp, random);
+        const part2Time = generateServiceTime(params.servicePart2, params.part2IsExp, random);
+        const serviceTime = part1Time + part2Time;
+        totalServiceTime += serviceTime;
+
+        // Calculate when service starts and ends
+        const serviceStartTime = Math.max(currentTime, serverFreeTime);
+        const waitingTime = serviceStartTime - currentTime;
+        const departureTime = serviceStartTime + serviceTime;
+
+        // Optimized: Accumulate wait times without storing
+        totalWaitingTime += waitingTime;
+        if (waitingTime > 0.001) {
+            totalWaitingTimeForWaiters += waitingTime;
+            customersWhoWaited++;
+        }
+
+        // Update system state for arrival
+        updateSystemState(currentTime, 1);
+
+        // Schedule departure
+        heapPush(departureHeap, departureTime);
+        serverFreeTime = departureTime;
+    }
+
+    // Process remaining departures
+    while (departureHeap.length > 0) {
+        let departureTime = heapPop(departureHeap);
+        if (departureTime > simulationTime) {
+            departureTime = simulationTime;
+        }
+        updateSystemState(departureTime, -1);
+    }
+
+    // Final state update to simulation end
+    if (lastEventTime < simulationTime) {
+        const timeDiff = simulationTime - lastEventTime;
+        stateTimeAccumulator[systemState] = (stateTimeAccumulator[systemState] || 0) + timeDiff;
+
+        const currentHour = Math.floor(lastEventTime / 3600);
         if (currentHour < params.simulationHours) {
             hourlyMaximums[currentHour] = Math.max(hourlyMaximums[currentHour], systemState);
         }
-        
-        if (event.type === 'arrival') {
-            systemState++;
-        } else {
-            systemState--;
-        }
-        
-        lastEventTime = event.time;
     }
-    
-    if (lastEventTime < simulationTime) {
-        stateTimeAccumulator[systemState] += simulationTime - lastEventTime;
-    }
-    
-    // Calculate metrics
-    const totalCustomers = arrivals.length;
+
+    // Calculate final metrics
     const avgArrivalsPerHour = totalCustomers / params.simulationHours;
-    const totalServiceTime = serviceTimes.reduce((sum, t) => sum + t, 0);
     const serverUtilization = totalServiceTime / simulationTime;
-    
-    const totalWaitingTime = waitingTimes.reduce((sum, w) => sum + w, 0);
     const avgWaitTimePerArrival = totalCustomers > 0 ? totalWaitingTime / totalCustomers : 0;
-    
-    const customersWhoWaited = waitingTimes.filter(w => w > 0.001).length;
-    const avgWaitTimePerWaiter = customersWhoWaited > 0 ? 
-        waitingTimes.filter(w => w > 0.001).reduce((sum, w) => sum + w, 0) / customersWhoWaited : 0;
-    
+    const avgWaitTimePerWaiter = customersWhoWaited > 0 ? totalWaitingTimeForWaiters / customersWhoWaited : 0;
     const probabilityOfWaiting = totalCustomers > 0 ? customersWhoWaited / totalCustomers : 0;
-    
+    const avgServiceTime = totalCustomers > 0 ? totalServiceTime / totalCustomers : 0;
+
     // System state percentages
     let systemStatePercentages = {};
-    let maxState = Math.max(...Object.keys(stateTimeAccumulator).map(k => parseInt(k)));
-    
-    for (let state = 0; state <= maxState; state++) {
+    for (let state = 0; state <= maxStateObserved; state++) {
         const timeInState = stateTimeAccumulator[state] || 0;
         systemStatePercentages[state] = (timeInState / simulationTime) * 100;
     }
-    
+
     // Hourly maximum distribution
     let hourlyMaxDistribution = {};
     for (let max of hourlyMaximums) {
         hourlyMaxDistribution[max] = (hourlyMaxDistribution[max] || 0) + 1;
     }
-    
+
     for (let max in hourlyMaxDistribution) {
         hourlyMaxDistribution[max] = (hourlyMaxDistribution[max] / params.simulationHours) * 100;
     }
-    
+
     return {
         totalCustomers,
         avgArrivalsPerHour,
@@ -208,7 +278,7 @@ function runSingleSimulation(params, seedValue = null) {
         systemStatePercentages,
         hourlyMaxDistribution,
         constrainedArrivals,
-        avgServiceTime: totalCustomers > 0 ? totalServiceTime / totalCustomers : 0
+        avgServiceTime
     };
 }
 
@@ -245,6 +315,7 @@ export default function handler(req, res) {
         }
 
         const token = authHeader.substring(7);
+
         if (!isValidToken(token)) {
             return res.status(401).json({ error: 'Invalid or expired token' });
         }

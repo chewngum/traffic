@@ -9,210 +9,11 @@
     
     <!-- Favicons will be injected by common.js -->
     <style>
+        /* Login page specific styles only - common auth styles now in style.css */
         body {
             margin-top: 0;
         }
-        
-        .login-main {
-            padding: 20px 0;
-            min-height: calc(100vh - 80px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        }
-        
-        .login-container {
-            display: flex;
-            max-width: 1000px;
-            width: 100%;
-            margin: 10px;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        
-        .login-left {
-            flex: 1;
-            padding: 30px 35px;
-            background: linear-gradient(135deg, #354e8d 0%, #496f9c 100%);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        
-        .login-right {
-            flex: 1;
-            padding: 30px 35px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        
-        .welcome-section h2 {
-            font-size: 1.8rem;
-            margin-bottom: 12px;
-            font-weight: 700;
-        }
-        
-        .welcome-section p {
-            font-size: 0.95rem;
-            opacity: 0.9;
-            line-height: 1.4;
-            margin-bottom: 20px;
-        }
-        
-        .feature-list {
-            list-style: none;
-            padding: 0;
-        }
-        
-        .feature-list li {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-        
-        .feature-list li::before {
-            content: "✓";
-            color: #a3c9e0;
-            font-weight: bold;
-            margin-right: 8px;
-            font-size: 1rem;
-        }
-        
-        .login-title {
-            text-align: center;
-            color: #354e8d;
-            margin-bottom: 5px;
-            font-size: 1.6rem;
-            font-weight: 700;
-        }
-        
-        .login-subtitle {
-            text-align: center;
-            color: #6c757d;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-        }
-        
-        .demo-info {
-            background: #e3f1f7;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            border: 1px solid #a3c9e0;
-        }
-        
-        .demo-info h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #354e8d;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-        
-        .demo-info p {
-            margin: 8px 0;
-            color: #4a4a4a;
-            font-size: 0.9rem;
-        }
-        
-        .demo-info strong {
-            color: #354e8d;
-            font-family: monospace;
-            font-size: 0.95rem;
-        }
-        
-        .social-login {
-            margin-bottom: 20px;
-        }
-        
-        .social-buttons {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-        
-        .social-btn {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            background: white;
-            color: #495057;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            font-weight: 500;
-            font-size: 0.85rem;
-            transition: all 0.3s ease;
-        }
-        
-        .social-btn:hover {
-            background: #f8f9fa;
-            border-color: #6b99c2;
-            color: #354e8d;
-        }
-        
-        .divider {
-            text-align: center;
-            margin: 12px 0;
-            color: #6c757d;
-            position: relative;
-        }
-        
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #dee2e6;
-        }
-        
-        .divider span {
-            background: white;
-            padding: 0 12px;
-            font-size: 0.8rem;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #354e8d;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-        
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #e9ecef;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            box-sizing: border-box;
-            transition: all 0.3s;
-            background: #f8f9fa;
-        }
-        
-        .form-group input:focus {
-            outline: none;
-            border-color: #6b99c2;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(107, 153, 194, 0.1);
-        }
-        
+
         .form-options {
             display: flex;
             justify-content: space-between;
@@ -220,36 +21,27 @@
             margin-bottom: 15px;
             font-size: 0.8rem;
         }
-        
+
         .remember-me {
             display: flex;
             align-items: center;
             gap: 6px;
         }
-        
+
         .remember-me input[type="checkbox"] {
             width: auto;
         }
-        
-        .forgot-password {
-            color: #6b99c2;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        
-        .forgot-password:hover {
-            color: #354e8d;
-            text-decoration: underline;
-        }
-        
+
         .button-group {
             display: flex;
             flex-direction: column;
             gap: 8px;
             margin-bottom: 15px;
         }
-        
-        .login-btn {
+
+        .btn-guest {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
             width: 100%;
             padding: 12px;
             border: none;
@@ -258,39 +50,21 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
         }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #6b99c2 0%, #5a88b0 100%);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #5a88b0 0%, #4a7a9f 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(107, 153, 194, 0.3);
-        }
-        
-        .btn-guest {
-            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-            color: white;
-        }
-        
+
         .btn-guest:hover {
             background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
         }
-        
-        .login-btn:disabled {
+
+        .btn-guest:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none !important;
             box-shadow: none !important;
         }
-        
+
         .error {
             color: #dc3545;
             text-align: center;
@@ -302,24 +76,63 @@
             display: none;
             font-size: 0.9rem;
         }
-        
+
         .signup-link {
             text-align: center;
             color: #6c757d;
             font-size: 0.8rem;
         }
-        
+
         .signup-link a {
             color: #6b99c2;
             text-decoration: none;
             font-weight: 600;
         }
-        
+
         .signup-link a:hover {
             color: #354e8d;
             text-decoration: underline;
         }
-        
+
+        .signup-section {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .signup-text {
+            color: #6c757d;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        .signup-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-signup {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-signup:hover {
+            background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+        }
+
         .security-note {
             background: #d1ecf1;
             border: 1px solid #b6d4da;
@@ -329,7 +142,7 @@
             font-size: 0.75rem;
             color: #0c5460;
         }
-        
+
         /* Loading spinner */
         .spinner {
             border: 2px solid rgba(255,255,255,0.3);
@@ -339,40 +152,21 @@
             height: 16px;
             animation: spin 1s linear infinite;
             margin-right: 8px;
+            display: inline-block;
+            vertical-align: middle;
         }
-        
+
+        /* Fix button height when loading */
+        .auth-submit-btn span,
+        .btn-guest.loading {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-        
-        @media (max-width: 768px) {
-            .login-container {
-                flex-direction: column;
-                margin: 10px;
-            }
-            
-            .login-left {
-                padding: 25px 20px;
-                text-align: center;
-            }
-            
-            .login-right {
-                padding: 25px 20px;
-            }
-            
-            .welcome-section h2 {
-                font-size: 1.5rem;
-            }
-            
-            .login-title {
-                font-size: 1.3rem;
-            }
-            
-            .social-buttons {
-                flex-direction: column;
-                gap: 6px;
-            }
         }
     </style>
 </head>
@@ -380,56 +174,29 @@
     <!-- Navigation will be injected by common.js -->
 
     <div class="container">
-        <main class="login-main">
-            <div class="login-container">
+        <main class="auth-main">
+            <div class="auth-container">
                 <!-- Left side - Welcome/Marketing -->
-                <div class="login-left">
+                <div class="auth-sidebar">
                     <div class="welcome-section">
                         <h2>Welcome to Traffic Labb</h2>
                         <p>Advanced traffic simulation and analysis platform for engineering professionals.</p>
-                        
+
                         <ul class="feature-list">
                             <li>Realistic traffic flow simulations</li>
-                            <li>Multiple Randomness Models</li>
+                            <li>Detailed Statistics</li>
                             <li>Network Traffic Visualisation</li>
                             <li>Design and Drawing tools</li>
-                            <li>Preformatted Reporting</li>
+                            <li>Pre-formatted Reporting</li>
                         </ul>
                     </div>
                 </div>
-                
+
                 <!-- Right side - Login Form -->
-                <div class="login-right">
-                    <h1 class="login-title">Sign In</h1>
-                    <p class="login-subtitle">Access your traffic engineering dashboard</p>
-                    
-                    <button type="button" class="login-btn btn-guest" id="guestBtn" style="margin-bottom: 20px;">Sign in as guest</button>
-                    
-                    <!-- Social Login Options -->
-                    <div class="social-login">
-                        <div class="social-buttons">
-                            <a href="#" class="social-btn" onclick="showComingSoon('Google SSO')">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                                </svg>
-                                Google
-                            </a>
-                            <a href="#" class="social-btn" onclick="showComingSoon('Microsoft SSO')">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z"/>
-                                </svg>
-                                Microsoft
-                            </a>
-                        </div>
-                        
-                        <div class="divider">
-                            <span>or continue with email</span>
-                        </div>
-                    </div>
-                    
+                <div class="auth-form-area">
+                    <h1 class="auth-title">Sign In</h1>
+                    <p class="auth-subtitle">Access your traffic engineering dashboard</p>
+
                     <form id="loginForm">
                         <div class="form-group">
                             <label for="username">Email or Username</label>
@@ -439,30 +206,30 @@
                             <label for="password">Password</label>
                             <input type="password" id="password" name="password" placeholder="Enter your password" required>
                         </div>
-                        
+
                         <div class="form-options">
                             <label class="remember-me">
                                 <input type="checkbox" id="rememberMe">
                                 <span>Remember me</span>
                             </label>
-                            <a href="/forgot-password/" class="forgot-password">Forgot password?</a>
+                            <a href="/forgot-password/" class="auth-link">Forgot password?</a>
                         </div>
-                        
+
                         <div class="button-group">
-                            <button type="submit" class="login-btn btn-primary" id="loginBtn">
+                            <button type="submit" class="auth-submit-btn" id="loginBtn">
                                 <span id="loginBtnText">Sign In</span>
                             </button>
                         </div>
-                        
+
                         <div class="error" id="error"></div>
                     </form>
-                    
-                    <div class="signup-link">
-                        Don't have an account? <a href="/signup/">Sign up</a>
-                    </div>
-                    
-                    <div class="security-note">
-                        🔒 Your data is protected with enterprise-grade security and encryption.
+
+                    <div class="signup-section">
+                        <p class="signup-text">Don't have an account?</p>
+                        <div class="signup-buttons">
+                            <button type="button" class="btn-guest" id="guestBtnBottom">Sign in as guest</button>
+                            <a href="/signup/" class="btn-signup">Sign up</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -475,20 +242,20 @@
             const loginForm = document.getElementById('loginForm');
             const loginBtn = document.getElementById('loginBtn');
             const loginBtnText = document.getElementById('loginBtnText');
-            const guestBtn = document.getElementById('guestBtn');
+            const guestBtnBottom = document.getElementById('guestBtnBottom');
             const errorDiv = document.getElementById('error');
-            
+
             // Prevent any default form submission
             loginForm.addEventListener('submit', handleLogin);
             loginBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 handleLogin(e);
             });
-            
-            // Guest login button
-            guestBtn.addEventListener('click', function(e) {
+
+            // Guest login button (bottom)
+            guestBtnBottom.addEventListener('click', function(e) {
                 e.preventDefault();
-                handleGuestLogin();
+                handleGuestLogin(guestBtnBottom);
             });
             
             async function handleLogin(e) {
@@ -508,21 +275,22 @@
                 return false;
             }
             
-            async function handleGuestLogin() {
-                await performLogin('guest', 'guest123', guestBtn, 'Accessing as guest...', false);
+            async function handleGuestLogin(button) {
+                await performLogin('guest', 'guest123', button, 'Accessing as guest...', false);
             }
             
             async function performLogin(username, password, button, loadingText, rememberMe = false) {
                 // Show loading state
                 const originalText = button.querySelector('span') ? button.querySelector('span').textContent : button.textContent;
                 button.disabled = true;
-                
+
                 if (button.querySelector('span')) {
                     button.querySelector('span').innerHTML = `<div class="spinner"></div>${loadingText}`;
                 } else {
-                    button.textContent = loadingText;
+                    button.classList.add('loading');
+                    button.innerHTML = `<div class="spinner"></div>${loadingText}`;
                 }
-                
+
                 errorDiv.style.display = 'none';
                 
                 try {
@@ -550,7 +318,13 @@
                         localStorage.setItem('authToken', data.token);
                         localStorage.setItem('userAccessLevel', data.accessLevel);
                         localStorage.setItem('userDisplayName', data.displayName);
-                        
+                        if (data.email) {
+                            localStorage.setItem('userEmail', data.email);
+                        }
+                        if (data.company) {
+                            localStorage.setItem('userCompany', data.company);
+                        }
+
                         // Store remember me preference
                         if (rememberMe) {
                             localStorage.setItem('rememberMe', 'true');
@@ -579,6 +353,7 @@
                 // Reset button if there was an error
                 setTimeout(() => {
                     button.disabled = false;
+                    button.classList.remove('loading');
                     if (button.querySelector('span')) {
                         button.querySelector('span').textContent = originalText;
                     } else {
@@ -621,12 +396,7 @@
                 }
             });
         });
-        
-        // Coming soon notification for features not yet implemented
-        function showComingSoon(feature) {
-            alert(`${feature} coming soon! Currently in development.`);
-        }
-        
+
         // Add shake animation CSS
         const shakeStyle = document.createElement('style');
         shakeStyle.textContent = `

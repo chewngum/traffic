@@ -739,7 +739,7 @@
     <section class="hero-section">
         <div class="hero-content">
             <h1 class="hero-title">Specialised Traffic Engineering Software</h1>
-            <p class="hero-subtitle">We provide highly configurable statistical analyses of standard scenarios beyond typical probability capabilities.</p>
+            <p class="hero-subtitle">Monte Carlo simulations that answer the questions basic queue theory can't. Like 'What's the 95th percentile queue?' or 'How often will this system fail?'</p>
 
             <div class="hero-cta">
                 <a href="/login/" class="cta-button cta-primary">Start Free Trial</a>
@@ -752,8 +752,8 @@
     <section class="benefits-section">
         <div class="benefits-container">
             <div class="section-header">
-                <h2 class="section-title">Transform Your Traffic Engineering Workflow</h2>
-                <p class="section-description">Professional-grade simulations and design tools that deliver statistical confidence and actionable insights for complex traffic scenarios.</p>
+                <h2 class="section-title">Stop Guessing, Start Proving</h2>
+                <p class="section-description">Simulations built by a traffic engineer who got tired of spreadsheets that couldn't handle real-world complexity.</p>
 
             </div>
             
@@ -761,19 +761,19 @@
                 <div class="benefit-card">
                     <div class="benefit-icon">A</div>
                     <h3 class="benefit-title">Accelerate Analysis</h3>
-                    <p class="benefit-description">Let us run the numbers so you don't have to-reinvent the wheel. Idyllic Monte Carlo simulations with configurable metrics that queue theory misses, means we don't leave excess yield on the table.</p>
+                    <p class="benefit-description">Stop rebuilding custom spreadsheets for every project. Our Monte Carlo simulations handle the statistical heavy lifting so you can focus on the engineering.</p>
                 </div>
                 
                 <div class="benefit-card">
                     <div class="benefit-icon">P</div>
                     <h3 class="benefit-title">Precision Engineering</h3>
-                    <p class="benefit-description">Statistical validation with customisable confidence levels up to 99.99%. Advanced queueing theory models provide accuracy that traditional methods cannot match for critical infrastructure decisions.</p>
+                    <p class="benefit-description">Configure confidence intervals up to 99.99%. Get percentile distributions and edge-case analysis, not just averages that hide the problems.</p>
                 </div>
                 
                 <div class="benefit-card">
                     <div class="benefit-icon">D</div>
                     <h3 class="benefit-title">Data-Driven Insights</h3>
-                    <p class="benefit-description">Comprehensive utilisation analysis, capacity planning, and performance optimisation. Identify bottlenecks, predict failures, and optimise operations with detailed statistical breakdowns.</p>
+                    <p class="benefit-description">See exactly where systems fail. Find out if your 90th percentile queue needs 5 spaces or 12. Plan capacity with data, not guesses.</p>
                 </div>
             </div>
         </div>
@@ -816,7 +816,7 @@
                 <div class="simulation-preview">
                     <div class="simulation-category">Queueing Analysis</div>
                     <h3 class="simulation-name">Boom Gate & Checkpoint Systems</h3>
-                    <p class="simulation-description">Model vehicle processing at security checkpoints, toll plazas, and access control points with realistic service time distributions.</p>
+                    <p class="simulation-description">How long will the queue get at your security checkpoint? Model vehicle processing at toll plazas and access control points with realistic service time distributions.</p>
                     <ul class="simulation-features">
                         <li>Variable service time modeling</li>
                         <li>Queue length optimisation</li>
@@ -843,7 +843,7 @@
                 <div class="simulation-preview">
                     <div class="simulation-category">Parking Systems</div>
                     <h3 class="simulation-name">Car Park Utilisation</h3>
-                    <p class="simulation-description">Optimise parking facility operations with stochastic arrival patterns and dynamic stay lengths.</p>
+                    <p class="simulation-description">Will your car park fill up? Model stochastic arrival patterns and dynamic stay lengths to size facilities correctly.</p>
 
                     <ul class="simulation-features">
                         <li>Demand pattern analysis</li>
@@ -880,7 +880,7 @@
                 <div class="simulation-preview">
                     <div class="simulation-category">Design Tools</div>
                     <h3 class="simulation-name">Professional Utilities</h3>
-                    <p class="simulation-description">CAD automation, network modeling, and design validation tools that integrate seamlessly with your existing workflow.</p>
+                    <p class="simulation-description">Automate the tedious stuff. CAD ramp generation, network modeling, and design validation tools for your daily workflow.</p>
                     <ul class="simulation-features">
                         <li>Automated ramp design</li>
                         <li>Compliance verification</li>
@@ -895,11 +895,11 @@
     <!-- Final CTA -->
     <section class="final-cta">
         <div class="final-cta-content">
-            <h2>Ready to Transform Your Practice and give your clients better results?</h2>
-            <p>Join other traffic engineers who have revolutionised their analysis workflow with professional-grade simulation tools. Start your free trial today.</p>
+            <h2>Ready to stop guessing and start proving your designs work?</h2>
+            <p>Join traffic engineers who've replaced spreadsheet guesswork with statistical confidence. Start your free trial today.</p>
             <div class="hero-cta">
                 <a href="/login/" class="cta-button cta-primary">Start Free Trial</a>
-                <a href="#contact" class="cta-button cta-secondary">Contact Sales</a>
+                <a href="/contact/" class="cta-button cta-secondary">Contact Sales</a>
             </div>
         </div>
     </section>
@@ -909,7 +909,7 @@
         <div class="contact-container">
             <div class="contact-header">
                 <h2 class="contact-title">Get in Touch</h2>
-                <p class="contact-description">Ready to see how <strong>Traffic Labb</strong> can transform your engineering workflow? Contact us for a personalised demonstration or to discuss your specific requirements.</p>
+                <p class="contact-description">Want to see how <strong>Traffic Labb</strong> works? Contact us for a demonstration or to discuss your specific requirements.</p>
             </div>
             
             <div class="contact-content">
@@ -941,7 +941,15 @@
                                 <span>Engadine, Sydney</span>
                             </div>
                         </div>
-                        
+
+                        <div class="contact-detail">
+                            <div class="contact-icon">🏢</div>
+                            <div class="contact-text">
+                                <h4>ABN</h4>
+                                <span>17 608 847 347</span>
+                            </div>
+                        </div>
+
                         <!-- Map inside card -->
                         <div class="map-container">
                             <iframe 
@@ -1007,7 +1015,40 @@
         // Contact form setup will be handled by common.js navigation
         document.addEventListener('DOMContentLoaded', function() {
             setupContactForm();
+            prefillUserData();
         });
+
+        function prefillUserData() {
+            // Check if user is authenticated and not a guest (access level > 1)
+            const authToken = localStorage.getItem('authToken');
+            const userAccessLevel = parseInt(localStorage.getItem('userAccessLevel')) || 0;
+
+            // Only prefill for authenticated non-guest users
+            if (!authToken || userAccessLevel <= 1) return;
+
+            // Get user data from localStorage
+            const userName = localStorage.getItem('userDisplayName');
+            const userEmail = localStorage.getItem('userEmail');
+            const userCompany = localStorage.getItem('userCompany');
+
+            // Prefill name field
+            const nameField = document.getElementById('contactName');
+            if (nameField && userName) {
+                nameField.value = userName;
+            }
+
+            // Prefill email field
+            const emailField = document.getElementById('contactEmail');
+            if (emailField && userEmail) {
+                emailField.value = userEmail;
+            }
+
+            // Prefill company field
+            const companyField = document.getElementById('contactCompany');
+            if (companyField && userCompany) {
+                companyField.value = userCompany;
+            }
+        }
 
         function setupContactForm() {
             const contactForm = document.getElementById('contactForm');

@@ -10,11 +10,9 @@
         .faq-container {
             max-width: 1000px;
             margin: 0 auto;
-        }
         
         .faq-section {
             margin-bottom: 40px;
-        }
         
         .section-header {
             color: #354e8d;
@@ -29,11 +27,9 @@
             align-items: center;
             gap: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
         
         .section-icon {
             font-size: 1.4rem;
-        }
         
         .faq-item {
             background: white;
@@ -42,12 +38,10 @@
             margin-bottom: 15px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             transition: all 0.3s ease;
-        }
         
         .faq-item:hover {
             border-color: #6b99c2;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
         
         .faq-question {
             padding: 20px;
@@ -60,7 +54,6 @@
             margin: 0;
             font-size: 1.1rem;
             line-height: 1.4;
-        }
         
         .faq-toggle {
             color: #6b99c2;
@@ -68,11 +61,9 @@
             transition: transform 0.3s ease;
             flex-shrink: 0;
             margin-left: 15px;
-        }
         
         .faq-item.active .faq-toggle {
             transform: rotate(180deg);
-        }
         
         .faq-answer {
             padding: 0 20px 20px 20px;
@@ -80,30 +71,24 @@
             line-height: 1.6;
             display: none;
             font-size: 1rem;
-        }
         
         .faq-item.active .faq-answer {
             display: block;
             animation: fadeIn 0.3s ease;
-        }
         
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
-        }
         
         .faq-answer ul {
             margin: 10px 0;
             padding-left: 20px;
-        }
         
         .faq-answer li {
             margin-bottom: 8px;
-        }
         
         .faq-answer strong {
             color: #354e8d;
-        }
         
         .faq-answer code {
             background: #f8f9fa;
@@ -113,7 +98,6 @@
             font-size: 0.9rem;
             color: #354e8d;
             border: 1px solid #e3f1f7;
-        }
         
         .highlight-box {
             background: #f8fbff;
@@ -121,7 +105,6 @@
             padding: 15px;
             margin: 15px 0;
             border-radius: 0 6px 6px 0;
-        }
         
         .access-level-badge {
             display: inline-block;
@@ -130,22 +113,18 @@
             font-size: 0.8rem;
             font-weight: 600;
             margin-left: 8px;
-        }
         
         .level-guest {
             background: #6c757d;
             color: white;
-        }
         
         .level-standard {
             background: #6b99c2;
             color: white;
-        }
         
         .level-premium {
             background: #354e8d;
             color: white;
-        }
         
         .search-box {
             width: 100%;
@@ -156,13 +135,11 @@
             background: white;
             margin-bottom: 30px;
             transition: border-color 0.3s ease;
-        }
         
         .search-box:focus {
             outline: none;
             border-color: #6b99c2;
             box-shadow: 0 0 0 3px rgba(107, 153, 194, 0.1);
-        }
         
         .search-results-info {
             background: #e3f1f7;
@@ -172,7 +149,6 @@
             color: #354e8d;
             font-weight: 500;
             display: none;
-        }
         
         .intro-section {
             background: linear-gradient(135deg, #e3f1f7 0%, #f8fbff 100%);
@@ -181,13 +157,11 @@
             margin-bottom: 40px;
             border: 1px solid #a3c9e0;
             text-align: center;
-        }
         
         .intro-section h2 {
             color: #354e8d;
             margin-bottom: 15px;
             font-size: 1.8rem;
-        }
         
         .intro-section p {
             color: #6c757d;
@@ -195,14 +169,12 @@
             line-height: 1.6;
             max-width: 800px;
             margin: 0 auto;
-        }
         
         .quick-links {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             margin: 30px 0;
-        }
         
         .quick-link {
             background: white;
@@ -213,34 +185,28 @@
             text-decoration: none;
             transition: all 0.3s ease;
             display: block;
-        }
         
         .quick-link:hover {
             border-color: #6b99c2;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
         
         .quick-link-icon {
             font-size: 2rem;
             margin-bottom: 10px;
             color: #6b99c2;
-        }
         
         .quick-link-title {
             color: #354e8d;
             font-weight: 600;
             margin-bottom: 5px;
-        }
         
         .quick-link-desc {
             color: #6c757d;
             font-size: 0.9rem;
-        }
         
         .hidden {
             display: none;
-        }
     </style>
 </head>
 <body>
@@ -373,7 +339,7 @@
                         <div class="faq-answer">
                             <p>Key metrics to focus on:</p>
                             <ul>
-                                <li><strong>Utilization Rate:</strong> Percentage of time the system is busy. 85%+ indicates high usage, 95%+ approaching capacity</li>
+                                <li><strong>Utilisation Rate:</strong> Percentage of time the system is busy. 85%+ indicates high usage, 95%+ approaching capacity</li>
                                 <li><strong>Queue Length (90th percentile):</strong> Maximum expected queue size 90% of the time</li>
                                 <li><strong>Average Wait Time:</strong> Time vehicles spend waiting before being served</li>
                                 <li><strong>Delay Probability:</strong> Percentage of vehicles that must wait rather than being served immediately</li>
@@ -686,12 +652,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const token = localStorage.getItem('authToken');
-            
-            if (!token || !isValidToken(token)) {
-                window.location.href = '/';
-                return;
-            }
+            // Auth check is now handled by common.js checkPageAccess()
             
             updateWelcomeMessage();
             
@@ -705,16 +666,7 @@
             setupQuickLinks();
         });
 
-        function isValidToken(token) {
-            try {
-                const decoded = atob(token);
-                const [timestamp, username] = decoded.split(':');
-                const tokenAge = Date.now() - parseInt(timestamp);
-                return tokenAge < 24 * 60 * 60 * 1000;
-            } catch {
-                return false;
-            }
-        }
+        
 
         function getUsernameFromToken() {
             try {
@@ -726,18 +678,14 @@
                 return username || 'User';
             } catch {
                 return 'User';
-            }
-        }
 
         function updateWelcomeMessage() {
             const username = getUsernameFromToken();
             document.getElementById('welcomeUser').textContent = `Welcome, ${username}`;
-        }
 
         function logout() {
             localStorage.removeItem('authToken');
             window.location.href = '/';
-        }
 
         function setupFAQInteractions() {
             const faqItems = document.querySelectorAll('.faq-item');
@@ -752,7 +700,6 @@
                     faqItems.forEach(otherItem => {
                         if (otherItem !== item) {
                             otherItem.classList.remove('active');
-                        }
                     });
                     
                     // Toggle current item
@@ -760,10 +707,8 @@
                         item.classList.remove('active');
                     } else {
                         item.classList.add('active');
-                    }
                 });
             });
-        }
 
         function setupQuickLinks() {
             const quickLinks = document.querySelectorAll('.quick-link');
@@ -779,10 +724,8 @@
                             behavior: 'smooth',
                             block: 'start'
                         });
-                    }
                 });
             });
-        }
 
         function searchFAQ() {
             const searchTerm = document.getElementById('faqSearch').value.toLowerCase();
@@ -801,7 +744,6 @@
                 } else {
                     item.style.display = 'none';
                     item.classList.remove('active'); // Close hidden items
-                }
             });
             
             // Show/hide sections based on visible items
@@ -814,7 +756,6 @@
                     section.style.display = 'block';
                 } else {
                     section.style.display = 'none';
-                }
             });
             
             // Update search results info
@@ -823,8 +764,6 @@
             } else {
                 searchResults.style.display = 'block';
                 searchResults.textContent = `Found ${visibleCount} result(s) for "${searchTerm}"`;
-            }
-        }
     </script>
 </body>
 </html>

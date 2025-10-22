@@ -140,33 +140,7 @@
             margin-top: 20px;
         }
 
-        .feature-card {
-            background: white;
-            border: 1px solid #a3c9e0;
-            border-radius: 6px;
-            padding: 20px;
-            text-align: left;
-        }
-
-        .feature-card h4 {
-            color: #354e8d;
-            margin-bottom: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .feature-card p {
-            color: #6c757d;
-            font-size: 0.9rem;
-            line-height: 1.4;
-            margin: 0;
-        }
-
-        .feature-icon {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-            color: #6b99c2;
-        }
+        /* Using .feature-card from common stylesheet */
 
         .progress-section {
             background: #e3f1f7;
@@ -566,19 +540,19 @@ document.addEventListener('DOMContentLoaded', () => {
             // Navigate to the specific simulation page
             switch(type) {
                 case 'queuing':
-                    window.location.href = '/queuing/';
+                    window.location.href = '/traffic/simulators/boomgate/';
                     break;
                 case 'carlift':
-                    window.location.href = '/carlift/';
+                    window.location.href = '/traffic/simulators/carlift/';
                     break;
                 case 'mechanical':
-                    window.location.href = '/mechanical/';
+                    window.location.href = '/traffic/simulators/mechanical/';
                     break;
                 case 'rampdrawer':
-                    window.location.href = '/rampdrawer/';
+                    window.location.href = '/traffic/tools/rampdrawer/';
                     break;
                 case 'network':
-                    window.location.href = '/network/';
+                    window.location.href = '/traffic/tools/network/';
                     break;
                 default:
                     alert('Simulation not found');
