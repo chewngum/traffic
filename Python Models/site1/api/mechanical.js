@@ -277,8 +277,8 @@ function runSingleParkingSimulation(seed, config) {
 }
 
 async function runMultipleParkingSimulations(params) {
-  const numSeeds = params.numSeeds || 100;
-  const seedMode = params.seedMode || 'fixed';
+  const numSeeds = params.numSeeds;
+  const seedMode = params.seedMode;
   
   // Generate seeds based on mode
   let seeds = [];

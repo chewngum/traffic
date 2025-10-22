@@ -6,7 +6,7 @@
     <title>Traffic Labb - Ramp Design Tool</title>
     <link rel="stylesheet" href="/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script src="/common.js"></script>
+    <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
 </head>
 <body>
     <div id="loading" class="loading">
@@ -47,6 +47,12 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
+                                <label for="startingChainageInput">Starting Chainage (m):</label>
+                                <input type="number" id="startingChainageInput" value="0.000" min="0" step="0.001" onchange="validateAndUpdate('startingChainageInput', 0); updateSegmentOutputs()">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
                                 <label for="startLabelInput">Left Label:</label>
                                 <input type="text" id="startLabelInput" value="Carpark" onchange="updateSegmentOutputs()">
                             </div>
@@ -59,60 +65,46 @@
 
                     <div class="card">
                         <div class="card-title">Drawing Details</div>
-                        <div class="subsection">
-                            <h4 class="subsection-title">Labels</h4>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="chainagePrefixInput">Chainage Label:</label>
-                                    <input type="text" id="chainagePrefixInput" value="CH" placeholder="e.g. CH, CL, ST" onchange="updateSegmentOutputs()">
-                                </div>
-                                <div class="form-group">
-                                    <label for="chainagePositionSelect">Label Position:</label>
-                                    <select id="chainagePositionSelect" onchange="updateChainagePosition(this.value)" class="form-select">
-                                        <option value="prefix">Prefix (CH1.5m)</option>
-                                        <option value="suffix">Suffix (1.5m CH)</option>
-                                    </select>
-                                </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="chainagePrefixInput">Chainage Label:</label>
+                                <input type="text" id="chainagePrefixInput" value="CH" placeholder="e.g. CH, CL, ST" onchange="updateChainageDropdownOptions(); updateSegmentOutputs()">
+                            </div>
+                            <div class="form-group">
+                                <label for="chainagePositionSelect">Label Position:</label>
+                                <select id="chainagePositionSelect" onchange="updateChainagePosition(this.value)" class="form-select">
+                                    <!-- Options will be dynamically generated -->
+                                </select>
                             </div>
                         </div>
-                        
-                        <div class="subsection">
-                            <h4 class="subsection-title">Drawing Precision</h4>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="chainageDecimalInput">CH Decimal Places:</label>
-                                    <input type="number" id="chainageDecimalInput" value="2" min="0" max="4" step="1" onchange="validateAndUpdate('chainageDecimalInput', 0, 3); updateSegmentOutputs()">
-                                </div>
-                                <div class="form-group">
-                                    <label for="rlDecimalInput">RL Decimal Places:</label>
-                                    <input type="number" id="rlDecimalInput" value="2" min="0" max="3" step="1" onchange="validateAndUpdate('rlDecimalInput', 0, 3); updateSegmentOutputs()">
-                                </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="distanceUnitsSelect">Distance Units:</label>
+                                <select id="distanceUnitsSelect" onchange="updateDistanceUnits(this.value)" class="form-select">
+                                    <option value="m">Metres (m)</option>
+                                    <option value="mm">Millimetres (mm)</option>
+                                </select>
                             </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="gradeDecimalInput">Grade Decimal Places:</label>
-                                    <input type="number" id="gradeDecimalInput" value="1" min="0" max="4" step="1" onchange="validateAndUpdate('gradeDecimalInput', 0, 2); updateSegmentOutputs()">
-                                </div>
+                            <div class="form-group">
+                                <label for="gradeDisplaySelect">Grade Display:</label>
+                                <select id="gradeDisplaySelect" onchange="updateGradeDisplay(this.value)" class="form-select">
+                                    <option value="percent">Percentage (%)</option>
+                                    <option value="ratio">Ratio (1:X)</option>
+                                </select>
                             </div>
                         </div>
-                        
-                        <div class="subsection">
-                            <h4 class="subsection-title">Units</h4>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="distanceUnitsSelect">Distance Units:</label>
-                                    <select id="distanceUnitsSelect" onchange="updateDistanceUnits(this.value)" class="form-select">
-                                        <option value="m">Metres (m)</option>
-                                        <option value="mm">Millimetres (mm)</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="gradeDisplaySelect">Grade Display:</label>
-                                    <select id="gradeDisplaySelect" onchange="updateGradeDisplay(this.value)" class="form-select">
-                                        <option value="percent">Percentage (%)</option>
-                                        <option value="ratio">Ratio (1:X)</option>
-                                    </select>
-                                </div>
+                        <div class="form-row triple">
+                            <div class="form-group">
+                                <label for="chainageDecimalInput">CH Decimals:</label>
+                                <input type="number" id="chainageDecimalInput" value="2" min="0" max="4" step="1" onchange="validateAndUpdate('chainageDecimalInput', 0, 3); updateChainageDropdownOptions(); updateSegmentOutputs()">
+                            </div>
+                            <div class="form-group">
+                                <label for="rlDecimalInput">RL Decimals:</label>
+                                <input type="number" id="rlDecimalInput" value="2" min="0" max="3" step="1" onchange="validateAndUpdate('rlDecimalInput', 0, 3); updateSegmentOutputs()">
+                            </div>
+                            <div class="form-group">
+                                <label for="gradeDecimalInput">Grade Decimals:</label>
+                                <input type="number" id="gradeDecimalInput" value="1" min="0" max="4" step="1" onchange="validateAndUpdate('gradeDecimalInput', 0, 2); updateSegmentOutputs()">
                             </div>
                         </div>
                     </div>
@@ -303,31 +295,6 @@
 
         .header-dropdown option {
             font-size: 0.75rem;
-        }
-
-        /* Subsection Styles */
-        .subsection {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border: 1px solid #e3f1f7;
-            border-radius: 6px;
-        }
-
-        .subsection:last-child {
-            margin-bottom: 0;
-        }
-
-        .subsection-title {
-            margin: 0 0 12px 0;
-            padding: 0;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #354e8d;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 1px solid #a3c9e0;
-            padding-bottom: 6px;
         }
 
         /* Form Select Styles */
@@ -561,8 +528,35 @@
         let chainageDecimalPlaces = 1;
         let rlDecimalPlaces = 3;
         let gradeDecimalPlaces = 1;
+        let startingChainage = 0;
         let segments = [];
         let segmentCounter = 0;
+
+        /**
+         * Update the chainage position dropdown options based on current settings
+         */
+        function updateChainageDropdownOptions() {
+            const dropdown = document.getElementById('chainagePositionSelect');
+            const chainagePrefix = document.getElementById('chainagePrefixInput').value || 'CH';
+            const decimals = parseInt(document.getElementById('chainageDecimalInput').value) || 1;
+            const unit = getDistanceUnit(currentDistanceUnits);
+            
+            // Create example value with current decimal places
+            const exampleValue = (1.5).toFixed(decimals);
+            
+            // Build options with current settings
+            const prefixExample = `${chainagePrefix}${exampleValue}${unit}`;
+            const suffixExample = `${exampleValue}${unit} ${chainagePrefix}`;
+            
+            const currentValue = dropdown.value || 'prefix';
+            
+            dropdown.innerHTML = `
+                <option value="prefix">Prefix (${prefixExample})</option>
+                <option value="suffix">Suffix (${suffixExample})</option>
+            `;
+            
+            dropdown.value = currentValue;
+        }
 
         /**
          * Handle chainage position change (prefix/suffix)
@@ -570,6 +564,14 @@
         function updateChainagePosition(position) {
             currentChainagePosition = position;
             updateSegmentOutputs();
+        }
+
+        /**
+         * Get starting chainage value
+         */
+        function getStartingChainage() {
+            const input = document.getElementById('startingChainageInput');
+            return input ? parseFloat(input.value) || 0 : 0;
         }
 
         /**
@@ -602,6 +604,7 @@
          */
         function updateDistanceUnits(units) {
             currentDistanceUnits = units;
+            updateChainageDropdownOptions();
             updateSegmentOutputs();
             
             // Update the ramp width label
@@ -614,6 +617,12 @@
             const startingRLLabel = document.querySelector('label[for="startingRLInput"]');
             if (startingRLLabel) {
                 startingRLLabel.textContent = `Starting RL (${units}):`;
+            }
+            
+            // Update the starting chainage label
+            const startingChainageLabel = document.querySelector('label[for="startingChainageInput"]');
+            if (startingChainageLabel) {
+                startingChainageLabel.textContent = `Starting Chainage (${units}):`;
             }
             
             // Update table headers to show current units
@@ -668,6 +677,13 @@
                 return `1:${ratio.toFixed(1)}`;
             }
             return `${gradePercent.toFixed(1)}%`;
+        }
+
+        /**
+         * Get distance unit suffix
+         */
+        function getDistanceUnit(units) {
+            return units === 'mm' ? 'mm' : 'm';
         }
 
         /**
@@ -746,6 +762,7 @@
             const validationRules = [
                 { id: 'widthInput', min: 0.001, name: 'Ramp Width' },
                 { id: 'startingRLInput', min: -1000, max: 10000, name: 'Starting RL' },
+                { id: 'startingChainageInput', min: 0, name: 'Starting Chainage' },
                 { id: 'chainageDecimalInput', min: 0, max: 3, name: 'CH Decimal Places' },
                 { id: 'rlDecimalInput', min: 0, max: 3, name: 'RL Decimal Places' },
                 { id: 'gradeDecimalInput', min: 0, max: 2, name: 'Grade Decimal Places' }
@@ -784,6 +801,7 @@
             chainageDecimalPlaces = parseInt(document.getElementById('chainageDecimalInput').value);
             rlDecimalPlaces = parseInt(document.getElementById('rlDecimalInput').value);
             gradeDecimalPlaces = parseInt(document.getElementById('gradeDecimalInput').value);
+            updateChainageDropdownOptions();
         }
 
         // Authentication check on page load
@@ -799,7 +817,6 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('app').classList.remove('hidden');
             initializeDefaultSegments();
-            setupDashboardFeedbackForm();
         });
 
         function isValidToken(token) {
@@ -985,7 +1002,7 @@
         function addSegment() {
             const segmentId = ++segmentCounter;
             
-            let defaultLength = 1; // Default to 1m instead of 0
+            let defaultLength = 1;
             let defaultGrade = 0;
             
             if (currentLengthInputType === 'chainage') {
@@ -1017,13 +1034,14 @@
         function renderSegments() {
             const tableBody = document.getElementById('segmentsTableBody');
             const startingRL = parseFloat(document.getElementById('startingRLInput').value);
+            const startingCH = getStartingChainage();
             
             let html = `
                 <tr class="starting-row">
                     <td>0</td>
                     <td>-</td>
                     <td>-</td>
-                    <td>0.000</td>
+                    <td>${formatDistanceValue(startingCH, chainageDecimalPlaces)}</td>
                     <td>${startingRL.toFixed(3)}</td>
                     <td><button class="btn-add" onclick="addSegmentBelow(0)">+</button></td>
                     <td>-</td>
@@ -1063,7 +1081,7 @@
                 insertIndex = segments.findIndex(seg => seg.id === afterId) + 1;
             }
             
-            let defaultLength = 1; // Default to 1m instead of 0
+            let defaultLength = 1;
             let defaultGrade = 0;
             
             if (currentLengthInputType === 'chainage') {
@@ -1135,6 +1153,7 @@
             // Reset basic parameters
             document.getElementById('widthInput').value = 3.6;
             document.getElementById('startingRLInput').value = 0.000;
+            document.getElementById('startingChainageInput').value = 0.000;
             document.getElementById('startLabelInput').value = "Carpark";
             document.getElementById('endLabelInput').value = "Property Boundary";
 
@@ -1162,6 +1181,9 @@
 
             // Update labels to reflect current units
             updateDistanceUnits('m');
+            
+            // Initialize chainage dropdown options
+            updateChainageDropdownOptions();
 
             const defaults = [
                 { length: 2, grade: 12.5 },
@@ -1199,12 +1221,14 @@
             // Update decimal places from inputs
             updateDecimalPlaces();
             
-            const startingRL = parseFloat(document.getElementById('startingRLInput').value) ;
+            const startingRL = parseFloat(document.getElementById('startingRLInput').value);
+            const startingCH = getStartingChainage();
             let cumulativeLength = 0;
             let cumulativeRL = startingRL;
             
             const startingRLCells = document.querySelectorAll('.starting-row td');
             if (startingRLCells.length > 4) {
+                startingRLCells[3].textContent = formatDistanceValue(startingCH, chainageDecimalPlaces);
                 startingRLCells[4].textContent = formatDistanceValue(startingRL);
             }
             
@@ -1234,7 +1258,10 @@
                 const chainageOutput = document.getElementById(`chainage-output-${segment.id}`);
                 const rlOutput = document.getElementById(`rl-output-${segment.id}`);
                 
-                if (chainageOutput) chainageOutput.textContent = formatDistanceValue(cumulativeLength);
+                // Add starting chainage offset to displayed chainage
+                const actualChainage = startingCH + cumulativeLength;
+                
+                if (chainageOutput) chainageOutput.textContent = formatDistanceValue(actualChainage, chainageDecimalPlaces);
                 if (rlOutput) rlOutput.textContent = formatDistanceValue(endRL);
             });
             
@@ -1303,12 +1330,10 @@
             // Update decimal places from inputs
             updateDecimalPlaces();
 
-            // Update decimal places from inputs
-            updateDecimalPlaces();
-
             const segmentData = getSegmentData();
             const width = parseFloat(document.getElementById('widthInput').value);
-            const startingRL = parseFloat(document.getElementById('startingRLInput').value) ;
+            const startingRL = parseFloat(document.getElementById('startingRLInput').value);
+            const startingCH = getStartingChainage();
             const startLabel = document.getElementById('startLabelInput').value || 'Start';
             const endLabel = document.getElementById('endLabelInput').value || 'End';
             const chainagePrefix = document.getElementById('chainagePrefixInput').value || 'CH';
@@ -1327,7 +1352,8 @@
             status.textContent = 'Generating ramp design drawings...';
 
             try {
-                const response = await fetch('/api/rampdrawer', {
+                const apiUrl = window.API_CONFIG?.endpoints?.rampdrawer || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/rampdrawer';
+const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1339,6 +1365,7 @@
                             segmentData,
                             width,
                             startingRL,
+                            startingChainage: startingCH,
                             startLabel,
                             endLabel,
                             chainagePrefix,
@@ -1442,14 +1469,16 @@
 
             const segmentData = getSegmentData();
             const width = parseFloat(document.getElementById('widthInput').value);
-            const startingRL = parseFloat(document.getElementById('startingRLInput').value) ;
+            const startingRL = parseFloat(document.getElementById('startingRLInput').value);
+            const startingCH = getStartingChainage();
             const startLabel = document.getElementById('startLabelInput').value || 'Start';
             const endLabel = document.getElementById('endLabelInput').value || 'End';
             const chainagePrefix = document.getElementById('chainagePrefixInput').value || 'CH';
 
             try {
                 const action = format === 'autocad' ? 'exportAutoCAD' : 'exportFile';
-                const response = await fetch('/api/rampdrawer', {
+                const apiUrl = window.API_CONFIG?.endpoints?.rampdrawer || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/rampdrawer';
+const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1463,6 +1492,7 @@
                             segmentData,
                             width,
                             startingRL,
+                            startingChainage: startingCH,
                             startLabel,
                             endLabel,
                             chainagePrefix,

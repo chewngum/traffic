@@ -8,11 +8,9 @@ export default async function handler(req, res) {
   const token = authHeader.split(' ')[1];
   
   try {
-    // Simple token validation (decode base64)
     const decoded = Buffer.from(token, 'base64').toString();
     const [timestamp, username] = decoded.split(':');
     
-    // Check if token is less than 24 hours old
     const tokenAge = Date.now() - parseInt(timestamp);
     if (tokenAge > 24 * 60 * 60 * 1000) {
       return res.status(401).json({ error: 'Token expired' });
@@ -39,7 +37,6 @@ export default async function handler(req, res) {
   }
 }
 
-// PROTECTED: All simulation logic hidden on server
 class SeededRandom {
   constructor(seed = Date.now()) { 
     this.seed = seed; 
@@ -56,31 +53,57 @@ class SeededRandom {
   }
 }
 
-class Event { 
-  constructor(time, type, data = {}) { 
-    this.time = time; 
-    this.type = type; 
-    this.data = data; 
-  } 
-}
-
+// Optimized: Heap-based priority queue instead of linear insertion
 class EventQueue {
   constructor() { 
-    this.events = []; 
+    this.heap = []; 
   }
   
-  add(event) { 
-    let i = 0; 
-    while (i < this.events.length && this.events[i].time <= event.time) i++; 
-    this.events.splice(i, 0, event); 
+  add(time, type, data = null) { 
+    // Optimized: Use array [time, type, data] instead of Event object
+    this.heap.push([time, type, data]);
+    this.bubbleUp(this.heap.length - 1);
   }
   
   next() { 
-    return this.events.shift(); 
+    if (this.heap.length === 0) return null;
+    if (this.heap.length === 1) return this.heap.pop();
+    
+    const result = this.heap[0];
+    this.heap[0] = this.heap.pop();
+    this.bubbleDown(0);
+    return result;
   }
   
   isEmpty() { 
-    return this.events.length === 0; 
+    return this.heap.length === 0; 
+  }
+  
+  bubbleUp(index) {
+    while (index > 0) {
+      const parentIndex = Math.floor((index - 1) / 2);
+      if (this.heap[parentIndex][0] <= this.heap[index][0]) break;
+      [this.heap[parentIndex], this.heap[index]] = [this.heap[index], this.heap[parentIndex]];
+      index = parentIndex;
+    }
+  }
+  
+  bubbleDown(index) {
+    while (true) {
+      let minIndex = index;
+      const leftChild = 2 * index + 1;
+      const rightChild = 2 * index + 2;
+      
+      if (leftChild < this.heap.length && this.heap[leftChild][0] < this.heap[minIndex][0]) {
+        minIndex = leftChild;
+      }
+      if (rightChild < this.heap.length && this.heap[rightChild][0] < this.heap[minIndex][0]) {
+        minIndex = rightChild;
+      }
+      if (minIndex === index) break;
+      [this.heap[index], this.heap[minIndex]] = [this.heap[minIndex], this.heap[index]];
+      index = minIndex;
+    }
   }
 }
 
@@ -99,48 +122,59 @@ class CarParkSimulation {
     this.totalArrivals = 0; 
     this.totalQueued = 0; 
     this.totalBlocked = 0; 
+    
+    // Optimized: Use running sums instead of storing all times
     this.totalQueueTime = 0; 
     this.queueTimeForQueued = 0;
-    this.occupancyHistory = []; 
+    
+    // Optimized: Track time-weighted occupancy instead of storing every state
+    this.occupancyTimeWeighted = new Map(); // Map<occupancy_level, time_spent>
+    this.queuedTimeWeighted = new Map();
+    this.totalTimeWeighted = new Map();
     this.lastRecordTime = 0; 
-    this.random = new SeededRandom(this.params.seed); 
+    
+    this.arrivalRandom = new SeededRandom(this.params.seed); 
+    this.serviceRandom = new SeededRandom(this.params.seed + 999999);
+    
     this.nextArrivalTime = 0;
-    this.queuedCarTimes = []; // Track arrival times of queued cars
+    
+    // Optimized: Use queue for FIFO, not array storage of all times
+    this.queueHead = 0; // Index of first queued car
+    this.queuedCarTimes = []; // Only store times currently in queue
+    
     this.scheduleNextArrival();
   }
   
-  // Generate service time based on distribution type
   generateServiceTime() {
-    const meanServiceTime = this.params.serviceTime; // Already in hours
+    const meanServiceTime = this.params.serviceTime;
     
     if (this.params.serviceTimeDistribution === 'exponential') {
-      // For exponential distribution, rate = 1/mean
-      // Generate exponential random variable with the specified mean
-      return this.random.exponential(1 / meanServiceTime);
+      return this.serviceRandom.exponential(1 / meanServiceTime);
     } else {
-      // Constant service time
       return meanServiceTime;
     }
   }
   
   scheduleNextArrival() {
-    const interArrival = this.random.exponential(this.params.arrivalRate);
+    const interArrival = this.arrivalRandom.exponential(this.params.arrivalRate);
     const adjustedTime = Math.max(interArrival, this.params.minHeadway);
     this.nextArrivalTime += adjustedTime;
     if (this.nextArrivalTime < this.params.simulationHours) {
-      this.eventQueue.add(new Event(this.nextArrivalTime, 'arrival'));
+      this.eventQueue.add(this.nextArrivalTime, 'arrival');
     }
   }
   
   recordOccupancy() {
     const timeDiff = this.currentTime - this.lastRecordTime;
     if (timeDiff > 0) {
-      this.occupancyHistory.push({ 
-        time: timeDiff, 
-        parked: this.parkedCars, 
-        queued: this.queuedCars, 
-        total: this.parkedCars + this.queuedCars 
-      });
+      // Optimized: Accumulate time-weighted counts instead of storing array
+      const parked = this.parkedCars;
+      const queued = this.queuedCars;
+      const total = parked + queued;
+      
+      this.occupancyTimeWeighted.set(parked, (this.occupancyTimeWeighted.get(parked) || 0) + timeDiff);
+      this.queuedTimeWeighted.set(queued, (this.queuedTimeWeighted.get(queued) || 0) + timeDiff);
+      this.totalTimeWeighted.set(total, (this.totalTimeWeighted.get(total) || 0) + timeDiff);
     }
     this.lastRecordTime = this.currentTime;
   }
@@ -152,12 +186,12 @@ class CarParkSimulation {
     if (this.modelType === 'infinite') {
       this.parkedCars++; 
       const serviceTime = this.generateServiceTime();
-      this.eventQueue.add(new Event(this.currentTime + serviceTime, 'departure'));
+      this.eventQueue.add(this.currentTime + serviceTime, 'departure');
     } else if (this.modelType === 'blocking') {
       if (this.parkedCars < this.params.spaces) { 
         this.parkedCars++; 
         const serviceTime = this.generateServiceTime();
-        this.eventQueue.add(new Event(this.currentTime + serviceTime, 'departure')); 
+        this.eventQueue.add(this.currentTime + serviceTime, 'departure'); 
       } else {
         this.totalBlocked++;
       }
@@ -165,12 +199,10 @@ class CarParkSimulation {
       if (this.parkedCars < this.params.spaces) { 
         this.parkedCars++; 
         const serviceTime = this.generateServiceTime();
-        this.eventQueue.add(new Event(this.currentTime + serviceTime, 'departure')); 
+        this.eventQueue.add(this.currentTime + serviceTime, 'departure'); 
       } else if (this.queuedCars < this.params.queueLength) { 
         this.queuedCars++; 
         this.totalQueued++; 
-        // Store arrival time for queue time calculation
-        if (!this.queuedCarTimes) this.queuedCarTimes = [];
         this.queuedCarTimes.push(this.currentTime);
       } else {
         this.totalBlocked++;
@@ -184,16 +216,23 @@ class CarParkSimulation {
       this.queuedCars--; 
       this.parkedCars++; 
       
-      // Calculate actual queue time: current time - arrival time of first queued car
-      const arrivalTime = this.queuedCarTimes.shift(); // Remove first car from queue (FIFO)
+      // Optimized: Use queue head pointer instead of shift()
+      const arrivalTime = this.queuedCarTimes[this.queueHead];
+      this.queueHead++;
+      
+      // Periodically clean up the queue array to prevent unbounded growth
+      if (this.queueHead > 1000) {
+        this.queuedCarTimes = this.queuedCarTimes.slice(this.queueHead);
+        this.queueHead = 0;
+      }
+      
       const actualQueueTime = this.currentTime - arrivalTime;
       
       this.totalQueueTime += actualQueueTime; 
       this.queueTimeForQueued += actualQueueTime;
       
-      // Now generate service time for the newly parked car
       const serviceTime = this.generateServiceTime();
-      this.eventQueue.add(new Event(this.currentTime + serviceTime, 'departure'));
+      this.eventQueue.add(this.currentTime + serviceTime, 'departure');
     }
   }
   
@@ -201,11 +240,11 @@ class CarParkSimulation {
     while (!this.eventQueue.isEmpty() && this.currentTime < this.params.simulationHours) {
       const event = this.eventQueue.next(); 
       this.recordOccupancy(); 
-      this.currentTime = event.time;
+      this.currentTime = event[0]; // time
       
-      if (event.type === 'arrival') {
+      if (event[1] === 'arrival') {
         this.handleArrival(); 
-      } else if (event.type === 'departure') {
+      } else if (event[1] === 'departure') {
         this.handleDeparture();
       }
     }
@@ -237,27 +276,16 @@ class CarParkSimulation {
   }
   
   calculatePercentiles() {
-    if (this.occupancyHistory.length === 0) return {};
-    
-    const totalTime = this.occupancyHistory.reduce((sum, h) => sum + h.time, 0);
+    // Optimized: Already have time-weighted data, no need to process history array
+    const totalTime = this.params.simulationHours;
     const levels = [10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99];
-    const parkedFreq = new Map();
-    const queuedFreq = new Map();
-    const totalFreq = new Map();
-    
-    for (const history of this.occupancyHistory) {
-      const time = history.time;
-      parkedFreq.set(history.parked, (parkedFreq.get(history.parked) || 0) + time);
-      queuedFreq.set(history.queued, (queuedFreq.get(history.queued) || 0) + time);
-      totalFreq.set(history.total, (totalFreq.get(history.total) || 0) + time);
-    }
     
     const results = { parked: {}, queued: {}, total: {} };
     for (const level of levels) {
       const targetTime = (level / 100) * totalTime;
-      results.parked[level] = this.findPercentileValue(parkedFreq, targetTime);
-      results.queued[level] = this.findPercentileValue(queuedFreq, targetTime);
-      results.total[level] = this.findPercentileValue(totalFreq, targetTime);
+      results.parked[level] = this.findPercentileValue(this.occupancyTimeWeighted, targetTime);
+      results.queued[level] = this.findPercentileValue(this.queuedTimeWeighted, targetTime);
+      results.total[level] = this.findPercentileValue(this.totalTimeWeighted, targetTime);
     }
     return results;
   }
@@ -273,47 +301,65 @@ class CarParkSimulation {
   }
 }
 
-function aggregateResults(results) {
-  const n = results.length; 
-  if (n === 0) return null;
-  
-  const aggregated = { 
-    percentiles: { parked: {}, queued: {}, total: {} }, 
-    expectedArrivalRate: results[0].expectedArrivalRate, 
-    actualArrivalRate: 0, 
-    queuedPercentage: 0, 
-    blockedPercentage: 0, 
-    avgQueueTimePerArrival: 0, 
-    avgQueueTimePerQueued: 0 
-  };
-  
-  for (const result of results) {
-    aggregated.actualArrivalRate += result.actualArrivalRate / n; 
-    aggregated.queuedPercentage += result.queuedPercentage / n;
-    aggregated.blockedPercentage += result.blockedPercentage / n; 
-    aggregated.avgQueueTimePerArrival += result.avgQueueTimePerArrival / n;
-    aggregated.avgQueueTimePerQueued += result.avgQueueTimePerQueued / n;
-  }
-  
-  const levels = [10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99];
-  for (const level of levels) {
-    aggregated.percentiles.parked[level] = 0; 
-    aggregated.percentiles.queued[level] = 0; 
-    aggregated.percentiles.total[level] = 0;
-    for (const result of results) {
-      aggregated.percentiles.parked[level] += result.percentiles.parked[level] / n;
-      aggregated.percentiles.queued[level] += result.percentiles.queued[level] / n;
-      aggregated.percentiles.total[level] += result.percentiles.total[level] / n;
+// Optimized: Streaming aggregation class
+class StreamingAggregator {
+  constructor() {
+    this.count = 0;
+    this.actualArrivalRate = 0;
+    this.queuedPercentage = 0;
+    this.blockedPercentage = 0;
+    this.avgQueueTimePerArrival = 0;
+    this.avgQueueTimePerQueued = 0;
+    this.percentiles = { parked: {}, queued: {}, total: {} };
+    this.expectedArrivalRate = null;
+    
+    const levels = [10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99];
+    for (const level of levels) {
+      this.percentiles.parked[level] = 0;
+      this.percentiles.queued[level] = 0;
+      this.percentiles.total[level] = 0;
     }
   }
   
-  return aggregated;
+  addResult(result) {
+    this.count++;
+    const n = this.count;
+    
+    if (this.expectedArrivalRate === null) {
+      this.expectedArrivalRate = result.expectedArrivalRate;
+    }
+    
+    // Update running averages using Welford's online algorithm
+    this.actualArrivalRate += (result.actualArrivalRate - this.actualArrivalRate) / n;
+    this.queuedPercentage += (result.queuedPercentage - this.queuedPercentage) / n;
+    this.blockedPercentage += (result.blockedPercentage - this.blockedPercentage) / n;
+    this.avgQueueTimePerArrival += (result.avgQueueTimePerArrival - this.avgQueueTimePerArrival) / n;
+    this.avgQueueTimePerQueued += (result.avgQueueTimePerQueued - this.avgQueueTimePerQueued) / n;
+    
+    const levels = [10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99];
+    for (const level of levels) {
+      this.percentiles.parked[level] += (result.percentiles.parked[level] - this.percentiles.parked[level]) / n;
+      this.percentiles.queued[level] += (result.percentiles.queued[level] - this.percentiles.queued[level]) / n;
+      this.percentiles.total[level] += (result.percentiles.total[level] - this.percentiles.total[level]) / n;
+    }
+  }
+  
+  getResult() {
+    return {
+      percentiles: this.percentiles,
+      expectedArrivalRate: this.expectedArrivalRate,
+      actualArrivalRate: this.actualArrivalRate,
+      queuedPercentage: this.queuedPercentage,
+      blockedPercentage: this.blockedPercentage,
+      avgQueueTimePerArrival: this.avgQueueTimePerArrival,
+      avgQueueTimePerQueued: this.avgQueueTimePerQueued
+    };
+  }
 }
 
 async function runMultipleSimulations(params) {
-  // Validate service time distribution parameter
   if (!params.serviceTimeDistribution) {
-    params.serviceTimeDistribution = 'constant'; // Default to constant
+    params.serviceTimeDistribution = 'constant';
   }
   
   if (!['constant', 'exponential'].includes(params.serviceTimeDistribution)) {
@@ -323,16 +369,21 @@ async function runMultipleSimulations(params) {
   const models = ['infinite', 'blocking', 'queuing']; 
   const allResults = {};
   
+  // Optimized: Use streaming aggregation instead of storing all results
   for (const model of models) {
-    const modelResults = [];
+    const aggregator = new StreamingAggregator();
+    
     for (let seed = 0; seed < params.numSeeds; seed++) {
       const seedValue = params.seedMode === 'fixed' ? seed + 1 : Math.random() * 1000000;
       const simParams = { ...params, seed: seedValue }; 
       const simulation = new CarParkSimulation(simParams, model);
-      const result = simulation.run(); 
-      modelResults.push(result);
+      const result = simulation.run();
+      
+      // Optimized: Add to running average instead of storing
+      aggregator.addResult(result);
     }
-    allResults[model] = aggregateResults(modelResults);
+    
+    allResults[model] = aggregator.getResult();
   }
   
   return {

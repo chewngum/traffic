@@ -6,7 +6,7 @@
     <title>Traffic Labb - Two-Way Passing</title>
     <link rel="stylesheet" href="/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script src="/common.js"></script>
+    <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
 </head>
 <body>
     <div id="loading" class="loading">
@@ -47,10 +47,10 @@
                         <div class="validation-check">
                             <strong>Total Arrival Rate:</strong> <span id="totalArrivalDisplay">30.0</span> cars/hr
                         </div>
-                        <div class="validation-check utilization-check">
+                        <div class="validation-check">
                             <strong>Estimated Utilization:</strong> <span id="utilizationEstimateDisplay">45.0%</span>
                         </div>
-                        <div id="followUpWarning" class="utilization-warning" style="display: none;">
+                        <div id="followUpWarning" class="validation-check warning" style="display: none;">
                             <span id="followUpMessage">Actual utilization will be slightly less due to follow-up time permitting additional efficiency</span>
                         </div>
                     </div>
@@ -162,12 +162,12 @@
                             Calculating minimum seeds...
                         </div>
 
-                        <div class="sample-actions">
-                            <button id="applySampleSize" class="btn-apply-sample">
+                        <div style="margin-top: 10px; display: flex; gap: 8px; justify-content: space-between; align-items: center;">
+                            <button id="applySampleSize" class="btn-secondary" style="flex: 1; max-width: 150px; padding: 6px 12px; font-size: 0.85rem;">
                                 Use Recommended Seeds
                             </button>
-                            <div class="current-seeds-info">
-                                Current: <span id="currentSeedsDisplay">130</span>
+                            <div style="font-size: 0.75rem; color: #666; text-align: right; flex: 1;">
+                                Current: <span id="currentSeedsDisplay" style="font-weight: 600; color: #354e8d;">130</span>
                             </div>
                         </div>
                     </div>
@@ -202,84 +202,31 @@
     </div>
 
     <style>
-        .sample-actions {
-            margin-top: 10px;
-            display: flex;
-            gap: 8px;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .btn-apply-sample {
-            background: #6b99c2;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            flex: 1;
-            max-width: 150px;
-        }
-
-        .btn-apply-sample:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .btn-apply-sample:disabled {
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .sample-result {
-            padding: 12px;
-            border: 2px solid #a3c9e0;
-            border-radius: 6px;
-            background: rgba(163, 201, 224, 0.1);
-            text-align: center;
-            margin-bottom: 0;
-            transition: all 0.3s ease;
-        }
-
-        .current-seeds-info {
-            font-size: 0.75rem;
-            color: #666;
-            text-align: right;
-            flex: 1;
-        }
-
-        #currentSeedsDisplay {
-            font-weight: 600;
-            color: #354e8d;
-        }
-
+        /* Additional styles not in main stylesheet */
         .seeds-updated {
             background: #e8f5e8 !important;
             border-color: #6b99c2 !important;
             transition: all 0.3s ease;
         }
 
-        .utilization-check {
-            margin-top: 8px;
+        .corrected-value {
+            border-color: #d4691e !important;
+            background-color: rgba(212, 105, 30, 0.1) !important;
+            transition: all 0.3s ease;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-5px); }
+            20% { opacity: 1; transform: translateY(0); }
+            80% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-5px); }
         }
 
-        .utilization-warning {
-            margin-top: 12px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid #f39c12;
-            background: rgba(243, 156, 18, 0.1);
-            font-size: 0.85rem;
-            font-weight: 500;
-            text-align: center;
-            color: #f39c12;
-        }
-
-        .validation-check {
-            margin-top: 8px;
+        .validation-warning {
+            color: #d4691e;
+            font-size: 0.8rem;
+            margin-top: 4px;
+            animation: fadeInOut 3s ease-in-out;
         }
 
         .input-summary {
@@ -333,48 +280,6 @@
             font-weight: 600;
         }
 
-        .validation-list {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .validation-list li {
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-            color: #495057;
-        }
-
-        .validation-list li:last-child {
-            margin-bottom: 0;
-        }
-
-        .validation-list strong {
-            color: #354e8d;
-            margin-right: 8px;
-        }
-
-        /* Input Validation Styles */
-        .corrected-value {
-            border-color: #d4691e !important;
-            background-color: rgba(212, 105, 30, 0.1) !important;
-            transition: all 0.3s ease;
-        }
-        
-        .validation-warning {
-            color: #d4691e;
-            font-size: 0.8rem;
-            margin-top: 4px;
-            animation: fadeInOut 3s ease-in-out;
-        }
-        
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateY(-5px); }
-            20% { opacity: 1; transform: translateY(0); }
-            80% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-5px); }
-        }
-
         @media (max-width: 768px) {
             .results-cards-container {
                 grid-template-columns: 1fr;
@@ -388,10 +293,33 @@
         let recommendedSeeds = 0;
 
         /**
+         * Safely format a number with toFixed, handling undefined, NaN, and Infinity
+         * @param {*} value - The value to format
+         * @param {number} decimals - Number of decimal places
+         * @param {number} fallback - Fallback value if invalid (default 0)
+         * @returns {string} Formatted number string
+         */
+        function safeFixed(value, decimals = 2, fallback = 0) {
+            const num = parseFloat(value);
+            if (!isFinite(num) || isNaN(num) || value === undefined || value === null) {
+                return fallback.toFixed(decimals);
+            }
+            return num.toFixed(decimals);
+        }
+
+        /**
+         * Safely get a numeric value, returning fallback if invalid
+         * @param {*} value - The value to check
+         * @param {number} fallback - Fallback value (default 0)
+         * @returns {number} Valid number or fallback
+         */
+        function safeNumber(value, fallback = 0) {
+            const num = parseFloat(value);
+            return (isFinite(num) && !isNaN(num)) ? num : fallback;
+        }
+
+        /**
          * Validates and corrects input values to prevent negative/invalid entries
-         * @param {string} inputId - The ID of the input element
-         * @param {number} minValue - Minimum allowed value (inclusive)
-         * @param {number} maxValue - Maximum allowed value (optional)
          */
         function validateAndUpdate(inputId, minValue, maxValue = null) {
             const input = document.getElementById(inputId);
@@ -399,46 +327,36 @@
             
             let value = parseFloat(input.value);
             
-            // Handle NaN or empty values
             if (isNaN(value) || input.value.trim() === '') {
                 value = minValue;
             }
             
-            // Apply minimum constraint
             if (value < minValue) {
                 value = minValue;
                 showValidationWarning(inputId, `Value cannot be less than ${minValue}`);
             }
             
-            // Apply maximum constraint if specified
             if (maxValue !== null && value > maxValue) {
                 value = maxValue;
                 showValidationWarning(inputId, `Value cannot be greater than ${maxValue}`);
             }
             
-            // Update input value if it was corrected
             if (parseFloat(input.value) !== value) {
                 input.value = value;
                 input.classList.add('corrected-value');
                 
-                // Remove highlight after 2 seconds
                 setTimeout(() => {
                     input.classList.remove('corrected-value');
                 }, 2000);
             }
         }
 
-        /**
-         * Show temporary validation warning
-         */
         function showValidationWarning(inputId, message) {
-            // Remove existing warnings for this input
             const existingWarning = document.getElementById(`warning-${inputId}`);
             if (existingWarning) {
                 existingWarning.remove();
             }
             
-            // Create and show new warning
             const input = document.getElementById(inputId);
             const warning = document.createElement('div');
             warning.id = `warning-${inputId}`;
@@ -447,7 +365,6 @@
             
             input.parentNode.appendChild(warning);
             
-            // Auto-remove after 3 seconds
             setTimeout(() => {
                 if (warning.parentNode) {
                     warning.parentNode.removeChild(warning);
@@ -455,9 +372,6 @@
             }, 3000);
         }
 
-        /**
-         * Validate all inputs before running simulation
-         */
         function validateAllInputs() {
             let isValid = true;
             const validationRules = [
@@ -488,25 +402,19 @@
             return isValid;
         }
 
-        // Authentication check on page load
         document.addEventListener('DOMContentLoaded', async () => {
-            // Give common.js time to load manifest and handle authentication
             await new Promise(resolve => setTimeout(resolve, 100));
             
-            // Check authentication using common.js functions
             const token = localStorage.getItem('authToken');
             if (!token || !isValidToken(token)) {
                 window.location.href = '/login/';
                 return;
             }
             
-            // Show the app
             document.getElementById('loading').style.display = 'none';
             document.getElementById('app').classList.remove('hidden');
             
             resetInputs();
-
-            // Setup apply sample size button
             document.getElementById('applySampleSize').addEventListener('click', applySampleSize);
         });
 
@@ -515,7 +423,7 @@
                 const decoded = atob(token);
                 const [timestamp, username] = decoded.split(':');
                 const tokenAge = Date.now() - parseInt(timestamp);
-                return tokenAge < 24 * 60 * 60 * 1000; // 24 hours
+                return tokenAge < 24 * 60 * 60 * 1000;
             } catch {
                 return false;
             }
@@ -523,52 +431,44 @@
 
         function updateUtilizationEstimate() {
             try {
-                const arrivalRateA = parseFloat(document.getElementById('arrivalRateA').value);
-                const arrivalRateB = parseFloat(document.getElementById('arrivalRateB').value);
+                const arrivalRateA = safeNumber(document.getElementById('arrivalRateA').value, 0);
+                const arrivalRateB = safeNumber(document.getElementById('arrivalRateB').value, 0);
                 const totalArrival = arrivalRateA + arrivalRateB;
-                const serviceTime = parseFloat(document.getElementById('serviceTime').value) ;
+                const serviceTime = safeNumber(document.getElementById('serviceTime').value, 0);
                 const followUpTime = getMinFollowUpValue();
                 
-                // Update total arrival display
-                document.getElementById('totalArrivalDisplay').textContent = totalArrival.toFixed(1);
+                document.getElementById('totalArrivalDisplay').textContent = safeFixed(totalArrival, 1);
                 
-                // Calculate basic utilization (arrival rate * service time / 3600)
                 const basicUtilization = (totalArrival * serviceTime) / 3600 * 100;
+                document.getElementById('utilizationEstimateDisplay').textContent = safeFixed(basicUtilization, 1) + '%';
                 
-                // Update utilization display
-                document.getElementById('utilizationEstimateDisplay').textContent = basicUtilization.toFixed(1) + '%';
-                
-                // Show warning if follow-up time is less than service time
                 const warningDiv = document.getElementById('followUpWarning');
                 if (followUpTime < serviceTime) {
                     warningDiv.style.display = 'block';
                 } else {
                     warningDiv.style.display = 'none';
                 }
-                
             } catch (error) {
                 console.warn('Could not update utilization estimate:', error);
             }
         }
 
-        // Collect all parameters for runtime estimation and validation
         function collectParameters() {
             return {
-                arrivalRateA: parseFloat(document.getElementById('arrivalRateA').value),
-                arrivalRateB: parseFloat(document.getElementById('arrivalRateB').value),
-                arrivalRate: parseFloat(document.getElementById('arrivalRateA').value) + parseFloat(document.getElementById('arrivalRateB').value),
-                serviceTime: parseFloat(document.getElementById('serviceTime').value),
-                simulationTime: parseFloat(document.getElementById('simulationHours').value) * 3600,
-                simHours: parseFloat(document.getElementById('simulationHours').value),
-                minGap: parseFloat(document.getElementById('minGap').value),
+                arrivalRateA: safeNumber(document.getElementById('arrivalRateA').value, 0),
+                arrivalRateB: safeNumber(document.getElementById('arrivalRateB').value, 0),
+                arrivalRate: safeNumber(document.getElementById('arrivalRateA').value, 0) + safeNumber(document.getElementById('arrivalRateB').value, 0),
+                serviceTime: safeNumber(document.getElementById('serviceTime').value, 0.1),
+                simulationTime: safeNumber(document.getElementById('simulationHours').value, 1) * 3600,
+                simHours: safeNumber(document.getElementById('simulationHours').value, 1),
+                minGap: safeNumber(document.getElementById('minGap').value, 0),
                 minFollowUp: getMinFollowUpValue(),
                 priorityScheme: document.getElementById('priorityScheme').value,
-                numSeeds: parseInt(document.getElementById('numSeeds').value),
+                numSeeds: parseInt(document.getElementById('numSeeds').value) || 1,
                 seedMode: document.getElementById('seedMode').value
             };
         }
 
-        // Update runtime display when parameters change
         function updateRuntimeDisplay() {
             try {
                 const parameters = collectParameters();
@@ -580,12 +480,11 @@
 
         function calculateSampleSize() {
             try {
-                const confidenceLevel = parseFloat(document.getElementById('confidenceLevel').value);
-                const marginError = parseFloat(document.getElementById('marginError').value);
-                const simHours = parseFloat(document.getElementById('simulationHours').value);
-                const currentSeeds = parseInt(document.getElementById('numSeeds').value);
+                const confidenceLevel = safeNumber(document.getElementById('confidenceLevel').value, 95);
+                const marginError = safeNumber(document.getElementById('marginError').value, 0.05);
+                const simHours = safeNumber(document.getElementById('simulationHours').value, 1000);
+                const currentSeeds = parseInt(document.getElementById('numSeeds').value) || 130;
                 
-                // Z-scores for common confidence levels
                 const zScores = {
                     90: 1.645,
                     95: 1.96,
@@ -594,12 +493,10 @@
                     99.99: 3.891
                 };
                 
-                // Interpolate z-score if not exact match
                 let zScore;
                 if (zScores[confidenceLevel]) {
                     zScore = zScores[confidenceLevel];
                 } else {
-                    // Linear interpolation between known values
                     const levels = Object.keys(zScores).map(Number).sort((a, b) => a - b);
                     for (let i = 0; i < levels.length - 1; i++) {
                         if (confidenceLevel >= levels[i] && confidenceLevel <= levels[i + 1]) {
@@ -610,17 +507,13 @@
                     }
                 }
                 
-                if (!zScore) zScore = 1.96; // Default to 95% if can't determine
+                if (!zScore) zScore = 1.96;
                 
-                // Estimate population standard deviation (square root of sum for Poisson processes)
-                const totalArrivalRate = parseFloat(document.getElementById('arrivalRateA').value) + 
-                                       parseFloat(document.getElementById('arrivalRateB').value);
-                const estimatedStdDev = Math.sqrt(totalArrivalRate); // Standard deviation = √(rate) for Poisson
+                const totalArrivalRate = safeNumber(document.getElementById('arrivalRateA').value, 0) + 
+                                       safeNumber(document.getElementById('arrivalRateB').value, 0);
+                const estimatedStdDev = Math.sqrt(totalArrivalRate);
                 
-                // Sample size calculation: n = (Z * σ / E)²
                 const minSampleSize = Math.ceil(Math.pow((zScore * estimatedStdDev) / marginError, 2));
-                
-                // Adjust for finite population if needed (simulation hours provide finite observations)
                 const observationsPerRun = simHours;
                 const adjustedSampleSize = Math.ceil(minSampleSize / observationsPerRun);
                 
@@ -630,17 +523,15 @@
                 const currentSeedsDisplay = document.getElementById('currentSeedsDisplay');
                 const applyButton = document.getElementById('applySampleSize');
                 
-                // Update current seeds display
                 if (currentSeedsDisplay) {
                     currentSeedsDisplay.textContent = currentSeeds;
                 }
                 
                 resultDiv.innerHTML = `
                     <strong>Minimum ${recommendedSeeds} seeds required</strong><br>
-                    <small>(${confidenceLevel}% confidence, Z=${zScore.toFixed(3)}, σ=√${totalArrivalRate}=${estimatedStdDev.toFixed(2)})</small>
+                    <small>(${safeFixed(confidenceLevel, 1)}% confidence, Z=${safeFixed(zScore, 3)}, σ=√${safeFixed(totalArrivalRate, 1)}=${safeFixed(estimatedStdDev, 2)})</small>
                 `;
                 
-                // Update button state and styling
                 if (applyButton) {
                     if (currentSeeds < recommendedSeeds) {
                         resultDiv.style.borderColor = '#d4691e';
@@ -683,14 +574,11 @@
                 const oldValue = numSeedsInput.value;
                 numSeedsInput.value = recommendedSeeds;
                 
-                // Add visual feedback class
                 numSeedsInput.classList.add('seeds-updated');
                 
-                // Trigger change events to update other dependent calculations
                 updateRuntimeDisplay();
                 calculateSampleSize();
                 
-                // Remove visual feedback after 2 seconds
                 setTimeout(() => {
                     numSeedsInput.classList.remove('seeds-updated');
                 }, 2000);
@@ -715,24 +603,24 @@
         }
 
         function calculateServiceTime() {
-            const distance = parseFloat(document.getElementById('segmentDistance').value);
-            const speed = parseFloat(document.getElementById('vehicleSpeed').value);
+            const distance = safeNumber(document.getElementById('segmentDistance').value, 30);
+            const speed = safeNumber(document.getElementById('vehicleSpeed').value, 20);
             
             if (distance && speed) {
-                const serviceTime = distance / (speed * 1000 / 3600); // Convert km/h to m/s
-                document.getElementById('serviceTime').value = serviceTime.toFixed(2);
+                const serviceTime = distance / (speed * 1000 / 3600);
+                document.getElementById('serviceTime').value = safeFixed(serviceTime, 2);
                 updateUtilizationEstimate();
             }
         }
 
         function generateValidationCheck(results, params) {
-            const expectedArrivalA = params.arrivalRateA;
-            const expectedArrivalB = params.arrivalRateB;
+            const expectedArrivalA = safeNumber(params.arrivalRateA, 0);
+            const expectedArrivalB = safeNumber(params.arrivalRateB, 0);
             
-            const actualArrivalA = results.arrivalRates[0] ? results.arrivalRates[0].totalPerHour : 0;
-            const actualArrivalB = results.arrivalRates[1] ? results.arrivalRates[1].totalPerHour : 0;
+            const actualArrivalA = results.arrivalRates && results.arrivalRates[0] ? safeNumber(results.arrivalRates[0].totalPerHour, 0) : 0;
+            const actualArrivalB = results.arrivalRates && results.arrivalRates[1] ? safeNumber(results.arrivalRates[1].totalPerHour, 0) : 0;
             
-            const marginError = parseFloat(document.getElementById('marginError').value) ;
+            const marginError = safeNumber(document.getElementById('marginError').value, 0.05);
             const errorA = Math.abs(expectedArrivalA - actualArrivalA);
             const errorB = Math.abs(expectedArrivalB - actualArrivalB);
             const totalError = errorA + errorB;
@@ -742,22 +630,17 @@
             return `
                 <h4>${validationPassed === null ? '⚠️' : validationPassed ? '✅' : '⚠️'} Arrival Rate Validation</h4>
                 <ul class="validation-list">
-                    <li><strong>Expected:</strong> A=${expectedArrivalA.toFixed(2)}, B=${expectedArrivalB.toFixed(2)}</li>
-                    <li><strong>Actual:</strong> A=${actualArrivalA.toFixed(2)}, B=${actualArrivalB.toFixed(2)}</li>
-                    <li><strong>Error:</strong> ${totalError.toFixed(3)} (A=${errorA.toFixed(3)} + B=${errorB.toFixed(3)})</li>
-                    <li><strong>Status:</strong> ${validationPassed ? 'Rates validated successfully' : 'Rates outside margin'} (±${marginError})</li>
+                    <li><strong>Expected:</strong> A=${safeFixed(expectedArrivalA, 2)}, B=${safeFixed(expectedArrivalB, 2)}</li>
+                    <li><strong>Actual:</strong> A=${safeFixed(actualArrivalA, 2)}, B=${safeFixed(actualArrivalB, 2)}</li>
+                    <li><strong>Error:</strong> ${safeFixed(totalError, 3)} (A=${safeFixed(errorA, 3)} + B=${safeFixed(errorB, 3)})</li>
+                    <li><strong>Status:</strong> ${validationPassed ? 'Rates validated successfully' : 'Rates outside margin'} (±${safeFixed(marginError, 3)})</li>
                 </ul>
             `;
         }
 
         function resetInputs() {
-            // Clear validation warnings
-            document.querySelectorAll('.validation-warning').forEach(warning => {
-                warning.remove();
-            });
-            document.querySelectorAll('.corrected-value').forEach(input => {
-                input.classList.remove('corrected-value');
-            });
+            document.querySelectorAll('.validation-warning').forEach(warning => warning.remove());
+            document.querySelectorAll('.corrected-value').forEach(input => input.classList.remove('corrected-value'));
             
             document.getElementById('arrivalRateA').value = '15';
             document.getElementById('arrivalRateB').value = '15';
@@ -785,6 +668,30 @@
         function displayResults(results, params) {
             const container = document.getElementById('resultsContent');
             
+            const serverUtil = safeNumber(results.serverUtilization, 0);
+            const dirUtil = results.directionalUtilization || [0, 0];
+            const dirUtil0 = safeNumber(dirUtil[0], 0);
+            const dirUtil1 = safeNumber(dirUtil[1], 0);
+            
+            const delays = results.delays || [{}, {}];
+            const queues = results.queues || [{}, {}];
+            const arrivalRates = results.arrivalRates || [{}, {}];
+            
+            const delay0 = delays[0] || {};
+            const delay1 = delays[1] || {};
+            const queue0 = queues[0] || { lengthPercentages: {}, maxPercentages: {} };
+            const queue1 = queues[1] || { lengthPercentages: {}, maxPercentages: {} };
+            const arrival0 = arrivalRates[0] || {};
+            const arrival1 = arrivalRates[1] || {};
+            
+            const simTime = safeNumber(params.simulationTime, 3600);
+            const queuedVeh0 = safeNumber(delay0.queuedVehicles, 0) / (simTime / 3600);
+            const queuedVeh1 = safeNumber(delay1.queuedVehicles, 0) / (simTime / 3600);
+            const totalRate0 = safeNumber(arrival0.totalPerHour, 1);
+            const totalRate1 = safeNumber(arrival1.totalPerHour, 1);
+            const delayProb0 = (queuedVeh0 / totalRate0) * 100;
+            const delayProb1 = (queuedVeh1 / totalRate1) * 100;
+            
             let html = `
                 <div class="results-cards-container">
                     <div class="input-summary">
@@ -794,28 +701,28 @@
                                 <strong>Model:</strong> Two-Way Passing/ Single Lane Road
                             </div>
                             <div class="input-group">
-                                <strong>Queue A Rate:</strong> ${params.arrivalRateA} cars/hr
+                                <strong>Queue A Rate:</strong> ${safeFixed(params.arrivalRateA, 1)} cars/hr
                             </div>
                             <div class="input-group">
-                                <strong>Queue B Rate:</strong> ${params.arrivalRateB} cars/hr
+                                <strong>Queue B Rate:</strong> ${safeFixed(params.arrivalRateB, 1)} cars/hr
                             </div>
                             <div class="input-group">
-                                <strong>Total Arrivals:</strong> ${(params.arrivalRateA + params.arrivalRateB).toFixed(1)} cars/hr
+                                <strong>Total Arrivals:</strong> ${safeFixed(params.arrivalRateA + params.arrivalRateB, 1)} cars/hr
                             </div>
                             <div class="input-group">
-                                <strong>Service Time:</strong> ${params.serviceTime}s
+                                <strong>Service Time:</strong> ${safeFixed(params.serviceTime, 1)}s
                             </div>
                             <div class="input-group">
-                                <strong>Min Gap:</strong> ${params.minGap}s
+                                <strong>Min Gap:</strong> ${safeFixed(params.minGap, 1)}s
                             </div>
                             <div class="input-group">
-                                <strong>Min Follow-up:</strong> ${params.minFollowUp}s
+                                <strong>Min Follow-up:</strong> ${safeFixed(params.minFollowUp, 1)}s
                             </div>
                             <div class="input-group">
                                 <strong>Priority:</strong> ${document.getElementById('priorityScheme').options[document.getElementById('priorityScheme').selectedIndex].text}
                             </div>
                             <div class="input-group">
-                                <strong>Simulation:</strong> ${params.simHours}h × ${params.numSeeds} seeds
+                                <strong>Simulation:</strong> ${safeFixed(params.simHours, 0)}h × ${params.numSeeds} seeds
                             </div>
                         </div>
                     </div>
@@ -838,18 +745,18 @@
                         <tbody>
                             <tr>
                                 <td style="text-align: left; font-weight: 600;">Road Segment (Total)</td>
-                                <td style="color: #354e8d; font-weight: 600;">${results.serverUtilization.toFixed(2)}%</td>
+                                <td style="color: #354e8d; font-weight: 600;">${safeFixed(serverUtil, 2)}%</td>
                                 <td>—</td>
                             </tr>
                             <tr>
                                 <td style="text-align: left; font-weight: 600;">Queue A Direction</td>
-                                <td>${results.directionalUtilization[0].toFixed(2)}%</td>
-                                <td>${((results.delays[0].queuedVehicles / (params.simulationTime / 3600)) / results.arrivalRates[0].totalPerHour * 100).toFixed(1)}%</td>
+                                <td>${safeFixed(dirUtil0, 2)}%</td>
+                                <td>${safeFixed(delayProb0, 1)}%</td>
                             </tr>
                             <tr>
                                 <td style="text-align: left; font-weight: 600;">Queue B Direction</td>
-                                <td>${results.directionalUtilization[1].toFixed(2)}%</td>
-                                <td>${((results.delays[1].queuedVehicles / (params.simulationTime / 3600)) / results.arrivalRates[1].totalPerHour * 100).toFixed(1)}%</td>
+                                <td>${safeFixed(dirUtil1, 2)}%</td>
+                                <td>${safeFixed(delayProb1, 1)}%</td>
                             </tr>
                         </tbody>
                     </table>
@@ -873,11 +780,9 @@
                                     <tbody>
             `;
             
-            // Build Queue A table with cumulative calculations
-            const queueA = results.queues[0];
             const allLengthsA = new Set([
-                ...Object.keys(queueA.lengthPercentages),
-                ...Object.keys(queueA.maxPercentages)
+                ...Object.keys(queue0.lengthPercentages || {}),
+                ...Object.keys(queue0.maxPercentages || {})
             ]);
             
             const sortedLengthsA = Array.from(allLengthsA)
@@ -889,8 +794,8 @@
             let maxCumulative = 0;
             
             for (const length of sortedLengthsA) {
-                const timePercent = queueA.lengthPercentages[length];
-                const maxPercent = queueA.maxPercentages[length];
+                const timePercent = safeNumber(queue0.lengthPercentages[length], 0);
+                const maxPercent = safeNumber(queue0.maxPercentages[length], 0);
                 
                 timeCumulative += timePercent;
                 maxCumulative += maxPercent;
@@ -899,10 +804,10 @@
                     html += `
                         <tr>
                             <td>${length}</td>
-                            <td>${timePercent.toFixed(2)}%</td>
-                            <td><strong>${timeCumulative.toFixed(2)}%</strong></td>
-                            <td>${maxPercent.toFixed(2)}%</td>
-                            <td><strong>${maxCumulative.toFixed(2)}%</strong></td>
+                            <td>${safeFixed(timePercent, 2)}%</td>
+                            <td>${safeFixed(timeCumulative, 2)}%</td>
+                            <td>${safeFixed(maxPercent, 2)}%</td>
+                            <td>${safeFixed(maxCumulative, 2)}%</td>
                         </tr>
                     `;
                 }
@@ -918,11 +823,11 @@
                                 <ul class="wait-stat-list">
                                     <li>
                                         <span>Avg. delay per vehicle:</span>
-                                        <span>${results.delays[0].avgDelayAll.toFixed(2)} s</span>
+                                        <span>${safeFixed(delay0.avgDelayAll, 2)} s</span>
                                     </li>
                                     <li>
                                         <span>Avg. delay per queued:</span>
-                                        <span>${results.delays[0].avgDelayQueued.toFixed(2)} s</span>
+                                        <span>${safeFixed(delay0.avgDelayQueued, 2)} s</span>
                                     </li>
                                 </ul>
                             </div>
@@ -946,11 +851,9 @@
                                     <tbody>
             `;
             
-            // Build Queue B table with cumulative calculations
-            const queueB = results.queues[1];
             const allLengthsB = new Set([
-                ...Object.keys(queueB.lengthPercentages),
-                ...Object.keys(queueB.maxPercentages)
+                ...Object.keys(queue1.lengthPercentages || {}),
+                ...Object.keys(queue1.maxPercentages || {})
             ]);
             
             const sortedLengthsB = Array.from(allLengthsB)
@@ -962,8 +865,8 @@
             maxCumulative = 0;
             
             for (const length of sortedLengthsB) {
-                const timePercent = queueB.lengthPercentages[length];
-                const maxPercent = queueB.maxPercentages[length];
+                const timePercent = safeNumber(queue1.lengthPercentages[length], 0);
+                const maxPercent = safeNumber(queue1.maxPercentages[length], 0);
                 
                 timeCumulative += timePercent;
                 maxCumulative += maxPercent;
@@ -972,10 +875,10 @@
                     html += `
                         <tr>
                             <td>${length}</td>
-                            <td>${timePercent.toFixed(2)}%</td>
-                            <td><strong>${timeCumulative.toFixed(2)}%</strong></td>
-                            <td>${maxPercent.toFixed(2)}%</td>
-                            <td><strong>${maxCumulative.toFixed(2)}%</strong></td>
+                            <td>${safeFixed(timePercent, 2)}%</td>
+                            <td>${safeFixed(timeCumulative, 2)}%</td>
+                            <td>${safeFixed(maxPercent, 2)}%</td>
+                            <td>${safeFixed(maxCumulative, 2)}%</td>
                         </tr>
                     `;
                 }
@@ -991,11 +894,11 @@
                                 <ul class="wait-stat-list">
                                     <li>
                                         <span>Avg. delay per vehicle:</span>
-                                        <span>${results.delays[1].avgDelayAll.toFixed(2)} s</span>
+                                        <span>${safeFixed(delay1.avgDelayAll, 2)} s</span>
                                     </li>
                                     <li>
                                         <span>Avg. delay per queued:</span>
-                                        <span>${results.delays[1].avgDelayQueued.toFixed(2)} s</span>
+                                        <span>${safeFixed(delay1.avgDelayQueued, 2)} s</span>
                                     </li>
                                 </ul>
                             </div>
@@ -1006,17 +909,20 @@
                 <div class="tables-container">
             `;
             
-            // Add arrival breakdown for each direction
-            for (let i = 0; i < results.arrivalRates.length; i++) {
-                const arrivalRate = results.arrivalRates[i];
+            for (let i = 0; i < 2; i++) {
+                const arrivalRate = i === 0 ? arrival0 : arrival1;
                 const queueName = i === 0 ? 'Queue A' : 'Queue B';
                 
-                // Calculate immediate entry (vehicles that didn't queue)
-                const immediateEntry = arrivalRate.totalPerHour - arrivalRate.sameQueue - arrivalRate.oppositeQueue - arrivalRate.noqueue;
-                const samePercentage = arrivalRate.totalPerHour > 0 ? (arrivalRate.sameQueue / arrivalRate.totalPerHour) * 100 : 0;
-                const oppositePercentage = arrivalRate.totalPerHour > 0 ? (arrivalRate.oppositeQueue / arrivalRate.totalPerHour) * 100 : 0;
-                const noqueuePercentage = arrivalRate.totalPerHour > 0 ? (arrivalRate.noqueue / arrivalRate.totalPerHour) * 100 : 0;
-                const immediatePercentage = arrivalRate.totalPerHour > 0 ? (immediateEntry / arrivalRate.totalPerHour) * 100 : 0;
+                const totalPerHour = safeNumber(arrivalRate.totalPerHour, 0);
+                const sameQueue = safeNumber(arrivalRate.sameQueue, 0);
+                const oppositeQueue = safeNumber(arrivalRate.oppositeQueue, 0);
+                const noqueue = safeNumber(arrivalRate.noqueue, 0);
+                
+                const immediateEntry = totalPerHour - sameQueue - oppositeQueue - noqueue;
+                const samePercentage = totalPerHour > 0 ? (sameQueue / totalPerHour) * 100 : 0;
+                const oppositePercentage = totalPerHour > 0 ? (oppositeQueue / totalPerHour) * 100 : 0;
+                const noqueuePercentage = totalPerHour > 0 ? (noqueue / totalPerHour) * 100 : 0;
+                const immediatePercentage = totalPerHour > 0 ? (immediateEntry / totalPerHour) * 100 : 0;
                 
                 html += `
                     <div class="table-section">
@@ -1027,23 +933,19 @@
                                 <ul class="wait-stat-list">
                                     <li>
                                         <span>Queued - Same Direction Busy:</span>
-                                        <span>(${samePercentage.toFixed(1)}%) ${arrivalRate.sameQueue.toFixed(2)} cars/hr</span>
+                                        <span>(${safeFixed(samePercentage, 1)}%) ${safeFixed(sameQueue, 2)} cars/hr</span>
                                     </li>
                                     <li>
                                         <span>Queued - Opposite Direction Busy:</span>
-                                        <span>(${oppositePercentage.toFixed(1)}%) ${arrivalRate.oppositeQueue.toFixed(2)} cars/hr</span>
-                                    </li>
-                                    <li>
-                                        <span>Queued - Road Empty (Follow-up Constraint):</span>
-                                        <span>(${noqueuePercentage.toFixed(1)}%) ${arrivalRate.noqueue.toFixed(2)} cars/hr</span>
+                                        <span>(${safeFixed(oppositePercentage, 1)}%) ${safeFixed(oppositeQueue, 2)} cars/hr</span>
                                     </li>
                                     <li>
                                         <span>Immediate Entry (No Queue):</span>
-                                        <span>(${immediatePercentage.toFixed(1)}%) ${immediateEntry.toFixed(2)} cars/hr</span>
+                                        <span>(${safeFixed(immediatePercentage, 1)}%) ${safeFixed(immediateEntry, 2)} cars/hr</span>
                                     </li>
                                 </ul>
                                 <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e9ecef;">
-                                    <strong>Total Arrivals: (100.0%) ${arrivalRate.totalPerHour.toFixed(2)} cars/hr</strong>
+                                    <strong>Total Arrivals: (100.0%) ${safeFixed(totalPerHour, 2)} cars/hr</strong>
                                 </div>
                             </div>
                         </div>
@@ -1060,14 +962,14 @@
 
         function getMinFollowUpValue() {
             const selection = document.getElementById('minFollowUp').value;
-            const serviceTime = parseFloat(document.getElementById('serviceTime').value);
-            const minGap = parseFloat(document.getElementById('minGap').value);
+            const serviceTime = safeNumber(document.getElementById('serviceTime').value, 0);
+            const minGap = safeNumber(document.getElementById('minGap').value, 0);
             
             switch(selection) {
                 case '0': return 0;
                 case 'minGap': return minGap;
                 case 'serviceTime': return serviceTime;
-                case 'custom': return parseFloat(document.getElementById('customFollowUp').value);
+                case 'custom': return safeNumber(document.getElementById('customFollowUp').value, 0);
                 default: return serviceTime;
             }
         }
@@ -1078,7 +980,6 @@
             customGroup.style.display = selection === 'custom' ? 'block' : 'none';
         }
 
-        // Event listeners
         document.getElementById('resetButton').addEventListener('click', resetInputs);
 
         document.getElementById('runSimulation').addEventListener('click', async () => {
@@ -1091,7 +992,6 @@
             const runButton = document.getElementById('runSimulation');
             if (runButton.disabled) return;
 
-            // Validate all inputs before proceeding
             if (!validateAllInputs()) {
                 const status = document.getElementById('status');
                 status.style.display = 'block';
@@ -1105,7 +1005,6 @@
             const estimatedTimeStr = formatEstimatedTime(estimatedMs);
             const numSeeds = parameters.numSeeds;
 
-            // UI Elements
             const elements = {
                 status: document.getElementById('status'),
                 progressContainer: document.getElementById('progressContainer'),
@@ -1115,7 +1014,6 @@
                 resultsContent: document.getElementById('resultsContent')
             };
 
-            // Show loading state
             runButton.disabled = true;
             runButton.textContent = `Running simulation...`;
             elements.status.style.display = 'block';
@@ -1124,15 +1022,14 @@
             elements.progressContainer.style.display = 'block';
             elements.resultsContent.innerHTML = `<div class="no-results"><h4>Running simulation...</h4></div>`;
 
-            // Scroll to progress bar using common.js function
             scrollToProgress();
 
-            // Start progress tracking from common.js
             const progressInterval = createRealisticProgress(estimatedMs, elements.progressFill, elements.progressPercentage, elements.progressDetails);
             const startTime = Date.now();
 
             try {
-                const response = await fetch('/api/two-way-passing', {
+                            const apiUrl = window.API_CONFIG?.endpoints?.['two-way-passing'] || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/two-way-passing';
+const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1159,7 +1056,6 @@
                 const data = await response.json();
                 if (!data.success) throw new Error(data.error || 'Simulation failed');
 
-                // Complete progress and show results
                 const actualTime = Date.now() - startTime;
                 
                 elements.progressFill.style.width = '100%';
@@ -1170,7 +1066,6 @@
                 
                 displayResults(data.results, parameters);
 
-                // Scroll to results using common.js function after a brief delay to allow for DOM updates
                 setTimeout(() => {
                     scrollToResults();
                 }, 300);
@@ -1186,7 +1081,6 @@
                 elements.status.textContent = 'Error: ' + error.message;
                 elements.resultsContent.innerHTML = `<div class="no-results"><h4>Error</h4><p>${error.message}</p></div>`;
                 
-                // Still scroll to results section even on error so user can see the error message
                 setTimeout(() => {
                     scrollToResults();
                 }, 300);

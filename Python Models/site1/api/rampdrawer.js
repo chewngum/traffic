@@ -1,5 +1,3 @@
-
-
 export default async function handler(req, res) {
     // Set headers for CORS and caching
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -135,7 +133,8 @@ function generateDrawings(params) {
     const { 
         segmentData, 
         width, 
-        startingRL, 
+        startingRL,
+        startingChainage = 0,
         startLabel, 
         endLabel, 
         gradeType,
@@ -148,7 +147,7 @@ function generateDrawings(params) {
         gradeDisplay = 'percent'
     } = params;
     
-    const sectionSvg = generateSectionView(segmentData, width, startingRL, startLabel, endLabel, gradeType, chainagePrefix, chainagePosition, chainageDecimalPlaces, rlDecimalPlaces, gradeDecimalPlaces, distanceUnits, gradeDisplay);
+    const sectionSvg = generateSectionView(segmentData, width, startingRL, startingChainage, startLabel, endLabel, gradeType, chainagePrefix, chainagePosition, chainageDecimalPlaces, rlDecimalPlaces, gradeDecimalPlaces, distanceUnits, gradeDisplay);
     const planSvg = generatePlanView(segmentData, width, gradeType, chainageDecimalPlaces, gradeDecimalPlaces, distanceUnits, gradeDisplay);
     
     return {
@@ -183,27 +182,28 @@ function generateSVGExport(params) {
         svgContent = generateSectionView(
             params.segmentData, 
             params.width, 
-            params.startingRL, 
+            params.startingRL,
+            params.startingChainage || 0,
             params.startLabel, 
             params.endLabel, 
             params.gradeType,
-            params.chainagePrefix || 'CH',
-            params.chainagePosition || 'prefix',
-            params.chainageDecimalPlaces || 1,
-            params.rlDecimalPlaces || 3,
-            params.gradeDecimalPlaces || 1,
-            params.distanceUnits || 'm',
-            params.gradeDisplay || 'percent'
+            params.chainagePrefix,
+            params.chainagePosition,
+            params.chainageDecimalPlaces,
+            params.rlDecimalPlaces,
+            params.gradeDecimalPlaces,
+            params.distanceUnits,
+            params.gradeDisplay
         );
     } else {
         svgContent = generatePlanView(
             params.segmentData, 
             params.width, 
             params.gradeType,
-            params.chainageDecimalPlaces || 1,
-            params.gradeDecimalPlaces || 1,
-            params.distanceUnits || 'm',
-            params.gradeDisplay || 'percent'
+            params.chainageDecimalPlaces,
+            params.gradeDecimalPlaces,
+            params.distanceUnits,
+            params.gradeDisplay
         );
     }
     
@@ -224,7 +224,8 @@ async function generatePNGExport(params) {
         svgContent = generateSectionView(
             params.segmentData, 
             params.width, 
-            params.startingRL, 
+            params.startingRL,
+            params.startingChainage || 0,
             params.startLabel, 
             params.endLabel, 
             params.gradeType,
@@ -367,7 +368,7 @@ async function generatePNGExport(params) {
     }
 }
 
-function generateSectionView(segmentData, width, startingRL, startLabel, endLabel, gradeType, chainagePrefix = 'CH', chainagePosition = 'prefix', chainageDecimalPlaces = 1, rlDecimalPlaces = 3, gradeDecimalPlaces = 1, distanceUnits = 'm', gradeDisplay = 'percent') {
+function generateSectionView(segmentData, width, startingRL, startingChainage = 0, startLabel, endLabel, gradeType, chainagePrefix = 'CH', chainagePosition = 'prefix', chainageDecimalPlaces = 1, rlDecimalPlaces = 3, gradeDecimalPlaces = 1, distanceUnits = 'm', gradeDisplay = 'percent') {
     const svgWidth = 1000;
     const svgHeight = 400;
     const margin = 80; // Increased margin to accommodate datum text
@@ -377,13 +378,13 @@ function generateSectionView(segmentData, width, startingRL, startLabel, endLabe
     
     // Calculate all RLs (elevation points) starting from the specified starting RL
     let currentElevation = startingRL;
-    const points = [{x: 0, rl: startingRL}];
+    const points = [{x: 0, rl: startingRL, chainage: startingChainage}];
     let cumulativeLength = 0;
     
     segmentData.forEach(segment => {
         cumulativeLength += segment.length;
         currentElevation += segment.rise;
-        points.push({x: cumulativeLength, rl: currentElevation});
+        points.push({x: cumulativeLength, rl: currentElevation, chainage: startingChainage + cumulativeLength});
     });
     
     // Find elevation range for proper scaling
@@ -458,11 +459,9 @@ function generateSectionView(segmentData, width, startingRL, startLabel, endLabe
         // Vertical dashed green line from datum to ramp node
         svgContent += `<line x1="${x}" y1="${datumY}" x2="${x}" y2="${y}" class="vertical-datum-line"/>`;
         
-        // Chainage label positioned below datum line (skip first point which is at 0)
-        if (index > 0) {
-            const chainageLabel = formatChainageLabel(point.x, distanceUnits, chainageDecimalPlaces, chainagePrefix, chainagePosition);
-            svgContent += `<text x="${x}" y="${datumY + 20}" class="chainage-text">${chainageLabel}</text>`;
-        }
+        // Chainage label positioned below datum line - use actual chainage including starting chainage
+        const chainageLabel = formatChainageLabel(point.chainage, distanceUnits, chainageDecimalPlaces, chainagePrefix, chainagePosition);
+        svgContent += `<text x="${x}" y="${datumY + 20}" class="chainage-text">${chainageLabel}</text>`;
     });
 
     // Add start and end labels
@@ -605,7 +604,8 @@ function generateAutoCADScript(params) {
         return generateSectionAutoCADScript(
             params.segmentData, 
             params.width, 
-            params.startingRL, 
+            params.startingRL,
+            params.startingChainage || 0,
             params.startLabel, 
             params.endLabel, 
             params.gradeType,
@@ -667,7 +667,8 @@ async function generatePDFExport(params) {
         svgContent = generateSectionView(
             params.segmentData, 
             params.width, 
-            params.startingRL, 
+            params.startingRL,
+            params.startingChainage || 0,
             params.startLabel, 
             params.endLabel, 
             params.gradeType,
@@ -829,6 +830,7 @@ async function generatePDFExport(params) {
                             <tr><th>Parameter</th><th>Value</th></tr>
                             <tr><td>Ramp Width</td><td>${formatDistance(params.width, params.distanceUnits)}${getDistanceUnit(params.distanceUnits)}</td></tr>
                             <tr><td>Starting RL</td><td>${formatDistance(params.startingRL, params.distanceUnits)}${getDistanceUnit(params.distanceUnits)}</td></tr>
+                            <tr><td>Starting Chainage</td><td>${formatDistance(params.startingChainage || 0, params.distanceUnits)}${getDistanceUnit(params.distanceUnits)}</td></tr>
                             <tr><td>Start Location</td><td>${params.startLabel}</td></tr>
                             <tr><td>End Location</td><td>${params.endLabel}</td></tr>
                             <tr><td>Total Length</td><td>${formatDistance(params.segmentData.reduce((sum, seg) => sum + seg.length, 0), params.distanceUnits)}${getDistanceUnit(params.distanceUnits)}</td></tr>
@@ -922,25 +924,26 @@ async function generatePDFExport(params) {
     }
 }
 
-function generateSectionAutoCADScript(segmentData, width, startingRL, startLabel, endLabel, gradeType, chainagePrefix = 'CH', chainagePosition = 'prefix', chainageDecimalPlaces = 1, rlDecimalPlaces = 3, gradeDecimalPlaces = 1, distanceUnits = 'm', gradeDisplay = 'percent') {
+function generateSectionAutoCADScript(segmentData, width, startingRL, startingChainage = 0, startLabel, endLabel, gradeType, chainagePrefix = 'CH', chainagePosition = 'prefix', chainageDecimalPlaces = 1, rlDecimalPlaces = 3, gradeDecimalPlaces = 1, distanceUnits = 'm', gradeDisplay = 'percent') {
     const totalLength = segmentData.reduce((sum, seg) => sum + seg.length, 0);
     
     // Calculate points
     let currentElevation = startingRL;
-    const points = [{x: 0, rl: startingRL}];
+    const points = [{x: 0, rl: startingRL, chainage: startingChainage}];
     let cumulativeLength = 0;
     
     segmentData.forEach(segment => {
         cumulativeLength += segment.length;
         currentElevation += segment.rise;
-        points.push({x: cumulativeLength, rl: currentElevation});
+        points.push({x: cumulativeLength, rl: currentElevation, chainage: startingChainage + cumulativeLength});
     });
 
     // Convert measurements to AutoCAD units (always use mm for precision)
     const unitMultiplier = 1000; // Always use mm for AutoCAD for precision
     const pointsCAD = points.map(p => ({
         x: p.x * unitMultiplier,
-        rl: p.rl * unitMultiplier
+        rl: p.rl * unitMultiplier,
+        chainage: p.chainage
     }));
     const segmentsCAD = segmentData.map(s => ({
         ...s,
@@ -952,7 +955,7 @@ function generateSectionAutoCADScript(segmentData, width, startingRL, startLabel
     script += `; Generated: ${new Date().toISOString()}\n`;
     script += '; All measurements in millimeters for precision\n';
     script += `; Original units: ${distanceUnits}, Chainage position: ${chainagePosition}, CH decimals: ${chainageDecimalPlaces}, RL decimals: ${rlDecimalPlaces}, Grade decimals: ${gradeDecimalPlaces}\n`;
-    script += `; Grade display: ${gradeDisplay}\n`;
+    script += `; Grade display: ${gradeDisplay}, Starting chainage: ${startingChainage}\n`;
     script += '\n';
     
     // Set units and precision
@@ -990,11 +993,9 @@ function generateSectionAutoCADScript(segmentData, width, startingRL, startLabel
         const rlText = `RL ${originalRL >= 0 ? '+' : ''}${formatDistance(originalRL, distanceUnits, rlDecimalPlaces)}${getDistanceUnit(distanceUnits)}`;
         script += `TEXT ${point.x.toFixed(1)},${(point.rl + 300).toFixed(1)} 150 0 ${rlText}\n`;
         
-        if (index > 0) {
-            const originalLength = point.x / unitMultiplier;
-            const chainageLabel = formatChainageLabel(originalLength, distanceUnits, chainageDecimalPlaces, chainagePrefix, chainagePosition);
-            script += `TEXT ${point.x.toFixed(1)},${(point.rl - 400).toFixed(1)} 120 0 ${chainageLabel}\n`;
-        }
+        // Use actual chainage with starting chainage offset
+        const chainageLabel = formatChainageLabel(point.chainage, distanceUnits, chainageDecimalPlaces, chainagePrefix, chainagePosition);
+        script += `TEXT ${point.x.toFixed(1)},${(point.rl - 400).toFixed(1)} 120 0 ${chainageLabel}\n`;
     });
     script += '\n';
 

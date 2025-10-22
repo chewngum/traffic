@@ -6,7 +6,34 @@
     <title>Traffic Labb - Car Lift</title>
     <link rel="stylesheet" href="/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script src="/common.js"></script>
+    <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
+    <style>
+        .sample-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .current-seeds-info {
+            font-size: 0.75rem;
+            color: #666;
+            text-align: right;
+            flex: 1;
+        }
+
+        #currentSeedsDisplay {
+            font-weight: 600;
+            color: #354e8d;
+        }
+
+        .seeds-updated {
+            background: #e8f5e8 !important;
+            border-color: #6b99c2 !important;
+            transition: all 0.3s ease;
+        }
+    </style>
 </head>
 <body>
     <div id="loading" class="loading">
@@ -28,67 +55,71 @@
                 
                 <div class="cards-container">
                     <div class="card">
-                        <div class="card-title">Lift Parameters (s)</div>
+                        <div class="card-title">Building Configuration</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="numFloors">Number of Floors:</label>
+                                <input type="number" id="numFloors" min="2" max="10" value="2" onchange="generateRateInputs(); validateCapacity(); updateRuntimeDisplay()">
+                            </div>
+                            <div class="form-group">
+                                <label for="lobbyFloor">Lobby Floor:</label>
+                                <input type="number" id="lobbyFloor" min="1" value="1" onchange="generateRateInputs(); validateCapacity(); updateRuntimeDisplay()">
+                            </div>
+                        </div>
+                        
+                        <div style="border-top: 1px solid #e3f1f7; margin: 15px 0; padding-top: 15px;">
+                            <h4 style="color: #354e8d; margin-bottom: 12px; font-size: 1rem; font-weight: 600; text-align: center; padding: 8px; background: linear-gradient(135deg, #f8fbff 0%, #e3f1f7 100%); border-radius: 6px; border: 1px solid #d1e7f0;">Per Floor Traffic Rates (cars per hour)</h4>
+                            <div class="rates-container" id="ratesContainer">
+                                <!-- Rates will be generated dynamically -->
+                            </div>
+                        </div>
+                        <div class="validation-check">
+                            <strong>Total Traffic Rate:</strong> <span id="totalTrafficDisplay">60.0</span> cars/hour
+                        </div>
+                        <div class="validation-check" style="margin-top: 8px;">
+                            <strong>Utilisation Range:</strong> <span id="utilizationDisplay">N/A</span>
+                        </div>
+                        <div id="utilizationWarning" class="capacity-warning" style="display: none;">
+                            <span id="utilizationMessage"></span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Lift Parameters (seconds)</div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="doorOpenTime">Door Opening:</label>
-                                <input type="number" id="doorOpenTime" step="0.1" value="5" onchange="validateCapacity(); updateRuntimeDisplay()">
+                                <input type="number" id="doorOpenTime" step="0.1" value="5" min="0" onchange="validateCapacity(); updateRuntimeDisplay()">
                             </div>
                             <div class="form-group">
                                 <label for="doorCloseTime">Door Closing:</label>
-                                <input type="number" id="doorCloseTime" step="0.1" value="5" onchange="validateCapacity(); updateRuntimeDisplay()">
+                                <input type="number" id="doorCloseTime" step="0.1" value="5" min="0" onchange="validateCapacity(); updateRuntimeDisplay()">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="enterTime">Entering Lift:</label>
-                                <input type="number" id="enterTime" step="0.1" value="15" onchange="validateCapacity(); updateRuntimeDisplay()">
+                                <input type="number" id="enterTime" step="0.1" value="15" min="0" onchange="validateCapacity(); updateRuntimeDisplay()">
                             </div>
                             <div class="form-group">
                                 <label for="exitTime">Exiting Lift:</label>
-                                <input type="number" id="exitTime" step="0.1" value="15" onchange="validateCapacity(); updateRuntimeDisplay()">
+                                <input type="number" id="exitTime" step="0.1" value="15" min="0" onchange="validateCapacity(); updateRuntimeDisplay()">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="verticalSpeed">Floor to Floor:</label>
-                                <input type="number" id="verticalSpeed" step="0.1" value="20" onchange="validateCapacity(); updateRuntimeDisplay()">
+                                <input type="number" id="verticalSpeed" step="0.1" value="20" min="0.000001" onchange="validateCapacity(); updateRuntimeDisplay()">
                             </div>
                             <div class="form-group">
                                 <label for="bufferTime">Leveling Buffer:</label>
-                                <input type="number" id="bufferTime" step="0.1" value="2" onchange="validateCapacity(); updateRuntimeDisplay()">
+                                <input type="number" id="bufferTime" step="0.1" value="2" min="0" onchange="validateCapacity(); updateRuntimeDisplay()">
                             </div>
                         </div>
                         <div class="form-group">
                             <label for="minHeadway">Min Arrival Headway:</label>
-                            <input type="number" id="minHeadway" step="0.1" value="3.0">
-                            <div class="help-text">Minimum time between arrivals</div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-title">Per Floor Configuration</div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="numFloors">Number of Floors:</label>
-                                <input type="number" id="numFloors" min="2" max="10" value="2" onchange="generateRateInputs(); updateRuntimeDisplay()">
-                            </div>
-                            <div class="form-group">
-                                <label for="lobbyFloor">Lobby Floor:</label>
-                                <input type="number" id="lobbyFloor" min="1" value="1" onchange="generateRateInputs(); updateRuntimeDisplay()">
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 15px;">
-                            <h4 style="color: #354e8d; margin-bottom: 12px; font-size: 1rem; font-weight: 600; text-align: center; padding: 8px; background: linear-gradient(135deg, #f8fbff 0%, #e3f1f7 100%); border-radius: 6px; border: 1px solid #d1e7f0;">Traffic Rates (cars per hour)</h4>
-                            <div class="rates-container" id="ratesContainer">
-                                <!-- Rates will be generated dynamically -->
-                            </div>
-                        </div>
-                        
-                        <div id="capacityWarning" class="capacity-warning" style="display: none;">
-                            <strong>Warning:</strong> <span id="capacityMessage"></span>
-                            <br><small>Reduce traffic rates or improve lift timing parameters</small>
+                            <input type="number" id="minHeadway" step="0.1" min="0" value="3.0">
+                            <div class="help-text">Minimum time between consecutive arrivals</div>
                         </div>
                     </div>
 
@@ -97,61 +128,60 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="simHours">Simulation Hours:</label>
-                                <input type="number" id="simHours" step="1" min="1" max="10000" value="1000" onchange="calculateSampleSize(); updateRuntimeDisplay()">
+                                <input type="number" id="simHours" step="1" min="1" max="2000" value="1000" onchange="calculateSampleSize(); updateRuntimeDisplay()">
                             </div>
                             <div class="form-group">
                                 <label for="numSeeds">Number of Seeds:</label>
-                                <input type="number" id="numSeeds" min="1" max="1000" value="130" onchange="updateRuntimeDisplay()">
+                                <input type="number" id="numSeeds" min="1" max="10000" value="130" onchange="calculateSampleSize(); updateRuntimeDisplay()">
                             </div>
                         </div>
-                        <div class="form-row single">
+                        <div class="form-row">
                             <div class="form-group">
                                 <label for="seedMode">Seed Mode:</label>
                                 <select id="seedMode">
                                     <option value="fixed" selected>Fixed (Reproducible)</option>
                                     <option value="random">Random</option>
                                 </select>
-                                <div class="help-text">Fixed: Same results every run | Random: Different results every run</div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Estimated Runtime:</label>
-                            <div id="runtimeEstimate" class="help-text" style="font-weight: 600;">Calculating...</div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-title">Sample Size Calculator</div>
-                        <p style="margin-bottom: 6px; font-size: 0.85rem; color: #666;">Calculate minimum seeds for statistical confidence</p>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="confidenceLevel">Confidence Level:</label>
-                                <select id="confidenceLevel" onchange="calculateSampleSize()">
-                                    <option value="90">90%</option>
-                                    <option value="95">95%</option>
-                                    <option value="99">99%</option>
-                                    <option value="99.9" selected>99.9%</option>
-                                    <option value="99.99">99.99%</option>
-                                </select>
                             </div>
                             <div class="form-group">
-                                <label for="marginError">Margin (cars/hour):</label>
-                                <input type="number" id="marginError" value="0.05" min="0.01" step="0.01" onchange="calculateSampleSize()">
+                                <label>Estimated Runtime:</label>
+                                <div id="runtimeEstimate" class="help-text" style="font-weight: 600;">Calculating...</div>
                             </div>
                         </div>
                         
-                        <div id="sampleSizeResult" class="sample-result">
-                            Calculating minimum seeds...
-                        </div>
-                        
-                        <div style="display: flex; gap: 8px; margin-top: 6px;">
-                            <button class="apply-sample-btn" id="applySampleBtn" onclick="useRecommendedSeeds()" style="display: none; flex: 1;">
-                                Apply Recommended Seeds
-                            </button>
-                            <button class="apply-sample-btn" onclick="useMinimumSeeds()" style="flex: 1;">
-                                Use Minimum (130 Seeds)
-                            </button>
+                        <div class="sample-calculator">
+                            <h4 style="color: #354e8d; margin-bottom: 8px; font-size: 0.95rem; font-weight: 600;">Sample Size Calculator</h4>
+                            <p style="margin-bottom: 8px; font-size: 0.8rem; color: #666;">Calculate minimum seeds for statistical confidence</p>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="confidenceLevel">Confidence Level:</label>
+                                    <select id="confidenceLevel" onchange="calculateSampleSize()">
+                                        <option value="90">90%</option>
+                                        <option value="95">95%</option>
+                                        <option value="99">99%</option>
+                                        <option value="99.9" selected>99.9%</option>
+                                        <option value="99.99">99.99%</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="marginError">Error Margin (cars/hour):</label>
+                                    <input type="number" id="marginError" value="0.05" min="0.01" step="0.01" onchange="calculateSampleSize()">
+                                </div>
+                            </div>
+                            
+                            <div id="sampleSizeResult" class="sample-result">
+                                Calculating minimum seeds...
+                            </div>
+                            
+                            <div class="sample-actions">
+                                <button id="applySampleSize" class="apply-sample-btn">
+                                    Use Minimum Seeds
+                                </button>
+                                <div class="current-seeds-info">
+                                    Current: <span id="currentSeedsDisplay">130</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -185,6 +215,11 @@
     </div>
 
     <script>
+        // Global variables
+        let recommendedSeeds = 0;
+        let theoreticalMinUtilization = 0;
+        let theoreticalMaxUtilization = 0;
+
         // Authentication check on page load
         document.addEventListener('DOMContentLoaded', async () => {
             // Give common.js time to load manifest and handle authentication
@@ -203,6 +238,9 @@
             
             // Initialize
             resetForm();
+            
+            // Setup apply sample size button
+            document.getElementById('applySampleSize').addEventListener('click', applySampleSize);
         });
 
         function isValidToken(token) {
@@ -214,6 +252,54 @@
             } catch {
                 return false;
             }
+        }
+
+        function validateAndParseFloat(elementId, min = 0, max = Infinity, defaultValue = null) {
+            const element = document.getElementById(elementId);
+            const value = parseFloat(element.value);
+            
+            if (isNaN(value)) {
+                if (defaultValue !== null) {
+                    element.value = defaultValue;
+                    element.style.borderColor = '';
+                    return defaultValue;
+                } else {
+                    element.style.borderColor = '#d4691e';
+                    throw new Error(`Invalid value for ${elementId}: must be a number`);
+                }
+            }
+            
+            if (value < min || value > max) {
+                element.style.borderColor = '#d4691e';
+                throw new Error(`${elementId} must be between ${min} and ${max}`);
+            }
+            
+            element.style.borderColor = ''; // Reset border
+            return value;
+        }
+
+        function validateAndParseInt(elementId, min = 1, max = Infinity, defaultValue = null) {
+            const element = document.getElementById(elementId);
+            const value = parseInt(element.value);
+            
+            if (isNaN(value)) {
+                if (defaultValue !== null) {
+                    element.value = defaultValue;
+                    element.style.borderColor = '';
+                    return defaultValue;
+                } else {
+                    element.style.borderColor = '#d4691e';
+                    throw new Error(`Invalid value for ${elementId}: must be a whole number`);
+                }
+            }
+            
+            if (value < min || value > max) {
+                element.style.borderColor = '#d4691e';
+                throw new Error(`${elementId} must be between ${min} and ${max}`);
+            }
+            
+            element.style.borderColor = ''; // Reset border
+            return value;
         }
 
         // Update runtime display when parameters change
@@ -249,8 +335,8 @@
             for (let f = 1; f <= 10; f++) {
                 const arrivalInput = document.getElementById(`arrivalRate${f}`);
                 const departureInput = document.getElementById(`departureRate${f}`);
-                if (arrivalInput) existingRates[`arrival_${f}`] = parseFloat(arrivalInput.value) || 15;
-                if (departureInput) existingRates[`departure_${f}`] = parseFloat(departureInput.value) || 15;
+                if (arrivalInput) existingRates[`arrival_${f}`] = parseFloat(arrivalInput.value);
+                if (departureInput) existingRates[`departure_${f}`] = parseFloat(departureInput.value);
             }
             
             // Update lobby floor max and adjust if necessary
@@ -273,14 +359,6 @@
                 
                 if (f === lobbyFloor) {
                     rateRow.className = 'rate-row lobby-row';
-                    rateRow.style.cssText = `
-                        background: linear-gradient(135deg, #e8f4f8 0%, #d4ebf2 100%);
-                        border: 2px solid #b8dae6;
-                        border-radius: 6px;
-                        padding: 6px;
-                        margin: 3px 0;
-                        box-shadow: 0 1px 3px rgba(52, 78, 141, 0.1);
-                    `;
                     rateRow.innerHTML = `
                         <div style="display: flex; align-items: center; margin-bottom: 4px;">
                             <span style="display: inline-block; width: 8px; height: 8px; background: #6b99c2; border-radius: 50%; margin-right: 6px;"></span>
@@ -299,15 +377,11 @@
                     `;
                 } else {
                     rateRow.className = 'rate-row traffic-row';
-                    rateRow.style.cssText = `
-                        background: linear-gradient(135deg, #f8fbff 0%, #f0f7fb 100%);
-                        border: 1px solid #d1e7f0;
-                        border-radius: 4px;
-                        padding: 6px;
-                        margin: 3px 0;
-                        box-shadow: 0 1px 2px rgba(52, 78, 141, 0.06);
-                        transition: all 0.2s ease;
-                    `;
+                    
+                    // Set default values to 15 if no existing values
+                    const defaultArrival = existingRates[`arrival_${f}`] !== undefined ? existingRates[`arrival_${f}`] : 15;
+                    const defaultDeparture = existingRates[`departure_${f}`] !== undefined ? existingRates[`departure_${f}`] : 15;
+                    
                     rateRow.innerHTML = `
                         <div style="display: flex; align-items: center; margin-bottom: 4px;">
                             <span style="display: inline-block; width: 6px; height: 6px; background: #a3c9e0; border-radius: 50%; margin-right: 6px;"></span>
@@ -315,13 +389,13 @@
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
                             <div style="background: rgba(255,255,255,0.9); padding: 4px; border-radius: 3px; border: 1px solid #e1ecf0;">
-                                <label style="display: block; font-size: 0.65em; color: #5a7ba3; margin-bottom: 1px; font-weight: 500;">→ Arrivals:</label>
-                                <input type="number" id="arrivalRate${f}" step="0.1" value="${existingRates[`arrival_${f}`] || 15}" min="0" onchange="validateCapacity(); updateRuntimeDisplay()" 
+                                <label style="display: block; font-size: 0.65em; color: #5a7ba3; margin-bottom: 1px; font-weight: 500;">L→${f} Arrivals:</label>
+                                <input type="number" id="arrivalRate${f}" step="0.1" value="${defaultArrival}" min="0" onchange="updateTotalTraffic(); validateCapacity(); updateRuntimeDisplay()" 
                                        style="width: 100%; padding: 2px 3px; border: 1px solid #c5dae5; border-radius: 2px; font-size: 0.75rem; text-align: center; background: #fff;">
                             </div>
                             <div style="background: rgba(255,255,255,0.9); padding: 4px; border-radius: 3px; border: 1px solid #e1ecf0;">
-                                <label style="display: block; font-size: 0.65em; color: #5a7ba3; margin-bottom: 1px; font-weight: 500;">← Departures:</label>
-                                <input type="number" id="departureRate${f}" step="0.1" value="${existingRates[`departure_${f}`] || 15}" min="0" onchange="validateCapacity(); updateRuntimeDisplay()" 
+                                <label style="display: block; font-size: 0.65em; color: #5a7ba3; margin-bottom: 1px; font-weight: 500;">${f}→L Departures:</label>
+                                <input type="number" id="departureRate${f}" step="0.1" value="${defaultDeparture}" min="0" onchange="updateTotalTraffic(); validateCapacity(); updateRuntimeDisplay()" 
                                        style="width: 100%; padding: 2px 3px; border: 1px solid #c5dae5; border-radius: 2px; font-size: 0.75rem; text-align: center; background: #fff;">
                             </div>
                         </div>
@@ -347,10 +421,31 @@
             }
             
             setTimeout(() => {
+                updateTotalTraffic();
                 validateCapacity();
                 calculateSampleSize();
                 updateRuntimeDisplay();
             }, 100);
+        }
+
+        function updateTotalTraffic() {
+            try {
+                const numFloors = parseInt(document.getElementById('numFloors').value);
+                const lobbyFloor = parseInt(document.getElementById('lobbyFloor').value);
+                
+                let totalTrafficRate = 0;
+                for (let f = 1; f <= numFloors; f++) {
+                    if (f === lobbyFloor) continue;
+                    const arrivalInput = document.getElementById(`arrivalRate${f}`);
+                    const departureInput = document.getElementById(`departureRate${f}`);
+                    if (arrivalInput) totalTrafficRate += parseFloat(arrivalInput.value) || 0;
+                    if (departureInput) totalTrafficRate += parseFloat(departureInput.value) || 0;
+                }
+                
+                document.getElementById('totalTrafficDisplay').textContent = totalTrafficRate.toFixed(1);
+            } catch (error) {
+                document.getElementById('totalTrafficDisplay').textContent = '0.0';
+            }
         }
 
         function getZScoreForConfidence(confidenceLevel) {
@@ -361,76 +456,129 @@
                 99.9: 3.291,
                 99.99: 3.891
             };
-            return zScores[confidenceLevel] || 3.291;
+            return zScores[confidenceLevel];
         }
 
         function calculateSampleSize() {
-            const numFloors = parseInt(document.getElementById('numFloors').value) || 2;
-            const lobbyFloor = parseInt(document.getElementById('lobbyFloor').value) || 1;
-            const simHours = parseFloat(document.getElementById('simHours').value) || 1000;
-            const confidenceLevel = parseFloat(document.getElementById('confidenceLevel').value) || 99.9;
-            const marginError = parseFloat(document.getElementById('marginError').value) || 0.05;
-            
-            const zScore = getZScoreForConfidence(confidenceLevel);
-            
-            // Calculate total traffic rate
-            let totalTrafficRate = 0;
-            for (let f = 1; f <= numFloors; f++) {
-                if (f === lobbyFloor) continue;
-                const arrivalInput = document.getElementById(`arrivalRate${f}`);
-                const departureInput = document.getElementById(`departureRate${f}`);
-                if (arrivalInput) totalTrafficRate += parseFloat(arrivalInput.value) || 0;
-                if (departureInput) totalTrafficRate += parseFloat(departureInput.value) || 0;
-            }
-            
-            if (totalTrafficRate === 0) {
-                document.getElementById('sampleSizeResult').textContent = 'No traffic configured';
-                document.getElementById('applySampleBtn').style.display = 'none';
-                return;
-            }
-            
-            // Standard deviation based on square root of traffic rate (Poisson approximation)
-            const estimatedStdDev = Math.sqrt(totalTrafficRate);
-            
-            // Sample size calculation: n = (Z * σ / E)²
-            const minSampleSize = Math.ceil(Math.pow((zScore * estimatedStdDev) / marginError, 2));
-            const adjustedSampleSize = Math.ceil(minSampleSize / simHours);
-            const recommendedSeeds = Math.max(adjustedSampleSize, 130);
-            const currentSeeds = parseInt(document.getElementById('numSeeds').value) || 200;
-            
-            const resultDiv = document.getElementById('sampleSizeResult');
-            const applyBtn = document.getElementById('applySampleBtn');
-            
-            resultDiv.innerHTML = `
-                <strong>Minimum ${recommendedSeeds} seeds required</strong><br>
-                <small>(${confidenceLevel}% confidence, Z=${zScore.toFixed(3)}, σ√${totalTrafficRate}=${estimatedStdDev.toFixed(2)})</small>
-            `;
-            
-            if (currentSeeds < recommendedSeeds) {
-                resultDiv.style.borderColor = '#a3c9e0';
-                resultDiv.style.background = 'rgba(163, 201, 224, 0.1)';
-                applyBtn.style.display = 'block';
-            } else {
-                resultDiv.style.borderColor = '#6b99c2';
-                resultDiv.style.background = 'rgba(107, 153, 194, 0.1)';
-                resultDiv.innerHTML += '<br><small style="color: #6b99c2;">✓ Current seeds adequate</small>';
-                applyBtn.style.display = 'none';
+            try {
+                const confidenceLevel = validateAndParseFloat('confidenceLevel');
+                const marginError = validateAndParseFloat('marginError', 0.01);
+                const simHours = validateAndParseFloat('simHours', 1);
+                const numFloors = validateAndParseInt('numFloors', 2, 10);
+                const lobbyFloor = validateAndParseInt('lobbyFloor', 1, numFloors);
+                const currentSeeds = parseInt(document.getElementById('numSeeds').value) || 130;
+                
+                // Calculate total traffic rate
+                let totalTrafficRate = 0;
+                for (let f = 1; f <= numFloors; f++) {
+                    if (f === lobbyFloor) continue;
+                    const arrivalInput = document.getElementById(`arrivalRate${f}`);
+                    const departureInput = document.getElementById(`departureRate${f}`);
+                    if (arrivalInput) totalTrafficRate += parseFloat(arrivalInput.value) || 0;
+                    if (departureInput) totalTrafficRate += parseFloat(departureInput.value) || 0;
+                }
+                
+                // Handle zero traffic case
+                if (totalTrafficRate === 0) {
+                    const resultDiv = document.getElementById('sampleSizeResult');
+                    const currentSeedsDisplay = document.getElementById('currentSeedsDisplay');
+                    const applyButton = document.getElementById('applySampleSize');
+                    
+                    if (currentSeedsDisplay) {
+                        currentSeedsDisplay.textContent = currentSeeds;
+                    }
+                    
+                    resultDiv.innerHTML = `
+                        <strong>Sample size calculation not applicable</strong><br>
+                        <small style="color: #999;">Zero traffic rate - no statistical analysis needed</small>
+                    `;
+                    resultDiv.style.borderColor = '#999';
+                    resultDiv.style.background = 'rgba(153, 153, 153, 0.1)';
+                    
+                    if (applyButton) {
+                        applyButton.disabled = true;
+                        applyButton.textContent = 'N/A for Zero Rate';
+                        applyButton.style.background = '#95a5a6';
+                    }
+                    return;
+                }
+                
+                const zScore = getZScoreForConfidence(confidenceLevel);
+                const estimatedStdDev = Math.sqrt(totalTrafficRate);
+                const minSampleSize = Math.ceil(Math.pow((zScore * estimatedStdDev) / marginError, 2));
+                const adjustedSampleSize = Math.ceil(minSampleSize / simHours);
+                recommendedSeeds = Math.max(adjustedSampleSize, 1);
+                
+                const resultDiv = document.getElementById('sampleSizeResult');
+                const currentSeedsDisplay = document.getElementById('currentSeedsDisplay');
+                const applyButton = document.getElementById('applySampleSize');
+                
+                // Update current seeds display
+                if (currentSeedsDisplay) {
+                    currentSeedsDisplay.textContent = currentSeeds;
+                }
+                
+                resultDiv.innerHTML = `
+                    <strong>Minimum ${recommendedSeeds} seeds required</strong><br>
+                    <small>(${confidenceLevel}% confidence, Z=${zScore.toFixed(3)}, σ=√${totalTrafficRate}=${estimatedStdDev.toFixed(2)})</small>
+                `;
+                
+                // Update button state and styling
+                if (applyButton) {
+                    if (currentSeeds < recommendedSeeds) {
+                        resultDiv.style.borderColor = '#d4691e';
+                        resultDiv.style.background = 'rgba(212, 105, 30, 0.1)';
+                        resultDiv.innerHTML += '<br><small style="color: #d4691e;">⚠ Currently below recommended seeds.</small>';
+                        
+                        applyButton.disabled = false;
+                        applyButton.textContent = `Use ${recommendedSeeds} Seeds`;
+                        applyButton.style.background = '#d4691e';
+                    } else if (currentSeeds === recommendedSeeds) {
+                        resultDiv.style.borderColor = '#6b99c2';
+                        resultDiv.style.background = 'rgba(107, 153, 194, 0.1)';
+                        resultDiv.innerHTML += '<br><small style="color: #6b99c2;">✓ Current seeds exactly at minimum</small>';
+                        
+                        applyButton.disabled = true;
+                        applyButton.textContent = 'Already at Minimum';
+                        applyButton.style.background = '#95a5a6';
+                    } else {
+                        resultDiv.style.borderColor = '#6b99c2';
+                        resultDiv.style.background = 'rgba(107, 153, 194, 0.1)';
+                        resultDiv.innerHTML += '<br><small style="color: #6b99c2;">✓ Current seeds adequate</small>';
+                        
+                        applyButton.disabled = false;
+                        applyButton.textContent = `Use ${recommendedSeeds} Seeds`;
+                        applyButton.style.background = '#6b99c2';
+                    }
+                }
+                
+            } catch (error) {
+                const resultDiv = document.getElementById('sampleSizeResult');
+                resultDiv.innerHTML = `<span style="color: #d4691e;">⚠️ ${error.message}</span>`;
+                resultDiv.style.borderColor = '#d4691e';
+                resultDiv.style.background = 'rgba(212, 105, 30, 0.1)';
             }
         }
 
-        function useMinimumSeeds() {
-            document.getElementById('numSeeds').value = 130;
-            calculateSampleSize();
-            updateRuntimeDisplay();
-        }
-
-        function useRecommendedSeeds() {
-            const recommendedText = document.getElementById('sampleSizeResult').textContent;
-            const match = recommendedText.match(/(\d+)/);
-            if (match) {
-                document.getElementById('numSeeds').value = parseInt(match[1]);
-                calculateSampleSize();
+        function applySampleSize() {
+            if (recommendedSeeds > 0) {
+                const numSeedsInput = document.getElementById('numSeeds');
+                const oldValue = numSeedsInput.value;
+                numSeedsInput.value = recommendedSeeds;
+                
+                // Add visual feedback class
+                numSeedsInput.classList.add('seeds-updated');
+                
+                // Trigger change events to update other dependent calculations
                 updateRuntimeDisplay();
+                calculateSampleSize();
+                
+                // Remove visual feedback after 2 seconds
+                setTimeout(() => {
+                    numSeedsInput.classList.remove('seeds-updated');
+                }, 2000);
+                
+                console.log(`Applied sample size: ${oldValue} → ${recommendedSeeds} seeds`);
             }
         }
 
@@ -443,7 +591,8 @@
             const parameters = collectParameters();
             
             try {
-                const response = await fetch('/api/carlift', {
+                const apiUrl = window.API_CONFIG?.endpoints?.carlift || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/carlift';
+const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -465,25 +614,33 @@
                 
                 if (data.success) {
                     const validation = data.validation;
-                    const warningDiv = document.getElementById('capacityWarning');
-                    const messageSpan = document.getElementById('capacityMessage');
+                    const warningDiv = document.getElementById('utilizationWarning');
+                    const messageSpan = document.getElementById('utilizationMessage');
                     const runButton = document.getElementById('runButton');
+                    const utilizationDisplay = document.getElementById('utilizationDisplay');
                     
                     // Store for later use in results display
-                    window.theoreticalMinUtilization = validation.minimum;
-                    window.theoreticalMaxUtilization = validation.maximum;
+                    theoreticalMinUtilization = validation.minimum;
+                    theoreticalMaxUtilization = validation.maximum;
+                    
+                    // Update utilization display
+                    utilizationDisplay.textContent = `${validation.minimum.toFixed(1)}% - ${validation.maximum.toFixed(1)}%`;
                     
                     if (validation.maxExceedsCapacity) {
                         warningDiv.style.display = 'block';
                         
                         if (validation.capacityExceeded) {
+                            warningDiv.style.borderColor = '#d4691e';
+                            warningDiv.style.background = 'rgba(212, 105, 30, 0.1)';
                             runButton.classList.add('btn-disabled');
                             runButton.disabled = true;
-                            messageSpan.innerHTML = `Maximum lift utilization would be ${validation.maximum.toFixed(1)}%<br>Minimum lift utilization would be ${validation.minimum.toFixed(1)}%<br><strong>Even optimal dispatching cannot handle this traffic load</strong>`;
+                            messageSpan.innerHTML = `<strong>Even optimal dispatching cannot handle this traffic load</strong>`;
                         } else {
+                            warningDiv.style.borderColor = '#f39c12';
+                            warningDiv.style.background = 'rgba(243, 156, 18, 0.1)';
                             runButton.classList.remove('btn-disabled');
                             runButton.disabled = false;
-                            messageSpan.innerHTML = `Maximum lift utilization would be ${validation.maximum.toFixed(1)}%<br>Minimum lift utilization: ${validation.minimum.toFixed(1)}%<br><strong>Traffic may be manageable with optimal dispatching</strong>`;
+                            messageSpan.innerHTML = `<strong>Traffic may be manageable with optimal dispatching</strong>`;
                         }
                     } else {
                         warningDiv.style.display = 'none';
@@ -514,16 +671,16 @@
             return {
                 numFloors,
                 lobbyFloor,
-                simHours: parseFloat(document.getElementById('simHours').value) || 1000,
-                numSeeds: parseInt(document.getElementById('numSeeds').value) || 100,
+                simHours: parseFloat(document.getElementById('simHours').value),
+                numSeeds: parseInt(document.getElementById('numSeeds').value),
                 seedMode: document.getElementById('seedMode').value,
-                doorOpenTime: parseFloat(document.getElementById('doorOpenTime').value) || 5,
-                doorCloseTime: parseFloat(document.getElementById('doorCloseTime').value) || 5,
-                enterTime: parseFloat(document.getElementById('enterTime').value) || 15,
-                exitTime: parseFloat(document.getElementById('exitTime').value) || 15,
-                verticalSpeed: parseFloat(document.getElementById('verticalSpeed').value) || 20,
-                bufferTime: parseFloat(document.getElementById('bufferTime').value) || 2,
-                minHeadway: parseFloat(document.getElementById('minHeadway').value) || 3,
+                doorOpenTime: parseFloat(document.getElementById('doorOpenTime').value),
+                doorCloseTime: parseFloat(document.getElementById('doorCloseTime').value),
+                enterTime: parseFloat(document.getElementById('enterTime').value),
+                exitTime: parseFloat(document.getElementById('exitTime').value),
+                verticalSpeed: parseFloat(document.getElementById('verticalSpeed').value),
+                bufferTime: parseFloat(document.getElementById('bufferTime').value),
+                minHeadway: parseFloat(document.getElementById('minHeadway').value),
                 arrivalRates,
                 departureRates
             };
@@ -531,43 +688,77 @@
 
         function generateValidationCheck(result, parameters) {
             // Calculate input arrival rate for comparison
-            let inputArrivalRate = 0;
+            let inputTrafficRate = 0;
             for (let f = 1; f <= result.numFloors; f++) {
                 if (f === result.lobbyFloor) continue;
-                inputArrivalRate += parameters.arrivalRates[f] || 0;
-                inputArrivalRate += parameters.departureRates[f] || 0;
+                inputTrafficRate += parameters.arrivalRates[f] || 0;
+                inputTrafficRate += parameters.departureRates[f] || 0;
             }
             
             const marginError = parseFloat(document.getElementById('marginError').value) || 0.05;
-            const error = Math.abs(inputArrivalRate - result.actualArrivalRate);
+            const error = Math.abs(inputTrafficRate - result.actualArrivalRate);
             const validationPassed = error <= marginError;
             
             return `
-                <div class="validation-section ${validationPassed ? '' : 'error'}">
-                    <h4>${validationPassed ? '✅' : '⚠️'} Arrival Rate Validation</h4>
-                    <ul class="validation-list">
-                        <li><strong>Input Rate:</strong> ${inputArrivalRate.toFixed(2)} cars/hour</li>
-                        <li><strong>Simulation Rate:</strong> ${result.actualArrivalRate.toFixed(2)} cars/hour</li>
-                        <li><strong>Difference:</strong> ${error.toFixed(3)} cars/hour</li>
-                        <li><strong>Status:</strong> ${validationPassed ? 'Rates validated successfully' : 'Rates outside margin'} (±${marginError} cars/hour)</li>
-                    </ul>
-                </div>
+                <h4>${validationPassed ? '✅' : '⚠️'} Traffic Rate Validation</h4>
+                <ul class="validation-list">
+                    <li><strong>Expected:</strong> ${inputTrafficRate.toFixed(2)} cars/hr</li>
+                    <li><strong>Actual:</strong> ${result.actualArrivalRate.toFixed(2)} cars/hr</li>
+                    <li><strong>Error:</strong> ${error.toFixed(3)} cars/hr</li>
+                    <li><strong>Status:</strong> ${validationPassed ? 'Rate validated successfully' : 'Rate outside margin'} (±${marginError})</li>
+                </ul>
             `;
         }
 
         function displayResults(result, parameters) {
             const content = document.getElementById('resultsContent');
             const totalSimTime = result.simHours * 3600;
+            const validationCheck = generateValidationCheck(result, parameters);
+            
+            // Build traffic rates summary for input display
+            let trafficRatesSummary = '';
+            for (let f = 1; f <= result.numFloors; f++) {
+                if (f === result.lobbyFloor) continue;
+                const arrivals = parameters.arrivalRates[f] || 0;
+                const departures = parameters.departureRates[f] || 0;
+                if (arrivals > 0 || departures > 0) {
+                    trafficRatesSummary += `Floor ${f}: ${arrivals} + ${departures} cars/hr; `;
+                }
+            }
+            trafficRatesSummary = trafficRatesSummary.slice(0, -2); // Remove last "; "
             
             let html = `
-                <div class="summary-note">
-                    Results from ${result.simHours.toFixed(0)} hours × ${result.numSeeds} seeds analysed and averaged below
-                </div>
-
-                ${generateValidationCheck(result, parameters)}
-                
-                <div class="utilisation-checkpoint">
-                    Utilisation Rate: ${result.utilizationRate.toFixed(2)}%
+                <div class="cards-container" style="margin-bottom: 20px;">
+                    <div class="card">
+                        <h4 class="card-title">Input Parameters</h4>
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                            <div style="font-size: 0.9rem; color: #495057;">
+                                <strong style="color: #354e8d;">Model:</strong> Car Lift System (${result.numFloors} floors)
+                            </div>
+                            <div style="font-size: 0.9rem; color: #495057;">
+                                <strong style="color: #354e8d;">Lobby Floor:</strong> ${result.lobbyFloor}
+                            </div>
+                            <div style="font-size: 0.9rem; color: #495057;">
+                                <strong style="color: #354e8d;">Traffic Rates IN+OUT:</strong> ${trafficRatesSummary}
+                            </div>
+                            <div style="font-size: 0.9rem; color: #495057;">
+                                <strong style="color: #354e8d;">Door Times:</strong> Open ${parameters.doorOpenTime}s, Close ${parameters.doorCloseTime}s
+                            </div>
+                            <div style="font-size: 0.9rem; color: #495057;">
+                                <strong style="color: #354e8d;">Movement:</strong> Enter ${parameters.enterTime}s, Exit ${parameters.exitTime}s
+                            </div>
+                            <div style="font-size: 0.9rem; color: #495057;">
+                                <strong style="color: #354e8d;">Travel:</strong> ${parameters.verticalSpeed}s/floor + ${parameters.bufferTime}s buffer
+                            </div>
+                            <div style="font-size: 0.9rem; color: #495057;">
+                                <strong style="color: #354e8d;">Simulation:</strong> ${result.simHours.toFixed(0)}h × ${result.numSeeds} seeds
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        ${validationCheck}
+                    </div>
                 </div>
                 
                 <div class="tables-container" style="grid-template-columns: 1fr 1fr 1fr;">
@@ -582,23 +773,23 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td style="text-align: left; font-weight: 600;">Served/Hour</td>
+                                    <td style="text-align: left; font-weight: 600;">Cars Served/Hour</td>
                                     <td>${(result.served / result.simHours).toFixed(2)}</td>
                                 </tr>
                                 <tr>
-                                    <td style="text-align: left; font-weight: 600;">Min Utilization</td>
-                                    <td>${(window.theoreticalMinUtilization || 0).toFixed(2)}%</td>
+                                    <td style="text-align: left; font-weight: 600;">Min Utilisation</td>
+                                    <td>${(theoreticalMinUtilization || 0).toFixed(2)}%</td>
                                 </tr>
                                 <tr>
-                                    <td style="text-align: left; font-weight: 600;">Max Utilization</td>
-                                    <td>${(window.theoreticalMaxUtilization || 0).toFixed(2)}%</td>
-                                </tr>
-                                <tr>
-                                    <td style="text-align: left; font-weight: 600;">Actual Utilization</td>
+                                    <td style="text-align: left; font-weight: 600;">Actual Utilisation</td>
                                     <td>${result.utilizationRate.toFixed(2)}%</td>
                                 </tr>
                                 <tr>
-                                    <td style="text-align: left; font-weight: 600;">Cars Served</td>
+                                    <td style="text-align: left; font-weight: 600;">Max Utilisation</td>
+                                    <td>${(theoreticalMaxUtilization || 0).toFixed(2)}%</td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align: left; font-weight: 600;">Total Cars Served</td>
                                     <td>${formatScientific(result.served * result.numSeeds)}</td>
                                 </tr>
                                 <tr>
@@ -623,42 +814,42 @@
                                 <tr>
                                     <td>Idle</td>
                                     <td>${(((result.stateTimeTracking?.IDLE || 0) / totalSimTime) * 100).toFixed(1)}%</td>
-                                    <td>${((result.stateTimeTracking?.IDLE || 0) / result.simHours / 60).toFixed(0)}</td>
+                                    <td>${((result.stateTimeTracking?.IDLE || 0) / result.simHours / 60).toFixed(1)}</td>
                                 </tr>
                                 <tr>
                                     <td>Opening</td>
                                     <td>${(((result.stateTimeTracking?.DOORS_OPENING || 0) / totalSimTime) * 100).toFixed(1)}%</td>
-                                    <td>${((result.stateTimeTracking?.DOORS_OPENING || 0) / result.simHours / 60).toFixed(0)}</td>
+                                    <td>${((result.stateTimeTracking?.DOORS_OPENING || 0) / result.simHours / 60).toFixed(1)}</td>
                                 </tr>
                                 <tr>
                                     <td>Loading</td>
                                     <td>${(((result.stateTimeTracking?.LOADING || 0) / totalSimTime) * 100).toFixed(1)}%</td>
-                                    <td>${((result.stateTimeTracking?.LOADING || 0) / result.simHours / 60).toFixed(0)}</td>
+                                    <td>${((result.stateTimeTracking?.LOADING || 0) / result.simHours / 60).toFixed(1)}</td>
                                 </tr>
                                 <tr>
                                     <td>Closing</td>
                                     <td>${(((result.stateTimeTracking?.DOORS_CLOSING || 0) / totalSimTime) * 100).toFixed(1)}%</td>
-                                    <td>${((result.stateTimeTracking?.DOORS_CLOSING || 0) / result.simHours / 60).toFixed(0)}</td>
+                                    <td>${((result.stateTimeTracking?.DOORS_CLOSING || 0) / result.simHours / 60).toFixed(1)}</td>
                                 </tr>
                                 <tr>
                                     <td>Moving Empty</td>
                                     <td>${(((result.stateTimeTracking?.MOVING || 0) / totalSimTime) * 100).toFixed(1)}%</td>
-                                    <td>${((result.stateTimeTracking?.MOVING || 0) / result.simHours / 60).toFixed(0)}</td>
+                                    <td>${((result.stateTimeTracking?.MOVING || 0) / result.simHours / 60).toFixed(1)}</td>
                                 </tr>
                                 <tr>
                                     <td>Moving Full</td>
                                     <td>${(((result.stateTimeTracking?.TRAVELING || 0) / totalSimTime) * 100).toFixed(1)}%</td>
-                                    <td>${((result.stateTimeTracking?.TRAVELING || 0) / result.simHours / 60).toFixed(0)}</td>
+                                    <td>${((result.stateTimeTracking?.TRAVELING || 0) / result.simHours / 60).toFixed(1)}</td>
                                 </tr>
                                 <tr>
                                     <td>Exiting</td>
                                     <td>${(((result.stateTimeTracking?.EXITING || 0) / totalSimTime) * 100).toFixed(1)}%</td>
-                                    <td>${((result.stateTimeTracking?.EXITING || 0) / result.simHours / 60).toFixed(0)}</td>
+                                    <td>${((result.stateTimeTracking?.EXITING || 0) / result.simHours / 60).toFixed(1)}</td>
                                 </tr>
                                 <tr>
                                     <td>Leveling Buffer</td>
                                     <td>${(((result.stateTimeTracking?.LEVELING_BUFFER || 0) / totalSimTime) * 100).toFixed(1)}%</td>
-                                    <td>${((result.stateTimeTracking?.LEVELING_BUFFER || 0) / result.simHours / 60).toFixed(0)}</td>
+                                    <td>${((result.stateTimeTracking?.LEVELING_BUFFER || 0) / result.simHours / 60).toFixed(1)}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -704,7 +895,6 @@
             
             // Queue Length Distribution Tables with Hourly Maximum Distribution
             for (let f = 1; f <= result.numFloors; f++) {
-                if (f === result.lobbyFloor) continue; // Skip lobby floor
                 
                 const hist = result.avgQueueStats[f] || {};
                 const totalTime = Object.values(hist).reduce((a, b) => a + b, 0);
@@ -716,7 +906,7 @@
                             <table class="distribution-table">
                                 <thead>
                                     <tr>
-                                        <th>Queue Length</th>
+                                        <th>Cars in Queue</th>
                                         <th>% Time</th>
                                         <th>Cumulative</th>
                                     </tr>
@@ -724,14 +914,21 @@
                                 <tbody>
                     `;
                     
-                    const sortedEntries = Object.entries(hist).sort(([a], [b]) => parseInt(a) - parseInt(b));
+                    // Get all queue lengths and ensure 0 is included
+                    const queueLengths = Object.keys(hist).map(k => parseInt(k)).sort((a, b) => a - b);
+                    if (!queueLengths.includes(0)) {
+                        queueLengths.unshift(0);
+                    }
+                    
                     let cumulative = 0;
                     
-                    for (const [qLen, timeSpent] of sortedEntries) {
+                    for (const qLen of queueLengths) {
+                        const timeSpent = hist[qLen] || 0;
                         const pct = (timeSpent / totalTime * 100);
                         cumulative += pct;
                         
-                        if (pct >= 0.01 && cumulative <= 99.99) {
+                        // Show all rows up to and including 99.99% cumulative
+                        if (cumulative <= 99.99) {
                             html += `
                                 <tr>
                                     <td>${qLen}</td>
@@ -753,14 +950,14 @@
                 const hourlyMaxDist = result.hourlyMaxDistributions && result.hourlyMaxDistributions[f] ? 
                     result.hourlyMaxDistributions[f] : {};
                 
-                if (Object.keys(hourlyMaxDist).length > 0) {
+                if (Object.keys(hourlyMaxDist).length > 0 || result.hourlyMaxDistributions) {
                     html += `
                         <div class="table-section" style="padding: 8px;">
                             <h4 style="color: #354e8d; margin-bottom: 8px; font-size: 1rem; font-weight: 600; text-align: center;">Floor ${f} Hourly Maximum Distribution</h4>
                             <table class="distribution-table">
                                 <thead>
                                     <tr>
-                                        <th>Max/Hour</th>
+                                        <th>Max Cars/Hour</th>
                                         <th>% Hours</th>
                                         <th>Cumulative</th>
                                     </tr>
@@ -768,17 +965,19 @@
                                 <tbody>
                     `;
                     
-                    const sortedMaxes = Object.keys(hourlyMaxDist)
-                        .map(m => parseInt(m))
-                        .sort((a, b) => a - b)
-                        .slice(0, 10);
+                    // Get all max values and ensure 0 is included
+                    const sortedMaxes = Object.keys(hourlyMaxDist).map(m => parseInt(m)).sort((a, b) => a - b);
+                    if (!sortedMaxes.includes(0)) {
+                        sortedMaxes.unshift(0);
+                    }
                     
                     let maxCumulative = 0;
                     for (const max of sortedMaxes) {
-                        const percentage = hourlyMaxDist[max].avg;
+                        const percentage = hourlyMaxDist[max] ? hourlyMaxDist[max].avg : 0;
                         maxCumulative += percentage;
                         
-                        if (percentage > 0.01 && maxCumulative <= 99.99) {
+                        // Show all rows up to and including 99.99% cumulative
+                        if (maxCumulative <= 99.99) {
                             html += `
                                 <tr>
                                     <td>${max}</td>
@@ -812,8 +1011,15 @@
             const runButton = document.getElementById('runButton');
             if (runButton.disabled) return;
 
+            let parameters;
+            try {
+                parameters = collectParameters();
+            } catch (error) {
+                // Error already displayed by collectParameters
+                return;
+            }
+
             const resultsContent = document.getElementById('resultsContent');
-            const parameters = collectParameters();
             const status = document.getElementById('status');
             const progressContainer = document.getElementById('progressContainer');
             const progressFill = document.getElementById('progressFill');
@@ -858,9 +1064,11 @@
             const progressInterval = createRealisticProgress(estimatedMs, progressFill, progressPercentage, progressDetails);
 
             try {
+                
                 const startTime = Date.now();
                 
-                const response = await fetch('/api/carlift', {
+                            const apiUrl = window.API_CONFIG?.endpoints?.carlift || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/carlift';
+const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -898,7 +1106,6 @@
                     progressDetails.textContent = 'Complete!';
                     
                     const actualTimeStr = formatEstimatedTime(actualTime);
-                    
                     
                     status.className = 'status complete';
                     status.textContent = `Simulation completed!`;
@@ -945,7 +1152,7 @@
             document.getElementById('numFloors').value = 2;
             document.getElementById('lobbyFloor').value = 1;
             document.getElementById('simHours').value = 1000;
-            document.getElementById('numSeeds').value = 200;
+            document.getElementById('numSeeds').value = 130;
             document.getElementById('confidenceLevel').value = '99.9';
             document.getElementById('marginError').value = 0.05;
             document.getElementById('seedMode').value = 'fixed';
@@ -958,9 +1165,20 @@
             document.getElementById('bufferTime').value = 2;
             document.getElementById('minHeadway').value = 3;
             
+            // Clear any error styling
+            document.querySelectorAll('input').forEach(input => {
+                input.style.borderColor = '';
+            });
+            
             generateRateInputs();
-            calculateSampleSize();
-            updateRuntimeDisplay();
+            
+            // Initialize displays in the correct order
+            setTimeout(() => {
+                updateTotalTraffic();
+                validateCapacity();
+                calculateSampleSize();
+                updateRuntimeDisplay();
+            }, 100);
             
             document.getElementById('resultsContent').innerHTML = `
                 <div class="no-results">

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Traffic Labb - Sign In</title>
     <link rel="stylesheet" href="/style.css">
-    <script src="/common.js"></script>
+    <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
     
     <!-- Favicons will be injected by common.js -->
     <style>
@@ -445,7 +445,7 @@
                                 <input type="checkbox" id="rememberMe">
                                 <span>Remember me</span>
                             </label>
-                            <a href="#" class="forgot-password" onclick="showComingSoon('Password Reset')">Forgot password?</a>
+                            <a href="/forgot-password/" class="forgot-password">Forgot password?</a>
                         </div>
                         
                         <div class="button-group">
@@ -458,7 +458,7 @@
                     </form>
                     
                     <div class="signup-link">
-                        Don't have an account? <a href="#" onclick="showComingSoon('User Registration')">Sign up</a>
+                        Don't have an account? <a href="/signup/">Sign up</a>
                     </div>
                     
                     <div class="security-note">
@@ -526,15 +526,17 @@
                 errorDiv.style.display = 'none';
                 
                 try {
-                    const response = await fetch('/api/login', {
+                    // Use API_CONFIG if available, fallback to relative URL
+                    const loginUrl = window.API_CONFIG?.endpoints?.login || '/api/login';
+                    const response = await fetch(loginUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ 
-                            username, 
+                        body: JSON.stringify({
+                            username,
                             password,
-                            rememberMe 
+                            rememberMe
                         })
                     });
                     

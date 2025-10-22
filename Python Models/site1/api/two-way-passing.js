@@ -8,11 +8,9 @@ export default async function handler(req, res) {
     const token = authHeader.split(' ')[1];
     
     try {
-      // Simple token validation (decode base64)
       const decoded = Buffer.from(token, 'base64').toString();
       const [timestamp, username] = decoded.split(':');
       
-      // Check if token is less than 24 hours old
       const tokenAge = Date.now() - parseInt(timestamp);
       if (tokenAge > 24 * 60 * 60 * 1000) {
         return res.status(401).json({ error: 'Token expired' });
@@ -29,6 +27,11 @@ export default async function handler(req, res) {
   
     try {
       if (action === 'runSimulation') {
+        const validation = validateParameters(parameters);
+        if (!validation.valid) {
+          return res.status(400).json({ error: validation.error });
+        }
+        
         const results = await runMultipleSimulations(parameters);
         res.json({ success: true, results });
       } else {
@@ -39,7 +42,50 @@ export default async function handler(req, res) {
     }
   }
   
-  // PROTECTED: All simulation logic hidden on server
+  function validateParameters(params) {
+    const {
+      arrivalRateA,
+      arrivalRateB,
+      serviceTime,
+      minGap = 0,
+      minFollowUp = 0
+    } = params;
+    
+    const rateA = arrivalRateA / 3600;
+    const rateB = arrivalRateB / 3600;
+    
+    const meanInterarrivalA = 1 / rateA;
+    const meanInterarrivalB = 1 / rateB;
+    
+    if (minGap > 0) {
+      if (minGap >= meanInterarrivalA * 0.95) {
+        return {
+          valid: false,
+          error: `Queue A: minGap (${minGap}s) is too close to mean interarrival time (${meanInterarrivalA.toFixed(2)}s). Reduce arrival rate or minGap.`
+        };
+      }
+      if (minGap >= meanInterarrivalB * 0.95) {
+        return {
+          valid: false,
+          error: `Queue B: minGap (${minGap}s) is too close to mean interarrival time (${meanInterarrivalB.toFixed(2)}s). Reduce arrival rate or minGap.`
+        };
+      }
+    }
+    
+    const totalArrivalRate = (arrivalRateA + arrivalRateB) / 3600;
+    const serviceRate = 1 / serviceTime;
+    const utilization = totalArrivalRate / serviceRate;
+    
+    if (utilization >= 0.99) {
+      return {
+        valid: false,
+        error: `System utilization (${(utilization * 100).toFixed(1)}%) is too high. Reduce arrival rates or service time.`
+      };
+    }
+    
+    return { valid: true };
+  }
+  
   class QueueSimulation {
     constructor(seed = null) {
       this.seed = seed;
@@ -48,10 +94,14 @@ export default async function handler(req, res) {
       this.queueLengths = [0, 0];
       this.roadOccupied = false;
       this.roadDirection = null;
-      this.carsOnRoad = [];
+      
+      // Optimized: track next departure instead of array of cars
+      this.nextDepartureTime = null;
+      this.nextDepartureDirection = null;
+      this.carsOnRoadCount = 0;
+      
       this.lastEntryTime = [null, null];
       this.queueTime = [{}, {}];
-      this.serverBusyTime = 0;
       this.lastEventTime = 0;
       this.hourlyMaxLength = [];
       
@@ -63,14 +113,18 @@ export default async function handler(req, res) {
       this.arrivalsSame = [0, 0];
       this.arrivalsOpposite = [0, 0];
       
+      // Optimized: use running sums instead of storing all times
       this.totalDelayTime = [0, 0];
       this.queuedDelayTime = [0, 0];
       this.vehicleCount = [0, 0];
       this.queuedVehicleCount = [0, 0];
       
+      // Optimized: FCFS queue using simple objects without unnecessary ID
       this.fcfsQueue = [];
-      this.queuedVehicles = [[], []];
-      this.nextCustomerId = 0;
+      
+      // Optimized: only track counts, not individual vehicles
+      this.queueCounts = [0, 0];
+      
       this.roadOccupancyPeriods = [];
       this.directionalOccupancy = [[], []];
     }
@@ -126,7 +180,14 @@ export default async function handler(req, res) {
     }
   
     exponentialRandom(rate) {
-      return -Math.log(this.rng()) / rate;
+      if (!isFinite(rate) || rate <= 0) {
+        console.warn('Invalid rate in exponentialRandom:', rate);
+        return 1;
+      }
+      
+      const u = this.rng();
+      const safeU = Math.max(u, 1e-10);
+      return -Math.log(safeU) / rate;
     }
   
     adjustedInterarrival(targetRate, minGap) {
@@ -137,10 +198,17 @@ export default async function handler(req, res) {
       const targetMean = 1 / targetRate;
       
       if (minGap >= targetMean) {
+        console.warn('minGap exceeds target mean interarrival time');
         return minGap;
       }
       
       const adjustedMean = targetMean - minGap;
+      
+      if (adjustedMean <= 0) {
+        console.warn('Adjusted mean is non-positive:', adjustedMean);
+        return minGap + 1;
+      }
+      
       const adjustedRate = 1 / adjustedMean;
       
       return minGap + this.exponentialRandom(adjustedRate);
@@ -188,9 +256,17 @@ export default async function handler(req, res) {
       }
       
       const departureTime = currentTime + serviceTime;
-      this.carsOnRoad.push({direction, departureTime});
+      
+      // Optimized: track only next departure
+      this.carsOnRoadCount++;
+      if (this.nextDepartureTime === null || departureTime < this.nextDepartureTime) {
+        this.nextDepartureTime = departureTime;
+        this.nextDepartureDirection = direction;
+      }
+      
       this.lastEntryTime[direction] = currentTime;
       
+      // Optimized: calculate delay immediately, don't store times
       if (arrivalTime !== null) {
         const delay = currentTime - arrivalTime;
         this.totalDelayTime[direction] += delay;
@@ -206,9 +282,28 @@ export default async function handler(req, res) {
     }
   
     updateRoadOccupancy(currentTime) {
-      this.carsOnRoad = this.carsOnRoad.filter(car => car.departureTime > currentTime);
+      // Optimized: check only next departure instead of filtering array
+      if (this.nextDepartureTime !== null && currentTime >= this.nextDepartureTime) {
+        this.carsOnRoadCount--;
+        
+        if (this.carsOnRoadCount === 0) {
+          this.nextDepartureTime = null;
+          this.nextDepartureDirection = null;
+        } else {
+          // Find next departure from event queue
+          this.nextDepartureTime = null;
+          for (const event of this.events) {
+            if (event[1] === 'departure' && event[0] > currentTime) {
+              if (this.nextDepartureTime === null || event[0] < this.nextDepartureTime) {
+                this.nextDepartureTime = event[0];
+                this.nextDepartureDirection = event[2];
+              }
+            }
+          }
+        }
+      }
       
-      if (this.carsOnRoad.length === 0) {
+      if (this.carsOnRoadCount === 0) {
         if (this.roadOccupied) {
           const lastPeriod = this.roadOccupancyPeriods[this.roadOccupancyPeriods.length - 1];
           if (lastPeriod && lastPeriod.end === null) {
@@ -218,13 +313,10 @@ export default async function handler(req, res) {
         }
         this.roadOccupied = false;
         this.roadDirection = null;
-      } else {
-        const newDirection = this.carsOnRoad[0].direction;
-        if (this.roadDirection !== newDirection) {
-          this.closeDirectionalOccupancy(currentTime);
-          this.roadDirection = newDirection;
-          this.directionalOccupancy[newDirection].push({start: currentTime, end: null});
-        }
+      } else if (this.nextDepartureDirection !== null && this.roadDirection !== this.nextDepartureDirection) {
+        this.closeDirectionalOccupancy(currentTime);
+        this.roadDirection = this.nextDepartureDirection;
+        this.directionalOccupancy[this.nextDepartureDirection].push({start: currentTime, end: null});
       }
     }
   
@@ -242,31 +334,49 @@ export default async function handler(req, res) {
   
     selectNextQueue(priorityScheme, currentTime, minFollowUp) {
       if (priorityScheme === 'FCFS') {
+        // Optimized: find first valid customer in one pass
         for (let i = 0; i < this.fcfsQueue.length; i++) {
           const customer = this.fcfsQueue[i];
           if (this.canEnterRoad(customer.direction, currentTime, minFollowUp)) {
-            const removed = this.fcfsQueue.splice(i, 1)[0];
-            return {direction: removed.direction, arrivalTime: removed.arrivalTime};
+            // Remove and return
+            this.fcfsQueue.splice(i, 1);
+            return customer;
           }
         }
         return null;
       } else if (priorityScheme === 'A') {
         if (this.queueLengths[0] > 0 && this.canEnterRoad(0, currentTime, minFollowUp)) {
-          const arrivalTime = this.queuedVehicles[0].shift();
-          return {direction: 0, arrivalTime: arrivalTime};
+          const customer = this.fcfsQueue.find(c => c.direction === 0);
+          if (customer) {
+            const index = this.fcfsQueue.indexOf(customer);
+            this.fcfsQueue.splice(index, 1);
+            return customer;
+          }
         }
         if (this.queueLengths[1] > 0 && this.canEnterRoad(1, currentTime, minFollowUp)) {
-          const arrivalTime = this.queuedVehicles[1].shift();
-          return {direction: 1, arrivalTime: arrivalTime};
+          const customer = this.fcfsQueue.find(c => c.direction === 1);
+          if (customer) {
+            const index = this.fcfsQueue.indexOf(customer);
+            this.fcfsQueue.splice(index, 1);
+            return customer;
+          }
         }
       } else if (priorityScheme === 'B') {
         if (this.queueLengths[1] > 0 && this.canEnterRoad(1, currentTime, minFollowUp)) {
-          const arrivalTime = this.queuedVehicles[1].shift();
-          return {direction: 1, arrivalTime: arrivalTime};
+          const customer = this.fcfsQueue.find(c => c.direction === 1);
+          if (customer) {
+            const index = this.fcfsQueue.indexOf(customer);
+            this.fcfsQueue.splice(index, 1);
+            return customer;
+          }
         }
         if (this.queueLengths[0] > 0 && this.canEnterRoad(0, currentTime, minFollowUp)) {
-          const arrivalTime = this.queuedVehicles[0].shift();
-          return {direction: 0, arrivalTime: arrivalTime};
+          const customer = this.fcfsQueue.find(c => c.direction === 0);
+          if (customer) {
+            const index = this.fcfsQueue.indexOf(customer);
+            this.fcfsQueue.splice(index, 1);
+            return customer;
+          }
         }
       }
       return null;
@@ -297,7 +407,8 @@ export default async function handler(req, res) {
         totalOccupiedTime += endTime - period.start;
       }
       
-      return (totalOccupiedTime / simulationTime) * 100;
+      const utilization = (totalOccupiedTime / simulationTime) * 100;
+      return isFinite(utilization) ? utilization : 0;
     }
   
     calculateDirectionalUtilization(simulationTime) {
@@ -311,8 +422,8 @@ export default async function handler(req, res) {
       }
       
       return [
-        (directionalTimes[0] / simulationTime) * 100,
-        (directionalTimes[1] / simulationTime) * 100
+        isFinite(directionalTimes[0]) ? (directionalTimes[0] / simulationTime) * 100 : 0,
+        isFinite(directionalTimes[1]) ? (directionalTimes[1] / simulationTime) * 100 : 0
       ];
     }
   
@@ -363,15 +474,11 @@ export default async function handler(req, res) {
             this.queueLengths[qIndex]++;
             this.arrivalsQueued[qIndex]++;
             
-            if (priorityScheme === 'FCFS') {
-              this.fcfsQueue.push({
-                arrivalTime: eventTime, 
-                direction: qIndex,
-                id: this.nextCustomerId++
-              });
-            } else {
-              this.queuedVehicles[qIndex].push(eventTime);
-            }
+            // Optimized: simpler queue object
+            this.fcfsQueue.push({
+              arrivalTime: eventTime, 
+              direction: qIndex
+            });
   
             if (this.roadOccupied) {
               if (this.roadDirection === qIndex) {
@@ -414,11 +521,15 @@ export default async function handler(req, res) {
       }
     }
   
+    safeValue(value, defaultValue = 0) {
+      return (isFinite(value) && !isNaN(value)) ? value : defaultValue;
+    }
+  
     calculateResults(simulationTime) {
       const results = {
         queues: [],
-        serverUtilization: this.calculateRoadUtilization(simulationTime),
-        directionalUtilization: this.calculateDirectionalUtilization(simulationTime),
+        serverUtilization: this.safeValue(this.calculateRoadUtilization(simulationTime)),
+        directionalUtilization: this.calculateDirectionalUtilization(simulationTime).map(v => this.safeValue(v)),
         arrivalRates: [],
         delays: [],
         totalArrivals: this.totalArrivals.slice()
@@ -430,7 +541,8 @@ export default async function handler(req, res) {
         
         const lengthPercentages = {};
         for (const [length, time] of Object.entries(this.queueTime[i])) {
-          lengthPercentages[length] = (time / totalTime) * 100;
+          const percentage = totalTime > 0 ? (time / totalTime) * 100 : 0;
+          lengthPercentages[length] = this.safeValue(percentage);
         }
   
         const maxCounts = {};
@@ -440,7 +552,8 @@ export default async function handler(req, res) {
   
         const maxPercentages = {};
         for (const [length, count] of Object.entries(maxCounts)) {
-          maxPercentages[length] = (count / this.numHours) * 100;
+          const percentage = this.numHours > 0 ? (count / this.numHours) * 100 : 0;
+          maxPercentages[length] = this.safeValue(percentage);
         }
   
         results.queues.push({
@@ -449,16 +562,18 @@ export default async function handler(req, res) {
           maxPercentages
         });
   
-        const rateSamePerHour = this.arrivalsSame[i] / (simulationTime / 3600);
-        const rateOppositePerHour = this.arrivalsOpposite[i] / (simulationTime / 3600);
-        const rateNonePerHour = this.arrivalsNone[i] / (simulationTime / 3600);
+        const hoursSimulated = simulationTime / 3600;
+        const rateSamePerHour = hoursSimulated > 0 ? this.arrivalsSame[i] / hoursSimulated : 0;
+        const rateOppositePerHour = hoursSimulated > 0 ? this.arrivalsOpposite[i] / hoursSimulated : 0;
+        const rateNonePerHour = hoursSimulated > 0 ? this.arrivalsNone[i] / hoursSimulated : 0;
+        const totalPerHour = hoursSimulated > 0 ? this.totalArrivals[i] / hoursSimulated : 0;
         
         results.arrivalRates.push({
           name: queueName,
-          sameQueue: rateSamePerHour,
-          oppositeQueue: rateOppositePerHour,
-          noqueue: rateNonePerHour,
-          totalPerHour: this.totalArrivals[i] / (simulationTime / 3600)
+          sameQueue: this.safeValue(rateSamePerHour),
+          oppositeQueue: this.safeValue(rateOppositePerHour),
+          noqueue: this.safeValue(rateNonePerHour),
+          totalPerHour: this.safeValue(totalPerHour)
         });
   
         const avgDelayAllVehicles = this.vehicleCount[i] > 0 ? 
@@ -468,8 +583,8 @@ export default async function handler(req, res) {
   
         results.delays.push({
           name: queueName,
-          avgDelayAll: avgDelayAllVehicles,
-          avgDelayQueued: avgDelayQueuedVehicles,
+          avgDelayAll: this.safeValue(avgDelayAllVehicles),
+          avgDelayQueued: this.safeValue(avgDelayQueuedVehicles),
           totalVehicles: this.vehicleCount[i],
           queuedVehicles: this.queuedVehicleCount[i]
         });
@@ -480,8 +595,10 @@ export default async function handler(req, res) {
   }
   
   async function runMultipleSimulations(params) {
-    const numSeeds = params.numSeeds || 100;
-    const seedMode = params.seedMode || 'fixed';
+    const numSeeds = params.numSeeds;
+    const seedMode = params.seedMode;
+    
+    // Optimized: streaming aggregation instead of storing all results
     let totalServerUtil = 0;
     let totalDirectionalUtil = [0, 0];
   
@@ -511,11 +628,12 @@ export default async function handler(req, res) {
         arrivalRateB: params.arrivalRateB,
         serviceTime: params.serviceTime,
         simulationTime: params.simulationTime,
-        minGap: params.minGap,
-        minFollowUp: params.minFollowUp,
+        minGap: params.minGap || 0,
+        minFollowUp: params.minFollowUp || 0,
         priorityScheme: params.priorityScheme
       });
   
+      // Optimized: accumulate directly without storing
       totalServerUtil += result.serverUtilization;
       totalDirectionalUtil[0] += result.directionalUtilization[0];
       totalDirectionalUtil[1] += result.directionalUtilization[1];
@@ -540,13 +658,18 @@ export default async function handler(req, res) {
         aggregateDelays[j].queuedVehicles += result.delays[j].queuedVehicles;
       }
     }
+    
+    const safeAverage = (value, divisor) => {
+      const result = divisor > 0 ? value / divisor : 0;
+      return (isFinite(result) && !isNaN(result)) ? result : 0;
+    };
   
     const avgResults = {
       queues: [],
-      serverUtilization: totalServerUtil / numSeeds,
+      serverUtilization: safeAverage(totalServerUtil, numSeeds),
       directionalUtilization: [
-        totalDirectionalUtil[0] / numSeeds,
-        totalDirectionalUtil[1] / numSeeds
+        safeAverage(totalDirectionalUtil[0], numSeeds),
+        safeAverage(totalDirectionalUtil[1], numSeeds)
       ],
       arrivalRates: [],
       delays: [],
@@ -558,12 +681,12 @@ export default async function handler(req, res) {
       
       const avgLengthPercentages = {};
       for (const [length, totalPercent] of Object.entries(aggregateQueueTime[i])) {
-        avgLengthPercentages[length] = totalPercent / numSeeds;
+        avgLengthPercentages[length] = safeAverage(totalPercent, numSeeds);
       }
   
       const avgMaxPercentages = {};
       for (const [length, totalPercent] of Object.entries(aggregateMaxCounts[i])) {
-        avgMaxPercentages[length] = totalPercent / numSeeds;
+        avgMaxPercentages[length] = safeAverage(totalPercent, numSeeds);
       }
   
       avgResults.queues.push({
@@ -574,18 +697,18 @@ export default async function handler(req, res) {
   
       avgResults.arrivalRates.push({
         name: queueName,
-        sameQueue: aggregateArrivalRates[i].same / numSeeds,
-        oppositeQueue: aggregateArrivalRates[i].opposite / numSeeds,
-        noqueue: aggregateArrivalRates[i].noqueue / numSeeds,
-        totalPerHour: aggregateArrivalRates[i].total / numSeeds
+        sameQueue: safeAverage(aggregateArrivalRates[i].same, numSeeds),
+        oppositeQueue: safeAverage(aggregateArrivalRates[i].opposite, numSeeds),
+        noqueue: safeAverage(aggregateArrivalRates[i].noqueue, numSeeds),
+        totalPerHour: safeAverage(aggregateArrivalRates[i].total, numSeeds)
       });
   
       avgResults.delays.push({
         name: queueName,
-        avgDelayAll: aggregateDelays[i].delayAll / numSeeds,
-        avgDelayQueued: aggregateDelays[i].delayQueued / numSeeds,
-        totalVehicles: aggregateDelays[i].totalVehicles / numSeeds,
-        queuedVehicles: aggregateDelays[i].queuedVehicles / numSeeds
+        avgDelayAll: safeAverage(aggregateDelays[i].delayAll, numSeeds),
+        avgDelayQueued: safeAverage(aggregateDelays[i].delayQueued, numSeeds),
+        totalVehicles: safeAverage(aggregateDelays[i].totalVehicles, numSeeds),
+        queuedVehicles: safeAverage(aggregateDelays[i].queuedVehicles, numSeeds)
       });
     }
   

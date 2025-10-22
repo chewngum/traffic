@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Traffic Labb - Boom Gate Simulation</title>
     <link rel="stylesheet" href="/style.css">
-    <script src="/common.js"></script>
+    <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
 </head>
 <body>
     <div id="loading" class="loading">
@@ -41,7 +41,6 @@
                             <div class="form-group">
                                 <label for="minHeadway">Min Headway (seconds):</label>
                                 <input type="number" id="minHeadway" value="0" min="0" max="3600" step="0.1">
-                                <!-- <div class="help-text">Minimum time between consecutive arrivals</div> -->
                             </div>
                         </div>
                     </div>
@@ -106,7 +105,6 @@
                                     <option value="fixed" selected>Fixed (Reproducible)</option>
                                     <option value="random">Random</option>
                                 </select>
-                                <!-- <div class="help-text">Fixed: For comparison purposes | Random: Unreliable</div> -->
                             </div>
                         </div>
                         <div class="form-group">
@@ -279,23 +277,18 @@
             font-weight: 600;
         }
 
-        .input-summary-list {
-            list-style: none;
-            margin: 0;
-            padding: 0;
+        .input-summary-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
         }
 
-        .input-summary-list li {
-            margin-bottom: 8px;
+        .input-group {
             font-size: 0.9rem;
             color: #495057;
         }
 
-        .input-summary-list li:last-child {
-            margin-bottom: 0;
-        }
-
-        .input-summary-list strong {
+        .input-group strong {
             color: #354e8d;
             margin-right: 8px;
         }
@@ -351,34 +344,27 @@
     </style>
  
  <script>
-    // Global variable to store recommended seeds
     let recommendedSeeds = 0;
 
     document.addEventListener('DOMContentLoaded', async () => {
-        // Give common.js time to load manifest and handle authentication
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Check if we were redirected or blocked by access control
         if (window.location.pathname !== '/traffic/simulators/boomgate/') {
-            return; // Access was denied, page was redirected
+            return;
         }
         
-        // Check authentication using common.js functions
         const token = localStorage.getItem('authToken');
         if (!token || !isValidToken(token)) {
             window.location.href = '/login/';
             return;
         }
         
-        // Show the app
         document.getElementById('loading').style.display = 'none';
         document.getElementById('app').classList.remove('hidden');
         
-        // Initialize the page
         resetInputs();
-        updateTotalService(); // Ensure this is called after page load
+        updateTotalService();
         
-        // Setup apply sample size button
         document.getElementById('applySampleSize').addEventListener('click', applySampleSize);
     });
 
@@ -388,7 +374,6 @@
             const [timestamp, username, accessLevel] = decoded.split(':');
             const tokenAge = Date.now() - parseInt(timestamp);
             
-            // Use 24 hours as default, or get from manifest if available
             let expiryHours = 24;
             if (window.SITE_MANIFEST?.settings?.tokenExpiry) {
                 expiryHours = window.SITE_MANIFEST.settings.tokenExpiry;
@@ -420,7 +405,7 @@
             throw new Error(`${elementId} must be between ${min} and ${max}`);
         }
         
-        element.style.borderColor = ''; // Reset border
+        element.style.borderColor = '';
         return value;
     }
 
@@ -444,7 +429,7 @@
             throw new Error(`${elementId} must be between ${min} and ${max}`);
         }
         
-        element.style.borderColor = ''; // Reset border
+        element.style.borderColor = '';
         return value;
     }
 
@@ -455,7 +440,7 @@
             const servicePart2 = validateAndParseFloat('servicePart2', 0, 3600);
             
             const avgServiceTime = servicePart1 + servicePart2;
-            const serviceRate = avgServiceTime > 0 ? 3600 / avgServiceTime : Infinity; // cars per hour
+            const serviceRate = avgServiceTime > 0 ? 3600 / avgServiceTime : Infinity;
             const utilization = arrivalRate / serviceRate;
             const utilizationPercent = utilization * 100;
             
@@ -464,12 +449,10 @@
             const runButton = document.getElementById('runSimulation');
             
             if (arrivalRate === 0) {
-                // Hide warning for zero arrival rate
                 warningDiv.style.display = 'none';
                 runButton.disabled = false;
                 runButton.classList.remove('btn-disabled');
             } else if (utilizationPercent >= 100) {
-                // Critical: System cannot handle this load
                 warningDiv.style.display = 'block';
                 warningDiv.style.borderColor = '#d4691e';
                 warningDiv.style.background = 'rgba(212, 105, 30, 0.1)';
@@ -477,7 +460,6 @@
                 runButton.disabled = true;
                 runButton.classList.add('btn-disabled');
             } else if (utilizationPercent >= 95) {
-                // High warning: Very unstable
                 warningDiv.style.display = 'block';
                 warningDiv.style.borderColor = '#d4691e';
                 warningDiv.style.background = 'rgba(212, 105, 30, 0.1)';
@@ -485,7 +467,6 @@
                 runButton.disabled = false;
                 runButton.classList.remove('btn-disabled');
             } else if (utilizationPercent >= 80) {
-                // Moderate warning: High utilization
                 warningDiv.style.display = 'block';
                 warningDiv.style.borderColor = '#f39c12';
                 warningDiv.style.background = 'rgba(243, 156, 18, 0.1)';
@@ -493,7 +474,6 @@
                 runButton.disabled = false;
                 runButton.classList.remove('btn-disabled');
             } else {
-                // Normal operation
                 warningDiv.style.display = 'none';
                 runButton.disabled = false;
                 runButton.classList.remove('btn-disabled');
@@ -502,7 +482,6 @@
             return utilizationPercent;
             
         } catch (error) {
-            // If validation fails, hide warning and let other validation handle it
             const warningDiv = document.getElementById('utilizationWarning');
             warningDiv.style.display = 'none';
             return 0;
@@ -526,10 +505,8 @@
             const part2 = parseFloat(document.getElementById('servicePart2').value) || 0;
             const total = part1 + part2;
             
-            // Update service time display
             document.getElementById('totalServiceDisplay').textContent = total.toFixed(2);
             
-            // Check utilization whenever service time changes
             validateUtilization();
         } catch (error) {
             document.getElementById('totalServiceDisplay').textContent = '0.00';
@@ -541,26 +518,20 @@
         const part2Mean = params.servicePart2;
         const totalMean = part1Mean + part2Mean;
         
-        // Calculate variance for each part based on distribution type
         let part1Variance, part2Variance;
         
         if (params.part1IsExp) {
-            // Exponential: Var = μ²
             part1Variance = part1Mean * part1Mean;
         } else {
-            // Fixed/Static: Var = 0
             part1Variance = 0;
         }
         
         if (params.part2IsExp) {
-            // Exponential: Var = μ²  
             part2Variance = part2Mean * part2Mean;
         } else {
-            // Fixed/Static: Var = 0
             part2Variance = 0;
         }
         
-        // For independent random variables: Var(X + Y) = Var(X) + Var(Y)
         const totalVariance = part1Variance + part2Variance;
         const totalStdDev = Math.sqrt(totalVariance);
         
@@ -572,7 +543,6 @@
         };
     }
 
-    // Update runtime display when parameters change
     function updateRuntimeDisplay() {
         try {
             const parameters = collectParameters();
@@ -596,7 +566,6 @@
                 seedMode: document.getElementById('seedMode').value
             };
         } catch (error) {
-            // Show error to user
             const statusEl = document.getElementById('status');
             statusEl.style.display = 'block';
             statusEl.className = 'status error';
@@ -613,7 +582,6 @@
             const arrivalRate = validateAndParseFloat('arrivalRate', 0);
             const currentSeeds = validateAndParseInt('numSeeds', 1);
             
-            // Handle zero arrival rate case
             if (arrivalRate === 0) {
                 const resultDiv = document.getElementById('sampleSizeResult');
                 const currentSeedsDisplay = document.getElementById('currentSeedsDisplay');
@@ -648,7 +616,6 @@
             const currentSeedsDisplay = document.getElementById('currentSeedsDisplay');
             const applyButton = document.getElementById('applySampleSize');
             
-            // Update current seeds display
             if (currentSeedsDisplay) {
                 currentSeedsDisplay.textContent = currentSeeds;
             }
@@ -658,7 +625,6 @@
                 <small>(${confidenceLevel}% confidence, Z=${zScore.toFixed(3)}, σ=√${arrivalRate}=${estimatedStdDev.toFixed(2)})</small>
             `;
             
-            // Update button state and styling
             if (applyButton) {
                 if (currentSeeds < recommendedSeeds) {
                     resultDiv.style.borderColor = '#d4691e';
@@ -701,14 +667,11 @@
             const oldValue = numSeedsInput.value;
             numSeedsInput.value = recommendedSeeds;
             
-            // Add visual feedback class
             numSeedsInput.classList.add('seeds-updated');
             
-            // Trigger change events to update other dependent calculations
             updateRuntimeDisplay();
             calculateSampleSize();
             
-            // Remove visual feedback after 2 seconds
             setTimeout(() => {
                 numSeedsInput.classList.remove('seeds-updated');
             }, 2000);
@@ -749,11 +712,9 @@
     function displayResults(results, params) {
         const container = document.getElementById('resultsContent');
         
-        // Check if arrival rate is effectively zero
         const hasArrivals = params.arrivalRate > 0;
         const serviceStats = calculateServiceTimeStats(params);
         
-        // Calculate utilization for display
         const utilizationPercent = hasArrivals ? (results.serverUtilization * 100) : 0;
         
         let html = `
@@ -804,7 +765,6 @@
         `;
 
         if (hasArrivals) {
-            // Normal case with arrivals
             html += `
                             <tr>
                                 <td style="text-align: left; font-weight: 600;">Utilization Rate</td>
@@ -828,7 +788,6 @@
                             </tr>
             `;
             
-            // Conditional service variability display
             if (serviceStats.stdDev > 0) {
                 html += `
                             <tr>
@@ -852,7 +811,6 @@
                             </tr>
             `;
         } else {
-            // Zero arrivals case
             html += `
                             <tr>
                                 <td style="text-align: left; font-weight: 600;">Utilization Rate</td>
@@ -895,7 +853,6 @@
         `;
 
         if (hasArrivals) {
-            // Normal system state table
             html += `
                     <table class="distribution-table">
                         <thead>
@@ -908,7 +865,6 @@
                         <tbody>
             `;
             
-            // Build system state table with cumulative
             const sortedStates = Object.keys(results.systemStatePercentages)
                 .map(s => parseInt(s))
                 .sort((a, b) => a - b);
@@ -934,7 +890,6 @@
                     </table>
             `;
         } else {
-            // Zero arrivals case
             html += `
                     <table class="distribution-table">
                         <thead>
@@ -963,7 +918,6 @@
         `;
 
         if (hasArrivals) {
-            // Normal hourly max table
             html += `
                     <table class="distribution-table">
                         <thead>
@@ -976,7 +930,6 @@
                         <tbody>
             `;
             
-            // Build hourly max table with cumulative
             const sortedMaxes = Object.keys(results.hourlyMaxDistribution)
                 .map(m => parseInt(m))
                 .sort((a, b) => a - b);
@@ -1002,7 +955,6 @@
                     </table>
             `;
         } else {
-            // Zero arrivals case
             html += `
                     <table class="distribution-table">
                         <thead>
@@ -1044,12 +996,10 @@
         document.getElementById('confidenceLevel').value = '99.9';
         document.getElementById('marginError').value = '0.05';
         
-        // Clear any error styling
         document.querySelectorAll('input').forEach(input => {
             input.style.borderColor = '';
         });
         
-        // Initialize displays in the correct order
         setTimeout(() => {
             updateTotalService();
             calculateSampleSize();
@@ -1058,7 +1008,6 @@
         }, 100);
     }
 
-    // Event listeners
     document.getElementById('resetButton').addEventListener('click', resetInputs);
 
     document.getElementById('runSimulation').addEventListener('click', async () => {
@@ -1075,7 +1024,6 @@
         try {
             parameters = collectParameters();
         } catch (error) {
-            // Error already displayed by collectParameters
             return;
         }
 
@@ -1083,7 +1031,6 @@
         const estimatedTimeStr = formatEstimatedTime(estimatedMs);
         const numSeeds = parameters.numSeeds;
 
-        // UI Elements
         const elements = {
             status: document.getElementById('status'),
             progressContainer: document.getElementById('progressContainer'),
@@ -1093,7 +1040,6 @@
             resultsContent: document.getElementById('resultsContent')
         };
 
-        // Show loading state
         runButton.disabled = true;
         runButton.textContent = `Running simulation...`;
         elements.status.style.display = 'block';
@@ -1102,15 +1048,14 @@
         elements.progressContainer.style.display = 'block';
         elements.resultsContent.innerHTML = `<div class="no-results"><h4>Running simulation...</h4><p>Processing ${numSeeds} seeds</p></div>`;
 
-        // Scroll to progress bar using common.js function
         scrollToProgress();
 
-        // Start progress tracking from common.js
         const progressInterval = createRealisticProgress(estimatedMs, elements.progressFill, elements.progressPercentage, elements.progressDetails);
         const startTime = Date.now();
 
         try {
-            const response = await fetch('/api/boomgate', {
+            const apiUrl = window.API_CONFIG?.endpoints?.boomgate || 'https://4x66k1lppi.execute-api.us-east-1.amazonaws.com/api/boomgate';
+const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ action: 'runSimulationBatched', parameters })
@@ -1131,7 +1076,6 @@
             const data = await response.json();
             if (!data.success) throw new Error(data.error || 'Simulation failed');
 
-            // Complete progress and show results
             const actualTime = Date.now() - startTime;
             
             elements.progressFill.style.width = '100%';
@@ -1142,7 +1086,6 @@
             
             displayResults(data.results, parameters);
 
-            // Scroll to results using common.js function after a brief delay to allow for DOM updates
             setTimeout(() => {
                 scrollToResults();
             }, 300);
@@ -1158,7 +1101,6 @@
             elements.status.textContent = 'Error: ' + error.message;
             elements.resultsContent.innerHTML = `<div class="no-results"><h4>Error</h4><p>${error.message}</p></div>`;
             
-            // Still scroll to results section even on error so user can see the error message
             setTimeout(() => {
                 scrollToResults();
             }, 300);

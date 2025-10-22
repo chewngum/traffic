@@ -6,128 +6,8 @@
     <title>Traffic Labb - Dashboard</title>
     <link rel="stylesheet" href="/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script src="/common.js"></script>
-    <style>
-        .category-section {
-            margin-bottom: 40px;
-        }
-        
-        .category-title {
-            color: #354e8d;
-            font-size: 1.4rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-            padding: 15px 20px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e3f1f7 100%);
-            border-radius: 10px;
-            border: 1px solid #a3c9e0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        
-        .category-icon {
-            font-size: 1.2rem;
-        }
-        
-        .compact-simulation-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .compact-simulation-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-            position: relative;
-        }
-        
-        .compact-simulation-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(53, 78, 141, 0.15);
-            border-color: #6b99c2;
-        }
-        
-        .compact-card-icon {
-            font-size: 36px;
-            margin-bottom: 12px;
-            height: 45px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .compact-simulation-card h3 {
-            color: #354e8d;
-            margin-bottom: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            line-height: 1.3;
-        }
-        
-        .compact-simulation-card p {
-            color: #6c757d;
-            font-size: 0.85rem;
-            line-height: 1.4;
-            margin: 0;
-        }
-        
-        .access-badge {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            padding: 2px 6px;
-            border-radius: 8px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            color: white;
-        }
-        
-        .level-1 { background: #6c757d; }
-        .level-2 { background: #6b99c2; }
-        .level-3 { background: #354e8d; }
-        
-        .card-disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .card-disabled:hover {
-            transform: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border-color: transparent;
-        }
+    <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
 
-        .page-description {
-            background: linear-gradient(135deg, #e3f1f7 0%, #f8fbff 100%);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            border: 1px solid #a3c9e0;
-            text-align: center;
-        }
-
-        .page-description h2 {
-            color: #354e8d;
-            margin-bottom: 10px;
-            font-size: 1.4rem;
-        }
-
-        .page-description p {
-            color: #6c757d;
-            font-size: 1rem;
-            margin: 0;
-            line-height: 1.5;
-        }
-    </style>
 </head>
 <body>
     <div id="loading" class="loading">
@@ -166,27 +46,27 @@
                         <p>Bi-directional single lane scenario with advanced queuing theory analysis</p>
                     </div>
 
-                    <div class="compact-simulation-card" onclick="openSimulation('carparkutilisation')" data-access-level="2">
+                    <div class="compact-simulation-card" onclick="openSimulation('carparkutilisation')" data-access-level="1">
                         <div class="access-badge level-2" id="badge-carparkutilisation">L2</div>
                         <div class="compact-card-icon">🅿️</div>
                         <h3>Car Park Utilisation</h3>
                         <p>Carpark analysis to find demand rates based on random arrivals</p>
                     </div>
                     
-                    <div class="compact-simulation-card" onclick="openSimulation('carlift')" data-access-level="2">
+                    <div class="compact-simulation-card" onclick="openSimulation('carlift')" data-access-level="1">
                         <div class="access-badge level-2" id="badge-carlift">L2</div>
                         <div class="compact-card-icon">🛗</div>
                         <h3>Car Lift Simulation</h3>
                         <p>Multi-Floor Lift operations with bi-directional traffic patterns</p>
                     </div>
                     
-                    <div class="compact-simulation-card" onclick="openSimulation('mechanical')" data-access-level="2">
+                    <div class="compact-simulation-card" onclick="openSimulation('mechanical')" data-access-level="1">
                         <div class="access-badge level-2" id="badge-mechanical">L2</div>
                         <div class="compact-card-icon">🏢</div>
                         <h3>Mechanical Parking</h3>
                         <p>Mechanical parking structure based on average service times</p>
                     </div>
-                    <div class="compact-simulation-card" onclick="openSimulation('schoolpickup')" data-access-level="2">
+                    <div class="compact-simulation-card" onclick="openSimulation('schoolpickup')" data-access-level="3">
                         <div class="access-badge level-2" id="badge-schoolpickup">L2</div>
                         <div class="compact-card-icon">🎒</div>
                         <h3>School Pickup Queue</h3>
@@ -226,9 +106,9 @@
             'boomgate': 1,
             'rampdrawer': 1,
             'two-way-passing': 1,
-            'carparkutilisation': 2,
-            'carlift': 2,
-            'mechanical': 2,
+            'carparkutilisation': 1,
+            'carlift': 1,
+            'mechanical': 1,
             'schoolpickup': 3,
             'network': 3
         };

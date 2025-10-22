@@ -47,7 +47,7 @@
       "category": "simulators",
       "pageId": "carlift",
       "type": "simulator",
-      "accessLevel": 2,
+      "accessLevel": 1,
       "hasIndex": true
     },
     "/traffic/simulators/carparkutilisation/": {
@@ -56,7 +56,7 @@
       "category": "simulators",
       "pageId": "carparkutilisation",
       "type": "simulator",
-      "accessLevel": 2,
+      "accessLevel": 1,
       "hasIndex": true
     },
     "/traffic/simulators/mechanical/": {
@@ -65,7 +65,7 @@
       "category": "simulators",
       "pageId": "mechanical",
       "type": "simulator",
-      "accessLevel": 2,
+      "accessLevel": 1,
       "hasIndex": true
     },
     "/traffic/simulators/schoolpickup/": {
@@ -74,7 +74,7 @@
       "category": "simulators",
       "pageId": "schoolpickup",
       "type": "simulator",
-      "accessLevel": 2,
+      "accessLevel": 3,
       "hasIndex": true
     },
     "/traffic/simulators/two-way-passing/": {
@@ -128,7 +128,7 @@
       "category": "support",
       "pageId": "faq",
       "type": "support",
-      "accessLevel": 4,
+      "accessLevel": 3,
       "hasIndex": true
     },
     "/support/glossary/": {
@@ -137,7 +137,7 @@
       "category": "support",
       "pageId": "glossary",
       "type": "support",
-      "accessLevel": 4,
+      "accessLevel": 3,
       "hasIndex": true
     },
     "/support/scenarios/": {
@@ -146,16 +146,16 @@
       "category": "support",
       "pageId": "scenarios",
       "type": "support",
-      "accessLevel": 4,
+      "accessLevel": 3,
       "hasIndex": true
     },
-    "/accounts/": {
-      "path": "/accounts/",
-      "name": "Account Management",
+    "/account/": {
+      "path": "/account/",
+      "name": "Account Settings",
       "category": "account",
       "pageId": "account",
       "type": "account",
-      "accessLevel": 1,
+      "accessLevel": 2,
       "hasIndex": true
     }
   },
@@ -186,25 +186,25 @@
           "label": "Car Park Utilisation",
           "path": "/traffic/simulators/carparkutilisation/",
           "pageId": "carparkutilisation",
-          "accessLevel": 2
+          "accessLevel": 1
         },
         {
           "label": "Car Lift",
           "path": "/traffic/simulators/carlift/",
           "pageId": "carlift",
-          "accessLevel": 2
+          "accessLevel": 1
         },
         {
           "label": "Mechanical Parking",
           "path": "/traffic/simulators/mechanical/",
           "pageId": "mechanical",
-          "accessLevel": 2
+          "accessLevel": 1
         },
         {
           "label": "School Pickup",
           "path": "/traffic/simulators/schoolpickup/",
           "pageId": "schoolpickup",
-          "accessLevel": 2
+          "accessLevel": 3
         }
       ]
     },
@@ -236,65 +236,29 @@
           "label": "FAQ",
           "path": "/support/FAQ/",
           "pageId": "faq",
-          "accessLevel": 4
+          "accessLevel": 3
         },
         {
           "label": "Glossary",
           "path": "/support/glossary/",
           "pageId": "glossary",
-          "accessLevel": 4
+          "accessLevel": 3
         },
         {
           "label": "Scenarios",
           "path": "/support/scenarios/",
           "pageId": "scenarios",
-          "accessLevel": 4
+          "accessLevel": 3
         }
       ]
     },
     "accounts": {
       "label": "Account",
-      "path": "/accounts/",
-      "accessLevel": 1
+      "path": "/account/",
+      "accessLevel": 2
     }
   },
-  "users": {
-    "guest": {
-      "password": "guest123",
-      "accessLevel": 1,
-      "displayName": "Guest User",
-      "description": "Limited access to basic features"
-    },
-    "demo": {
-      "password": "demo456",
-      "accessLevel": 2,
-      "displayName": "Demo User",
-      "description": "Standard access to most features"
-    },
-    "admin": {
-      "password": "admin789",
-      "accessLevel": 3,
-      "displayName": "Administrator",
-      "description": "Full access to all features"
-    }
-  },
-  "accessLevels": {
-    "1": {
-      "name": "Guest",
-      "color": "#6c757d",
-      "description": "Basic access to free simulations and tools"
-    },
-    "2": {
-      "name": "Premium",
-      "color": "#6b99c2",
-      "description": "Access to advanced simulations and features"
-    },
-    "3": {
-      "name": "Admin",
-      "color": "#354e8d",
-      "description": "Full access to all features and tools"
-    }
-  },
+
   "settings": {
     "tokenExpiry": 24,
     "defaultAccessLevel": 1,

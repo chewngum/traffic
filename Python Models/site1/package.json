@@ -4,14 +4,36 @@
     "description": "Traffic Simulation Web Application",
     "main": "index.js",
     "scripts": {
-        "dev": "vercel dev",
-        "deploy": "vercel --prod"
+        "predev": "bash ensure-env.sh",
+        "dev": "node dev-server.js",
+        "cleanup": "bash cleanup-ports.sh",
+        "cleanup:project": "bash cleanup-project.sh",
+        "check": "bash pre-deploy-check.sh",
+        "deploy": "bash deploy-lambda.sh",
+        "migrate": "node simple-migrate.js",
+        "lambda:dev": "dotenv -e .env -- serverless offline",
+        "lambda:deploy": "serverless deploy",
+        "lambda:deploy:prod": "serverless deploy --stage prod",
+        "lambda:info": "serverless info",
+        "lambda:logs": "serverless logs -f",
+        "lambda:remove": "serverless remove",
+        "preview:package": "bash preview-lambda-package.sh"
     },
+    "type": "module",
     "dependencies": {
-        "@vercel/speed-insights": "^1.2.0",
-        "svg-to-img": "^2.0.7"
+        "bcryptjs": "^2.4.3",
+        "dotenv": "^16.3.1",
+        "pg": "^8.11.3"
     },
     "engines": {
         "node": ">=18.0.0"
+    },
+    "devDependencies": {
+        "@types/pg": "^8.10.9",
+        "dotenv-cli": "^7.3.0",
+        "express": "^4.18.2",
+        "http-proxy-middleware": "^2.0.6",
+        "serverless": "^4.20.2",
+        "serverless-offline": "^14.4.0"
     }
 }
