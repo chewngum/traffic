@@ -522,7 +522,7 @@
                 simulationTime: safeNumber(document.getElementById('simulationHours').value, 1) * 3600,
                 simHours: safeNumber(document.getElementById('simulationHours').value, 1),
                 minGap: safeNumber(document.getElementById('minGap').value, 0),
-                minFollowUp: getMinFollowUpValue(),
+                minFollowUp: isSimple ? 0 : getMinFollowUpValue(),
                 reactionDelay: isSimple ? 0 : safeNumber(document.getElementById('reactionDelay').value, 1.1),
                 accelerationRate: safeNumber(document.getElementById('accelerationRate').value, 1.5),
                 segmentDistance: safeNumber(document.getElementById('segmentDistance').value, 30),
