@@ -1037,12 +1037,35 @@ export default async function handler(req, res) {
           const nextArrival = eventTime + dt;
           this.heapPush(this.events, [nextArrival, 'arrival', qIndex]);
 
+          // Check if any queued vehicles can now enter (in case road state changed)
+          // WHY: With minFollowUp < serviceTime, same-direction queued vehicles may be able
+          // to enter immediately after an arriving vehicle enters
+          // Process repeatedly to allow multiple same-direction vehicles to enter when minFollowUp=0
+          let processed = 0;
+          const maxIterations = this.fcfsQueue.length + 1; // Prevent infinite loops
+          while (processed < maxIterations && this.fcfsQueue.length > 0) {
+            const queueLengthBefore = this.fcfsQueue.length;
+            this.processQueueAfterDeparture(eventTime, priorityScheme);
+            // If no vehicle was removed from queue, exit loop (no more eligible vehicles)
+            if (this.fcfsQueue.length === queueLengthBefore) break;
+            processed++;
+          }
+
         // ====================================================================
         // EVENT TYPE 2: DEPARTURE - A vehicle finishes traversing the road
         // ====================================================================
         } else if (eventType === 'departure') {
-          // After a departure, check if a waiting vehicle can now enter
-          this.processQueueAfterDeparture(eventTime, priorityScheme);
+          // After a departure, check if any waiting vehicles can now enter
+          // Process repeatedly to allow multiple same-direction vehicles to enter when minFollowUp=0
+          let processed = 0;
+          const maxIterations = this.fcfsQueue.length + 1; // Prevent infinite loops
+          while (processed < maxIterations && this.fcfsQueue.length > 0) {
+            const queueLengthBefore = this.fcfsQueue.length;
+            this.processQueueAfterDeparture(eventTime, priorityScheme);
+            // If no vehicle was removed from queue, exit loop (no more eligible vehicles)
+            if (this.fcfsQueue.length === queueLengthBefore) break;
+            processed++;
+          }
         }
       }
 
