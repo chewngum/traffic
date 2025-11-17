@@ -522,7 +522,7 @@
                 simulationTime: safeNumber(document.getElementById('simulationHours').value, 1) * 3600,
                 simHours: safeNumber(document.getElementById('simulationHours').value, 1),
                 minGap: safeNumber(document.getElementById('minGap').value, 0),
-                minFollowUp: isSimple ? 0 : getMinFollowUpValue(),
+                minFollowUp: getMinFollowUpValue(),
                 reactionDelay: isSimple ? 0 : safeNumber(document.getElementById('reactionDelay').value, 1.1),
                 accelerationRate: safeNumber(document.getElementById('accelerationRate').value, 1.5),
                 segmentDistance: safeNumber(document.getElementById('segmentDistance').value, 30),
@@ -764,7 +764,7 @@
             document.getElementById('queueSpaceLength').value = '6.5';
             document.getElementById('simulationHours').value = '1000';
             document.getElementById('minGap').value = '0';
-            document.getElementById('minFollowUp').value = 'serviceTime';
+            document.getElementById('minFollowUp').value = '0';
             document.getElementById('priorityScheme').value = 'FCFS';
             document.getElementById('confidenceLevel').value = '99.9';
             document.getElementById('marginError').value = '0.5';
