@@ -1,23 +1,5 @@
 export default async function handler(req, res) {
-  // Check authentication (allow internal worker calls)
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-
-  const token = authHeader.split(' ')[1];
-
-  try {
-    const decoded = Buffer.from(token, 'base64').toString();
-    const [timestamp, username] = decoded.split(':');
-
-    const tokenAge = Date.now() - parseInt(timestamp);
-    if (tokenAge > 24 * 60 * 60 * 1000) {
-      return res.status(401).json({ error: 'Token expired' });
-    }
-  } catch {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
+  // Authentication is handled by the Lambda wrapper (simulation-wrapper.js)
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });

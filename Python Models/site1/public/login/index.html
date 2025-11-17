@@ -6,8 +6,10 @@
     <title>Traffic Labb - Sign In</title>
     <link rel="stylesheet" href="/style.css">
     <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
-    
-    <!-- Favicons will be injected by common.js -->
+
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/site.webmanifest">
     <style>
         /* Login page specific styles only - common auth styles now in style.css */
         body {
@@ -212,7 +214,7 @@
                                 <input type="checkbox" id="rememberMe">
                                 <span>Remember me</span>
                             </label>
-                            <a href="/forgot-password/" class="auth-link">Forgot password?</a>
+                            <a href="/login/forgot-password/" class="auth-link">Forgot password?</a>
                         </div>
 
                         <div class="button-group">
@@ -323,6 +325,10 @@
                         }
                         if (data.company) {
                             localStorage.setItem('userCompany', data.company);
+                        }
+                        // Store roles for easy access and debugging
+                        if (data.roles && Array.isArray(data.roles)) {
+                            localStorage.setItem('userRoles', JSON.stringify(data.roles));
                         }
 
                         // Store remember me preference

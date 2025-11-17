@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
+    <script src="/utils/cad-file-parser.js"></script>
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/site.webmanifest">
 </head>
 <body>
     <div id="loading" class="loading">
@@ -57,59 +61,150 @@
                                 <input type="text" id="endLabelInput" value="Property Boundary" onchange="updateSegmentOutputs()">
                             </div>
                         </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="sectionSubtitleInput">Section Subtitle:</label>
+                                <input type="text" id="sectionSubtitleInput" value="" placeholder="Optional subtitle for section view">
+                            </div>
+                            <div class="form-group">
+                                <label for="planSubtitleInput">Plan Subtitle:</label>
+                                <input type="text" id="planSubtitleInput" value="" placeholder="Optional subtitle for plan view">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="card">
-                        <div class="card-title">Drawing Details</div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="chainagePrefixInput">Chainage Label:</label>
-                                <input type="text" id="chainagePrefixInput" value="CH" placeholder="e.g. CH, CL, ST" onchange="updateChainageDropdownOptions(); updateSegmentOutputs()">
-                            </div>
-                            <div class="form-group">
-                                <label for="chainagePositionSelect">Label Position:</label>
-                                <select id="chainagePositionSelect" onchange="updateChainagePosition(this.value)" class="form-select">
-                                    <!-- Options will be dynamically generated -->
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="distanceUnitsSelect">Distance Units:</label>
-                                <select id="distanceUnitsSelect" onchange="updateDistanceUnits(this.value)" class="form-select">
-                                    <option value="m">Metres (m)</option>
-                                    <option value="mm">Millimetres (mm)</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="gradeDisplaySelect">Grade Display:</label>
-                                <select id="gradeDisplaySelect" onchange="updateGradeDisplay(this.value)" class="form-select">
-                                    <option value="percent">Percentage (%)</option>
-                                    <option value="ratio">Ratio (1:X)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row triple">
-                            <div class="form-group">
-                                <label for="chainageDecimalInput">CH Decimals:</label>
-                                <input type="number" id="chainageDecimalInput" value="2" min="0" max="4" step="1" onchange="validateAndUpdate('chainageDecimalInput', 0, 3); updateChainageDropdownOptions(); updateSegmentOutputs()">
-                            </div>
-                            <div class="form-group">
-                                <label for="rlDecimalInput">RL Decimals:</label>
-                                <input type="number" id="rlDecimalInput" value="2" min="0" max="3" step="1" onchange="validateAndUpdate('rlDecimalInput', 0, 3); updateSegmentOutputs()">
-                            </div>
-                            <div class="form-group">
-                                <label for="gradeDecimalInput">Grade Decimals:</label>
-                                <input type="number" id="gradeDecimalInput" value="1" min="0" max="4" step="1" onchange="validateAndUpdate('gradeDecimalInput', 0, 2); updateSegmentOutputs()">
-                            </div>
+                        <div class="card-title">Drawing Details & Label Visibility</div>
+                        <div class="table-section">
+                            <table class="table visibility-table">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: left;">Dimension</th>
+                                        <th style="text-align: center; width: 80px;">Section</th>
+                                        <th style="text-align: center; width: 80px;">Plan</th>
+                                        <th style="text-align: center; width: 100px;">Unit</th>
+                                        <th style="text-align: center; width: 120px;">Location</th>
+                                        <th style="text-align: center; width: 80px;">Label</th>
+                                        <th style="text-align: center; width: 110px;">Decimal Places</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>RL</td>
+                                        <td style="text-align: center;">
+                                            <input type="checkbox" id="showRLSectionCheckbox" checked onchange="updateSegmentOutputs()" style="cursor: pointer; width: auto;">
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <input type="checkbox" id="showRLPlanCheckbox" checked onchange="updateSegmentOutputs()" style="cursor: pointer; width: auto;">
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <select id="rlUnitsSelect" onchange="updateSegmentOutputs()" class="table-select-small">
+                                                <option value="m">m</option>
+                                                <option value="mm">mm</option>
+                                            </select>
+                                        </td>
+                                        <td style="text-align: center; color: #999;">-</td>
+                                        <td style="text-align: center; color: #999;">-</td>
+                                        <td style="text-align: center;">
+                                            <input type="number" id="rlDecimalInput" value="3" min="0" max="3" step="1" onchange="validateAndUpdate('rlDecimalInput', 0, 3); updateSegmentOutputs()" class="table-input-small">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chainage</td>
+                                        <td style="text-align: center;">
+                                            <input type="checkbox" id="showCHSectionCheckbox" checked onchange="updateSegmentOutputs()" style="cursor: pointer; width: auto;">
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <input type="checkbox" id="showCHPlanCheckbox" checked onchange="updateSegmentOutputs()" style="cursor: pointer; width: auto;">
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <select id="distanceUnitsSelect" onchange="updateDistanceUnits(this.value)" class="table-select-small">
+                                                <option value="m">m</option>
+                                                <option value="mm">mm</option>
+                                            </select>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <select id="chainagePositionSelect" onchange="updateChainagePosition(this.value)" class="table-select-small">
+                                                <option value="prefix">Prefix</option>
+                                                <option value="suffix">Suffix</option>
+                                            </select>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <input type="text" id="chainagePrefixInput" value="CH" placeholder="CH" onchange="updateChainageDropdownOptions(); updateSegmentOutputs()" class="table-input-small">
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <input type="number" id="chainageDecimalInput" value="1" min="0" max="4" step="1" onchange="validateAndUpdate('chainageDecimalInput', 0, 3); updateChainageDropdownOptions(); updateSegmentOutputs()" class="table-input-small">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Grade</td>
+                                        <td style="text-align: center;">
+                                            <input type="checkbox" id="showGradeSectionCheckbox" checked onchange="updateSegmentOutputs()" style="cursor: pointer; width: auto;">
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <input type="checkbox" id="showGradePlanCheckbox" checked onchange="updateSegmentOutputs()" style="cursor: pointer; width: auto;">
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <select id="gradeDisplaySelect" onchange="updateGradeDisplay(this.value)" class="table-select-small">
+                                                <option value="percent">%</option>
+                                                <option value="ratio">1:X</option>
+                                            </select>
+                                        </td>
+                                        <td style="text-align: center; color: #999;">-</td>
+                                        <td style="text-align: center; color: #999;">-</td>
+                                        <td style="text-align: center;">
+                                            <input type="number" id="gradeDecimalInput" value="1" min="0" max="4" step="1" onchange="validateAndUpdate('gradeDecimalInput', 0, 2); updateSegmentOutputs()" class="table-input-small">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Length</td>
+                                        <td style="text-align: center;">
+                                            <input type="checkbox" id="showLengthSectionCheckbox" checked onchange="updateSegmentOutputs()" style="cursor: pointer; width: auto;">
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <input type="checkbox" id="showLengthPlanCheckbox" checked onchange="updateSegmentOutputs()" style="cursor: pointer; width: auto;">
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <select id="lengthUnitsSelect" onchange="updateSegmentOutputs()" class="table-select-small">
+                                                <option value="m">m</option>
+                                                <option value="mm">mm</option>
+                                            </select>
+                                        </td>
+                                        <td style="text-align: center; color: #999;">-</td>
+                                        <td style="text-align: center; color: #999;">-</td>
+                                        <td style="text-align: center; color: #999;">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Width</td>
+                                        <td style="text-align: center;">
+                                            <input type="checkbox" id="showWidthSectionCheckbox" checked onchange="updateSegmentOutputs()" style="cursor: pointer; width: auto;">
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <input type="checkbox" id="showWidthPlanCheckbox" checked onchange="updateSegmentOutputs()" style="cursor: pointer; width: auto;">
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <select id="widthUnitsSelect" onchange="updateSegmentOutputs()" class="table-select-small">
+                                                <option value="m">m</option>
+                                                <option value="mm">mm</option>
+                                            </select>
+                                        </td>
+                                        <td style="text-align: center; color: #999;">-</td>
+                                        <td style="text-align: center; color: #999;">-</td>
+                                        <td style="text-align: center; color: #999;">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-title">Ramp Segments</div>
-                    <div style="margin-bottom: 15px;">
-                        <button class="btn btn-reset" onclick="resetSegments()">Reset</button>
+                    <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-reset" onclick="resetSegments()">Reset Sections</button>
+                        <button class="btn btn-reset" style="background: #dc3545;" onmouseover="this.style.background='#c82333'" onmouseout="this.style.background='#dc3545'" onclick="clearSegments()">Clear Sections</button>
+                        <button class="btn btn-reset" style="background: #17a2b8;" onmouseover="this.style.background='#138496'" onmouseout="this.style.background='#17a2b8'" onclick="document.getElementById('cadFileInput').click()">Import from File</button>
+                        <input type="file" id="cadFileInput" accept=".svg,.dxf,.dwf,.scr" style="display: none;" onchange="handleFileImport(event)">
                     </div>
                     
                     <div class="table-section">
@@ -131,7 +226,7 @@
                                         </select>
                                     </th>
                                     <th>Chainage at End (m)</th>
-                                    <th>RL at End (m)</th>
+                                    <th>Label Location</th>
                                     <th>Add Below</th>
                                     <th>Remove</th>
                                 </tr>
@@ -468,10 +563,123 @@
             100% { opacity: 0; transform: translateY(-5px); }
         }
 
+        /* Visibility Table Styles */
+        .visibility-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border: 1px solid #a3c9e0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .visibility-table th {
+            background: #e3f1f7;
+            color: #354e8d;
+            padding: 10px;
+            font-weight: 600;
+            border-bottom: 1px solid #a3c9e0;
+            font-size: 0.9rem;
+        }
+
+        .visibility-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e3f1f7;
+            font-size: 0.9rem;
+        }
+
+        .visibility-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .visibility-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .visibility-table input[type="checkbox"] {
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+
+        .table-input-small {
+            width: 60px !important;
+            padding: 4px 6px !important;
+            border: 1px solid #a3c9e0 !important;
+            border-radius: 3px !important;
+            text-align: center !important;
+            font-size: 0.85rem !important;
+            box-sizing: border-box !important;
+        }
+
+        .table-input-small:focus {
+            outline: none !important;
+            border-color: #6b99c2 !important;
+        }
+
+        .table-select-small {
+            width: 90px !important;
+            padding: 4px 6px !important;
+            border: 1px solid #a3c9e0 !important;
+            border-radius: 3px !important;
+            text-align: center !important;
+            font-size: 0.85rem !important;
+            box-sizing: border-box !important;
+            background: white;
+            cursor: pointer;
+        }
+
+        .table-select-small:focus {
+            outline: none !important;
+            border-color: #6b99c2 !important;
+        }
+
+        /* Make visibility table scrollable on small screens */
+        @media (max-width: 1024px) {
+            .visibility-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+
+            .visibility-table thead,
+            .visibility-table tbody,
+            .visibility-table tr,
+            .visibility-table th,
+            .visibility-table td {
+                display: table-cell;
+            }
+
+            .table-section {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
         /* Responsive adjustments */
         @media (max-width: 768px) {
             #segmentsTable {
                 font-size: 0.8rem;
+            }
+
+            .visibility-table {
+                font-size: 0.8rem;
+            }
+
+            .visibility-table th,
+            .visibility-table td {
+                padding: 6px 4px;
+            }
+
+            .table-input-small {
+                width: 50px !important;
+                font-size: 0.75rem !important;
+                padding: 3px 4px !important;
+            }
+
+            .table-select-small {
+                width: 75px !important;
+                font-size: 0.75rem !important;
+                padding: 3px 4px !important;
             }
             
             #segmentsTable th,
@@ -533,24 +741,16 @@
          */
         function updateChainageDropdownOptions() {
             const dropdown = document.getElementById('chainagePositionSelect');
-            const chainagePrefix = document.getElementById('chainagePrefixInput').value || 'CH';
-            const decimals = parseInt(document.getElementById('chainageDecimalInput').value) || 1;
-            const unit = getDistanceUnit(currentDistanceUnits);
-            
-            // Create example value with current decimal places
-            const exampleValue = (1.5).toFixed(decimals);
-            
-            // Build options with current settings
-            const prefixExample = `${chainagePrefix}${exampleValue}${unit}`;
-            const suffixExample = `${exampleValue}${unit} ${chainagePrefix}`;
-            
+            if (!dropdown) return;
+
             const currentValue = dropdown.value || 'prefix';
-            
+
+            // Keep simple options for table display
             dropdown.innerHTML = `
-                <option value="prefix">Prefix (${prefixExample})</option>
-                <option value="suffix">Suffix (${suffixExample})</option>
+                <option value="prefix">Prefix</option>
+                <option value="suffix">Suffix</option>
             `;
-            
+
             dropdown.value = currentValue;
         }
 
@@ -1135,10 +1335,18 @@
             document.querySelectorAll('.corrected-value').forEach(input => {
                 input.classList.remove('corrected-value');
             });
-            
+
             segments = [];
             segmentCounter = 0;
             initializeDefaultSegments();
+        }
+
+        function clearSegments() {
+            // Clear all segments without resetting to defaults
+            segments = [];
+            segmentCounter = 0;
+            renderSegments();
+            updateSegmentOutputs();
         }
 
         function initializeDefaultSegments() {
@@ -1151,16 +1359,35 @@
             document.getElementById('startingChainageInput').value = 0.000;
             document.getElementById('startLabelInput').value = "Carpark";
             document.getElementById('endLabelInput').value = "Property Boundary";
+            document.getElementById('sectionSubtitleInput').value = "";
+            document.getElementById('planSubtitleInput').value = "";
 
-            // Reset drawing details
+            // Reset drawing details (now in combined table)
             document.getElementById('chainagePrefixInput').value = "CH";
-            document.getElementById('chainagePositionSelect').value = "prefix";
             document.getElementById('distanceUnitsSelect').value = "m";
             document.getElementById('gradeDisplaySelect').value = "percent";
             document.getElementById('chainageDecimalInput').value = 1;
             document.getElementById('rlDecimalInput').value = 3;
             document.getElementById('gradeDecimalInput').value = 1;
-            
+
+            // Set chainage position after dropdown is initialized
+            const chainagePositionDropdown = document.getElementById('chainagePositionSelect');
+            if (chainagePositionDropdown) {
+                chainagePositionDropdown.value = "prefix";
+            }
+
+            // Reset label visibility checkboxes
+            document.getElementById('showRLSectionCheckbox').checked = true;
+            document.getElementById('showRLPlanCheckbox').checked = true;
+            document.getElementById('showCHSectionCheckbox').checked = true;
+            document.getElementById('showCHPlanCheckbox').checked = true;
+            document.getElementById('showGradeSectionCheckbox').checked = true;
+            document.getElementById('showGradePlanCheckbox').checked = true;
+            document.getElementById('showLengthSectionCheckbox').checked = true;
+            document.getElementById('showLengthPlanCheckbox').checked = true;
+            document.getElementById('showWidthSectionCheckbox').checked = true;
+            document.getElementById('showWidthPlanCheckbox').checked = true;
+
             // Update global variables
             currentDistanceUnits = 'm';
             currentGradeDisplay = 'percent';
@@ -1170,13 +1397,13 @@
             gradeDecimalPlaces = 1;
             currentLengthInputType = 'length';
             currentGradeInputType = 'percent';
-            
+
             document.getElementById('lengthInputType').value = 'length';
             document.getElementById('gradeInputType').value = 'percent';
 
             // Update labels to reflect current units
             updateDistanceUnits('m');
-            
+
             // Initialize chainage dropdown options
             updateChainageDropdownOptions();
 
@@ -1265,14 +1492,14 @@
         }
 
         function updateTableHeaders() {
-            const chainageHeader = document.querySelector('th:nth-child(4)');
-            const rlHeader = document.querySelector('th:nth-child(5)');
-            
+            const chainageHeader = document.querySelector('#segmentsTable th:nth-child(4)');
+            const rlHeader = document.querySelector('#segmentsTable th:nth-child(5)');
+
             if (chainageHeader) {
                 chainageHeader.textContent = `Chainage at End (${currentDistanceUnits})`;
             }
             if (rlHeader) {
-                rlHeader.textContent = `RL at End (${currentDistanceUnits})`;
+                rlHeader.textContent = `Label Location`;
             }
         }
 
@@ -1370,7 +1597,26 @@ const response = await fetch(apiUrl, {
                             gradeDecimalPlaces,
                             distanceUnits: currentDistanceUnits,
                             gradeDisplay: currentGradeDisplay,
-                            gradeType: 'percent'
+                            gradeType: 'percent',
+                            sectionSubtitle: document.getElementById('sectionSubtitleInput').value || '',
+                            planSubtitle: document.getElementById('planSubtitleInput').value || '',
+                            // New format with separate section/plan controls
+                            showRLSection: document.getElementById('showRLSectionCheckbox').checked,
+                            showRLPlan: document.getElementById('showRLPlanCheckbox').checked,
+                            showCHSection: document.getElementById('showCHSectionCheckbox').checked,
+                            showCHPlan: document.getElementById('showCHPlanCheckbox').checked,
+                            showGradeSection: document.getElementById('showGradeSectionCheckbox').checked,
+                            showGradePlan: document.getElementById('showGradePlanCheckbox').checked,
+                            showLengthSection: document.getElementById('showLengthSectionCheckbox').checked,
+                            showLengthPlan: document.getElementById('showLengthPlanCheckbox').checked,
+                            showWidthSection: document.getElementById('showWidthSectionCheckbox').checked,
+                            showWidthPlan: document.getElementById('showWidthPlanCheckbox').checked,
+                            // Backward compatibility - combined values (true if either section OR plan is checked)
+                            showRL: document.getElementById('showRLSectionCheckbox').checked || document.getElementById('showRLPlanCheckbox').checked,
+                            showCH: document.getElementById('showCHSectionCheckbox').checked || document.getElementById('showCHPlanCheckbox').checked,
+                            showGrade: document.getElementById('showGradeSectionCheckbox').checked || document.getElementById('showGradePlanCheckbox').checked,
+                            showLength: document.getElementById('showLengthSectionCheckbox').checked || document.getElementById('showLengthPlanCheckbox').checked,
+                            showWidth: document.getElementById('showWidthSectionCheckbox').checked || document.getElementById('showWidthPlanCheckbox').checked
                         }
                     })
                 });
@@ -1497,7 +1743,26 @@ const response = await fetch(apiUrl, {
                             gradeDecimalPlaces,
                             distanceUnits: currentDistanceUnits,
                             gradeDisplay: currentGradeDisplay,
-                            gradeType: 'percent'
+                            gradeType: 'percent',
+                            sectionSubtitle: document.getElementById('sectionSubtitleInput').value || '',
+                            planSubtitle: document.getElementById('planSubtitleInput').value || '',
+                            // New format with separate section/plan controls
+                            showRLSection: document.getElementById('showRLSectionCheckbox').checked,
+                            showRLPlan: document.getElementById('showRLPlanCheckbox').checked,
+                            showCHSection: document.getElementById('showCHSectionCheckbox').checked,
+                            showCHPlan: document.getElementById('showCHPlanCheckbox').checked,
+                            showGradeSection: document.getElementById('showGradeSectionCheckbox').checked,
+                            showGradePlan: document.getElementById('showGradePlanCheckbox').checked,
+                            showLengthSection: document.getElementById('showLengthSectionCheckbox').checked,
+                            showLengthPlan: document.getElementById('showLengthPlanCheckbox').checked,
+                            showWidthSection: document.getElementById('showWidthSectionCheckbox').checked,
+                            showWidthPlan: document.getElementById('showWidthPlanCheckbox').checked,
+                            // Backward compatibility - combined values (true if either section OR plan is checked)
+                            showRL: document.getElementById('showRLSectionCheckbox').checked || document.getElementById('showRLPlanCheckbox').checked,
+                            showCH: document.getElementById('showCHSectionCheckbox').checked || document.getElementById('showCHPlanCheckbox').checked,
+                            showGrade: document.getElementById('showGradeSectionCheckbox').checked || document.getElementById('showGradePlanCheckbox').checked,
+                            showLength: document.getElementById('showLengthSectionCheckbox').checked || document.getElementById('showLengthPlanCheckbox').checked,
+                            showWidth: document.getElementById('showWidthSectionCheckbox').checked || document.getElementById('showWidthPlanCheckbox').checked
                         }
                     })
                 });
@@ -1547,6 +1812,149 @@ const response = await fetch(apiUrl, {
                 button.classList.remove('loading');
                 button.textContent = originalText;
             }
+        }
+
+        /**
+         * Handle file import from SVG, DXF, DWF, or CAD script files
+         */
+        async function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const status = document.getElementById('status');
+            status.style.display = 'block';
+            status.className = 'status running';
+            status.textContent = `Importing ${file.name}...`;
+
+            try {
+                const parser = new CADFileParser();
+                const parsedData = await parser.parseFile(file);
+
+                // Populate input fields with parsed data
+                applyParsedData(parsedData);
+
+                status.className = 'status complete';
+                status.textContent = `Successfully imported data from ${file.name}`;
+
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 3000);
+
+            } catch (error) {
+                console.error('Import error:', error);
+                status.className = 'status error';
+                status.textContent = `Import error: ${error.message}`;
+
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+
+            // Reset file input so the same file can be imported again
+            event.target.value = '';
+        }
+
+        /**
+         * Apply parsed data to input fields
+         */
+        function applyParsedData(data) {
+            console.log('Parsed data:', data);
+
+            // Apply basic parameters if available
+            if (data.width !== null && data.width > 0) {
+                document.getElementById('widthInput').value = data.width;
+            }
+
+            if (data.startingRL !== null) {
+                document.getElementById('startingRLInput').value = data.startingRL.toFixed(3);
+            }
+
+            if (data.startingChainage !== null && data.startingChainage >= 0) {
+                document.getElementById('startingChainageInput').value = data.startingChainage.toFixed(3);
+            }
+
+            // Apply labels if available
+            if (data.startLabel) {
+                document.getElementById('startLabelInput').value = data.startLabel;
+            }
+
+            if (data.endLabel) {
+                document.getElementById('endLabelInput').value = data.endLabel;
+            }
+
+            // Apply chainage prefix if available
+            if (data.chainagePrefix) {
+                document.getElementById('chainagePrefixInput').value = data.chainagePrefix;
+                updateChainageDropdownOptions();
+            }
+
+            // Apply distance units if available
+            if (data.distanceUnits && (data.distanceUnits === 'm' || data.distanceUnits === 'mm')) {
+                document.getElementById('distanceUnitsSelect').value = data.distanceUnits;
+                updateDistanceUnits(data.distanceUnits);
+            }
+
+            // Apply chainage position if available
+            if (data.chainagePosition && (data.chainagePosition === 'prefix' || data.chainagePosition === 'suffix')) {
+                document.getElementById('chainagePositionSelect').value = data.chainagePosition;
+                updateChainagePosition(data.chainagePosition);
+            }
+
+            // Apply subtitles if available
+            if (data.sectionSubtitle) {
+                document.getElementById('sectionSubtitleInput').value = data.sectionSubtitle;
+            }
+
+            if (data.planSubtitle) {
+                document.getElementById('planSubtitleInput').value = data.planSubtitle;
+            }
+
+            // Apply decimal places if available
+            if (data.chainageDecimalPlaces !== undefined) {
+                document.getElementById('chainageDecimalInput').value = data.chainageDecimalPlaces;
+            }
+
+            if (data.rlDecimalPlaces !== undefined) {
+                document.getElementById('rlDecimalInput').value = data.rlDecimalPlaces;
+            }
+
+            if (data.gradeDecimalPlaces !== undefined) {
+                document.getElementById('gradeDecimalInput').value = data.gradeDecimalPlaces;
+            }
+
+            // Apply grade display if available
+            if (data.gradeDisplay && (data.gradeDisplay === 'percent' || data.gradeDisplay === 'ratio')) {
+                document.getElementById('gradeDisplaySelect').value = data.gradeDisplay;
+                updateGradeDisplay(data.gradeDisplay);
+            }
+
+            // Apply segments if available
+            if (data.segments && data.segments.length > 0) {
+                // Clear existing segments
+                segments = [];
+                segmentCounter = 0;
+
+                // Add new segments from parsed data
+                data.segments.forEach(seg => {
+                    if (seg.length && seg.length > 0) {
+                        const segmentId = ++segmentCounter;
+                        segments.push({
+                            id: segmentId,
+                            length: seg.length,
+                            grade: seg.grade || 0
+                        });
+                    }
+                });
+
+                // If no valid segments were imported, show a message
+                if (segments.length === 0) {
+                    console.warn('No valid segments found in file. Keeping existing segments.');
+                }
+            }
+
+            // Re-render and update all outputs
+            renderSegments();
+            updateSegmentOutputs();
         }
     </script>
 </body>

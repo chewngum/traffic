@@ -1,5 +1,7 @@
 import bcrypt from 'bcryptjs';
 import pool from '../lib/database.js';
+import { sendLoginNotification } from '../lib/email-service.js';
+import { generateAccessToken, createSecureCookie } from '../lib/jwt.js';
 
 export default async function handler(req, res) {
   // Set CORS headers
@@ -38,51 +40,96 @@ export default async function handler(req, res) {
 
     // Query user from database
     const userResult = await pool.query(`
-      SELECT u.*, al.name as access_level_name, al.color as access_level_color
-      FROM users u 
-      JOIN access_levels al ON u.access_level = al.level
-      WHERE u.username = $1 OR u.email = $1
+      SELECT u.*
+      FROM users u
+      WHERE (u.username = $1 OR u.email = $1)
     `, [username.toLowerCase()]);
 
     if (userResult.rows.length === 0) {
-      return res.status(401).json({ 
-        success: false, 
-        error: 'Invalid username or password' 
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid username or password'
       });
     }
 
     const user = userResult.rows[0];
-    
+
+    // Check if user is active
+    if (user.is_active === false) {
+      return res.status(403).json({
+        success: false,
+        error: 'Account has been deactivated. Please contact support.'
+      });
+    }
+
     // Check password
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
-    
+
     if (!passwordMatch) {
-      return res.status(401).json({ 
-        success: false, 
-        error: 'Invalid username or password' 
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid username or password'
       });
     }
 
     // Update last login
     await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
 
-    // Create token
-    const tokenData = `${Date.now()}:${user.username}:${user.access_level}`;
-    const token = Buffer.from(tokenData).toString('base64');
-    
+    // Get user roles (default to 'authenticated' if not set)
+    const userRoles = user.roles || 'authenticated';
+
+    // Send login notification to admin (non-blocking)
+    const ipAddress = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.socket.remoteAddress || 'Unknown';
+    const userAgent = req.headers['user-agent'] || 'Unknown';
+
+    sendLoginNotification({
+      username: user.username,
+      email: user.email,
+      displayName: user.display_name,
+      accessLevel: user.access_level || 'N/A',
+      roles: userRoles,
+      loginTime: new Date().toLocaleString('en-AU', { timeZone: 'Australia/Sydney' }),
+      ipAddress,
+      userAgent
+    }).catch(err => {
+      console.error('Failed to send login notification email:', err);
+      // Don't fail the login if email fails
+    });
+
+    // Parse roles array
+    const rolesArray = userRoles.split(',').map(r => r.trim());
+
+    // Generate secure JWT token
+    const token = generateAccessToken({
+      userId: user.id,
+      username: user.username,
+      email: user.email,
+      roles: rolesArray,
+      displayName: user.display_name
+    });
+
+    // Create secure HttpOnly cookie
+    const cookieHeader = createSecureCookie('authToken', token, {
+      maxAge: 24 * 60 * 60, // 24 hours
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Lax'
+    });
+
+    // Set the cookie header
+    res.setHeader('Set-Cookie', cookieHeader);
+
     res.json({
       success: true,
-      token: token,
-      accessLevel: user.access_level,
+      token: token, // Also send in body for localStorage fallback
+      roles: rolesArray,
       displayName: user.display_name,
       email: user.email,
       company: user.company,
-      accessLevelName: user.access_level_name,
-      accessLevelColor: user.access_level_color,
       description: user.description,
       tokenExpiry: 24,
       siteName: 'Traffic Labb',
-      message: `Login successful - ${user.access_level_name} access granted`
+      message: `Login successful - ${rolesArray.join(', ')} access granted`
     });
 
   } catch (error) {

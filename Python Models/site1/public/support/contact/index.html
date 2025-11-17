@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - Traffic Labb</title>
+    <link rel="stylesheet" href="/style.css">
+    <script type="module" src="/common.js"></script>
+
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/site.webmanifest">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e3f1f7 50%, #f8f9fa 100%);
+        }
+
+        .page-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 20px 40px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-top: 8px;
+        }
+
+        .page-title {
+            font-size: 1.9rem;
+            color: #354e8d;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .page-description {
+            font-size: 0.95rem;
+            color: #6c757d;
+            line-height: 1.4;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Contact Section */
+        .contact-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: stretch;
+        }
+
+        /* Contact Information Styles */
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .contact-info-card {
+            background: white;
+            padding: 20px 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid rgba(107, 153, 194, 0.1);
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .contact-info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #6b99c2, #87ceeb);
+        }
+
+        .contact-info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(53, 78, 141, 0.15);
+        }
+
+        .contact-info-title {
+            font-size: 1.3rem;
+            color: #354e8d;
+            margin-bottom: 12px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        /* Contact Detail Items */
+        .contact-detail {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e3f1f7;
+            transition: all 0.3s ease;
+        }
+
+        .contact-detail:last-of-type {
+            border-bottom: none;
+            margin-bottom: 10px;
+        }
+
+        .contact-detail:hover {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e3f1f7 100%);
+            margin: 0 -10px;
+            padding: 10px 10px;
+            border-radius: 8px;
+        }
+
+        .contact-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #6b99c2, #354e8d);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+            margin-right: 15px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(107, 153, 194, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .contact-detail:hover .contact-icon {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(107, 153, 194, 0.4);
+        }
+
+        .contact-text {
+            flex: 1;
+        }
+
+        .contact-text h4 {
+            color: #354e8d;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin: 0 0 3px 0;
+        }
+
+        .contact-text a,
+        .contact-text span {
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 0.9rem;
+            line-height: 1.3;
+            transition: color 0.3s ease;
+        }
+
+        .contact-text a:hover {
+            color: #354e8d;
+            text-decoration: underline;
+        }
+
+        /* Map Container */
+        .map-container {
+            margin-top: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid rgba(107, 153, 194, 0.1);
+        }
+
+        .map-container iframe {
+            width: 100%;
+            height: 140px;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .map-container:hover iframe {
+            filter: saturate(1.2);
+        }
+
+        /* Contact Form Styles */
+        .contact-form-container {
+            position: relative;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .contact-form {
+            background: white;
+            padding: 20px 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid rgba(107, 153, 194, 0.1);
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .contact-form::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #6b99c2, #87ceeb);
+        }
+
+        .contact-form:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(53, 78, 141, 0.15);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 4px;
+            color: #354e8d;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e3f1f7;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #6b99c2;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(107, 153, 194, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .submit-button {
+            background: linear-gradient(135deg, #6b99c2, #354e8d);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(107, 153, 194, 0.3);
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(107, 153, 194, 0.4);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .form-status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .form-status.success {
+            background: #e3f1f7;
+            color: #354e8d;
+            border: 1px solid #6b99c2;
+        }
+
+        .form-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .contact-content {
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 1.8rem;
+            }
+
+            .page-description {
+                font-size: 0.95rem;
+            }
+
+            .contact-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .contact-info-card,
+            .contact-form {
+                padding: 30px 20px;
+            }
+
+            .contact-detail {
+                padding: 15px 0;
+            }
+
+            .contact-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 1.1rem;
+                margin-right: 15px;
+            }
+
+            .contact-text h4 {
+                font-size: 0.9rem;
+            }
+
+            .contact-text a,
+            .contact-text span {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-title {
+                font-size: 1.8rem;
+            }
+
+            .contact-info-card,
+            .contact-form {
+                padding: 20px 15px;
+            }
+
+            .contact-detail {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px 0;
+            }
+
+            .contact-icon {
+                margin: 0 0 10px 0;
+            }
+
+            .contact-info-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation will be injected by common.js -->
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1 class="page-title">Get in Touch</h1>
+            <p class="page-description">Ready to see how <strong>Traffic Labb</strong> can transform your engineering workflow? Contact us for a personalised demonstration or to discuss your specific requirements.</p>
+        </div>
+
+        <div class="contact-content">
+            <!-- Contact Information -->
+            <div class="contact-info">
+                <div class="contact-info-card">
+                    <h3 class="contact-info-title">Contact Information</h3>
+
+                    <div class="contact-detail">
+                        <div class="contact-icon">📧</div>
+                        <div class="contact-text">
+                            <h4>Email</h4>
+                            <a href="mailto:traffic@thelabb.com.au">traffic@thelabb.com.au</a>
+                        </div>
+                    </div>
+
+                    <div class="contact-detail">
+                        <div class="contact-icon">📞</div>
+                        <div class="contact-text">
+                            <h4>Phone</h4>
+                            <a href="tel:+61432866183">0432 866 183</a>
+                        </div>
+                    </div>
+
+                    <div class="contact-detail">
+                        <div class="contact-icon">📍</div>
+                        <div class="contact-text">
+                            <h4>Location</h4>
+                            <span>Engadine, Sydney</span>
+                        </div>
+                    </div>
+
+                    <div class="contact-detail">
+                        <div class="contact-icon">🏢</div>
+                        <div class="contact-text">
+                            <h4>ABN</h4>
+                            <span>17 608 847 347</span>
+                        </div>
+                    </div>
+
+                    <!-- Map inside card -->
+                    <div class="map-container">
+                        <iframe
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3307.5234!2d151.0129!3d-34.0667!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6b12f0b8c8b0b0b1%3A0x504c0a7f8b8b8b8b!2sEngadine%20NSW%2C%20Australia!5e0!3m2!1sen!2sau!4v1632123456789!5m2!1sen!2sau"
+                            width="100%"
+                            height="200"
+                            style="border:0; border-radius: 10px;"
+                            allowfullscreen=""
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Form -->
+            <div class="contact-form-container">
+                <form class="contact-form" id="contactForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contactName" class="form-label">Name *</label>
+                            <input type="text" id="contactName" name="name" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contactEmail" class="form-label">Email *</label>
+                            <input type="email" id="contactEmail" name="email" class="form-input" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contactType" class="form-label">Inquiry Type *</label>
+                        <select id="contactType" name="inquiryType" class="form-select" required>
+                            <option value="">Select...</option>
+                            <option value="demo">Request Demo</option>
+                            <option value="pricing">Pricing Information</option>
+                            <option value="technical">Technical Questions</option>
+                            <option value="partnership">Partnership</option>
+                            <option value="support">Support</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contactMessage" class="form-label">Message *</label>
+                        <textarea id="contactMessage" name="message" class="form-textarea" placeholder="Tell us about your traffic engineering challenges and how we can help..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="submit-button" id="contactSubmitBtn">Send Message</button>
+                    <div class="form-status" id="contactStatus"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Contact form setup
+        document.addEventListener('DOMContentLoaded', function() {
+            setupContactForm();
+            prefillUserData();
+        });
+
+        function prefillUserData() {
+            // Check if user is authenticated and not a guest (access level > 1)
+            const authToken = localStorage.getItem('authToken');
+            const userAccessLevel = parseInt(localStorage.getItem('userAccessLevel')) || 0;
+
+            // Only prefill for authenticated non-guest users
+            if (!authToken || userAccessLevel <= 1) return;
+
+            // Get user data from localStorage
+            const userName = localStorage.getItem('userDisplayName');
+            const userEmail = localStorage.getItem('userEmail');
+
+            // Prefill name field
+            const nameField = document.getElementById('contactName');
+            if (nameField && userName) {
+                nameField.value = userName;
+            }
+
+            // Prefill email field
+            const emailField = document.getElementById('contactEmail');
+            if (emailField && userEmail) {
+                emailField.value = userEmail;
+            }
+        }
+
+        function setupContactForm() {
+            const contactForm = document.getElementById('contactForm');
+            if (!contactForm) return;
+
+            contactForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const submitBtn = document.getElementById('contactSubmitBtn');
+                const statusDiv = document.getElementById('contactStatus');
+
+                // Get form data
+                const formData = new FormData(this);
+                const contactData = {
+                    feedbackType: 'contact',
+                    name: formData.get('name'),
+                    email: formData.get('email'),
+                    inquiryType: formData.get('inquiryType'),
+                    message: formData.get('message'),
+                    timestamp: new Date().toISOString(),
+                    page: 'Contact Page',
+                    url: window.location.href
+                };
+
+                // Basic validation
+                if (!contactData.name || !contactData.email || !contactData.inquiryType || !contactData.message) {
+                    showStatus('Please fill in all required fields.', 'error');
+                    return;
+                }
+
+                // Submit
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Sending...';
+                statusDiv.style.display = 'none';
+
+                try {
+                    const response = await fetch('/api/sendform', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(contactData)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showStatus('Message sent successfully! We\'ll get back to you soon.', 'success');
+                        this.reset();
+                    } else {
+                        showStatus('Failed to send message. Please try again or contact us directly.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Contact form error:', error);
+                    showStatus('An error occurred. Please try again later.', 'error');
+                }
+
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Message';
+            });
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('contactStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `form-status ${type}`;
+            statusDiv.style.display = 'block';
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+    </script>
+
+    <!-- Footer will be injected by common.js -->
+</body>
+</html>

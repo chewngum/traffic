@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
+    <script src="/utils/tooltip-definitions.js"></script>
+    <script src="/utils/tooltip-init.js"></script>
     <style>
         .sample-actions {
             margin-top: 10px;
@@ -34,6 +36,9 @@
             transition: all 0.3s ease;
         }
     </style>
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/site.webmanifest">
 </head>
 <body>
     <div id="loading" class="loading">
@@ -227,7 +232,7 @@
             
             // Check authentication using common.js functions
             const token = localStorage.getItem('authToken');
-            if (!token || !isValidToken(token)) {
+            if (!token) {
                 window.location.href = '/login/';
                 return;
             }
@@ -586,7 +591,7 @@
 
         async function validateCapacity() {
             const token = localStorage.getItem('authToken');
-            if (!token || !isValidToken(token)) {
+            if (!token) {
                 return;
             }
 
@@ -1001,11 +1006,16 @@ const response = await fetch(apiUrl, {
             html += `</div>`;
 
             content.innerHTML = html;
+
+            // Refresh tooltips for dynamically generated content
+            if (typeof window.refreshTooltips === 'function') {
+                window.refreshTooltips();
+            }
         }
 
         async function runSimulation() {
             const token = localStorage.getItem('authToken');
-            if (!token || !isValidToken(token)) {
+            if (!token) {
                 window.location.href = '/login/';
                 return;
             }

@@ -9,13 +9,33 @@ function isUserAuthenticated() {
 
 function isValidToken(token) {
     try {
-        const decoded = atob(token);
-        const [timestamp, username, accessLevel] = decoded.split(':');
-        const tokenAge = Date.now() - parseInt(timestamp);
-        const manifest = getSiteManifest();
-        const expiryHours = manifest?.settings?.tokenExpiry || 24;
-        return tokenAge < expiryHours * 60 * 60 * 1000;
-    } catch {
+        // Decode JWT payload (without verification - server verifies)
+        const parts = token.split('.');
+        if (parts.length !== 3) {
+            // Silently return false for invalid format (common for unauthenticated users)
+            return false;
+        }
+
+        const payload = JSON.parse(atob(parts[1]));
+
+        // Check if token has expired
+        if (payload.exp) {
+            const now = Math.floor(Date.now() / 1000);
+            if (now >= payload.exp) {
+                // Token expired - silently return false
+                return false;
+            }
+        }
+
+        // Check required fields
+        if (!payload.userId || !payload.username) {
+            // Missing fields - silently return false
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        // Silently handle token parsing errors (common for invalid/missing tokens)
         return false;
     }
 }
@@ -23,12 +43,39 @@ function isValidToken(token) {
 function getUserAccessLevel() {
     try {
         const token = localStorage.getItem('authToken');
-        if (!token) return 0;
-        
-        const decoded = atob(token);
-        const [timestamp, username, accessLevel] = decoded.split(':');
-        return parseInt(accessLevel) || 0;
-    } catch {
+        if (!token) {
+            // No token - guest user, silently return 0
+            return 0;
+        }
+
+        // Decode JWT payload
+        const parts = token.split('.');
+        if (parts.length !== 3) {
+            // Invalid token format - silently return 0
+            return 0;
+        }
+
+        const payload = JSON.parse(atob(parts[1]));
+        const roles = Array.isArray(payload.roles) ? payload.roles : [];
+
+        // Role to access level mapping:
+        // - guest or no roles: 0
+        // - authenticated: 1
+        // - paying: 2
+        // - admin: 3
+        // - beta: 3
+        let level = 0;
+        if (roles.includes('admin') || roles.includes('beta')) {
+            level = 3;
+        } else if (roles.includes('paying')) {
+            level = 2;
+        } else if (roles.includes('authenticated')) {
+            level = 1;
+        }
+
+        return level;
+    } catch (error) {
+        // Silently handle errors (invalid token)
         return 0;
     }
 }
@@ -37,21 +84,59 @@ function getUserDisplayName() {
     try {
         const displayName = localStorage.getItem('userDisplayName');
         if (displayName) return displayName;
-        
+
         const token = localStorage.getItem('authToken');
         if (!token) return 'User';
-        
-        const decoded = atob(token);
-        const [timestamp, username] = decoded.split(':');
-        return username || 'User';
+
+        // Decode JWT payload
+        const parts = token.split('.');
+        if (parts.length !== 3) return 'User';
+
+        const payload = JSON.parse(atob(parts[1]));
+        return payload.displayName || payload.username || 'User';
     } catch {
         return 'User';
     }
 }
 
+function getUserRoles() {
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            return ['guest'];
+        }
+
+        // Decode JWT payload
+        const parts = token.split('.');
+        if (parts.length !== 3) {
+            return ['guest'];
+        }
+
+        const payload = JSON.parse(atob(parts[1]));
+        const roles = payload.roles;
+
+        // Handle both array and string formats
+        if (Array.isArray(roles)) {
+            const result = roles.length > 0 ? roles : ['guest'];
+            return result;
+        } else if (typeof roles === 'string') {
+            const rolesArray = roles.split(',').map(r => r.trim());
+            const result = rolesArray.length > 0 ? rolesArray : ['guest'];
+            return result;
+        }
+
+        return ['guest'];
+    } catch (error) {
+        return ['guest'];
+    }
+}
+
 function checkPageAccess() {
     const manifest = getSiteManifest();
-    if (!manifest) return;
+    if (!manifest) {
+        console.log('🔍 AUTH DEBUG: Manifest not loaded');
+        return;
+    }
 
     const currentPath = window.location.pathname;
     const pageInfo = manifest.pages[currentPath];
@@ -61,26 +146,29 @@ function checkPageAccess() {
         return;
     }
 
-    // If page is public (accessLevel 0), allow access without authentication
-    if (pageInfo.accessLevel === 0) {
+    // Get user's roles
+    const userRoles = getUserRoles();
+
+    // Check if user has any of the allowed roles for this page
+    const allowedRoles = pageInfo.allowedRoles || [];
+
+    // If no specific roles required, allow access
+    if (allowedRoles.length === 0) {
         return;
     }
 
-    // Check if user is authenticated
-    const isAuthenticated = isUserAuthenticated();
-    const userAccessLevel = getUserAccessLevel();
+    // Check if user has any of the required roles
+    const hasAccess = allowedRoles.some(role => userRoles.includes(role));
 
-    // If page requires authentication (accessLevel > 0) and user is not logged in
-    if (pageInfo.accessLevel > 0 && !isAuthenticated) {
-        // Redirect to login-required page with return URL
-        window.location.href = `/login-required/?from=${encodeURIComponent(currentPath)}`;
-        return;
-    }
+    if (!hasAccess) {
+        // If user only has guest role, redirect to login
+        if (userRoles.length === 1 && userRoles[0] === 'guest') {
+            window.location.href = `/login/login-required/?from=${encodeURIComponent(currentPath)}`;
+            return;
+        }
 
-    // If user is logged in but doesn't have sufficient access level
-    if (isAuthenticated && userAccessLevel < pageInfo.accessLevel) {
-        // Redirect to upgrade-required page with return URL
-        window.location.href = `/upgrade-required/?from=${encodeURIComponent(currentPath)}`;
+        // Otherwise, user is logged in but doesn't have required role
+        window.location.href = `/login/upgrade-required/?from=${encodeURIComponent(currentPath)}`;
         return;
     }
 }
@@ -214,11 +302,12 @@ function logout() {
     window.location.href = '/login/';
 }
 
-export { 
-    isUserAuthenticated, 
-    isValidToken, 
-    getUserAccessLevel, 
+export {
+    isUserAuthenticated,
+    isValidToken,
+    getUserAccessLevel,
     getUserDisplayName,
+    getUserRoles,
     checkPageAccess,
     showAccessDeniedOverlay,
     logout

@@ -22,6 +22,10 @@ provider:
     SUPPORT_EMAIL: ${env:SUPPORT_EMAIL, 'placeholder'}
     REPLY_TO_EMAIL: ${env:REPLY_TO_EMAIL, 'placeholder'}
     APP_URL: ${env:APP_URL, 'placeholder'}
+    # JWT Authentication
+    JWT_SECRET: ${env:JWT_SECRET, 'CHANGE_THIS_SECRET_IN_PRODUCTION'}
+    JWT_EXPIRY: ${env:JWT_EXPIRY, '24h'}
+    JWT_REFRESH_EXPIRY: ${env:JWT_REFRESH_EXPIRY, '7d'}
     # Legacy EmailJS (can be removed)
     EMAILJS_PRIVATE_KEY: ${env:EMAILJS_PRIVATE_KEY, 'placeholder'}
     EMAILJS_PUBLIC_KEY: ${env:EMAILJS_PUBLIC_KEY, 'placeholder'}
@@ -32,18 +36,21 @@ provider:
   httpApi:
     cors:
       allowedOrigins:
-        - '*'
+        - 'https://thelabb.com.au'
+        - 'http://localhost:3000'
       allowedHeaders:
         - Content-Type
         - Authorization
         - X-Requested-With
+        - Accept
       allowedMethods:
         - GET
         - POST
         - PUT
         - DELETE
         - OPTIONS
-      allowCredentials: false
+      allowCredentials: true
+      maxAge: 86400
 
 functions:
   # Compute-intensive simulation functions (1769 MB = 1 vCPU equivalent)
@@ -145,7 +152,7 @@ functions:
     events:
       - httpApi:
           path: /api/login
-          method: ANY
+          method: POST
 
   account:
     handler: lambda-api/handlers/account.main
@@ -183,6 +190,24 @@ functions:
           path: /api/password-reset-confirm
           method: ANY
 
+  admin-users:
+    handler: lambda-api/handlers/admin-users.main
+    memorySize: 512
+    timeout: 10
+    events:
+      - httpApi:
+          path: /api/admin/users
+          method: ANY
+      - httpApi:
+          path: /api/admin/users/{userId}
+          method: ANY
+      - httpApi:
+          path: /api/admin/users/{userId}/roles
+          method: ANY
+      - httpApi:
+          path: /api/admin/users/{userId}/status
+          method: ANY
+
 plugins:
    - serverless-offline
 
@@ -195,92 +220,21 @@ build:
       - aws-sdk
     external:
       - '@aws-sdk/client-ses'
-      - pg
-      - pg-native
-    format: esm
-    platform: node
-    target: node18
+      - 'pg'
+      - 'pg-native'
+      - 'bcryptjs'
+      - 'jsonwebtoken'
+      - 'mailgun.js'
+      - 'form-data'
 
 package:
   individually: true
-  excludeDevDependencies: true
   patterns:
-    # Include only essential files
-    - 'lambda-api/handlers/**'
-    - 'lambda-api/middleware/**'
-    - 'lambda-api/lib/**'
-    - 'api/**'
-    - 'lib/**'
-    - 'node_modules/**'
-    - 'package.json'
-    
-    # Exclude everything else
-    - '!lambda-api/package.json'
-    - '!lambda-api/package-lock.json'
-    - '!lambda-api/workers/**'
-    - '!node_modules/aws-sdk/**'
-    - '!node_modules/**/.cache/**'
-    - '!node_modules/**/test/**'
-    - '!node_modules/**/tests/**'
-    - '!node_modules/**/__tests__/**'
-    - '!node_modules/**/*.md'
-    - '!node_modules/**/*.txt'
-    - '!node_modules/**/LICENSE*'
-    - '!node_modules/**/README*'
-    - '!node_modules/**/CHANGELOG*'
-    - '!node_modules/**/HISTORY*'
-    - '!node_modules/**/.bin/**'
-    - '!node_modules/**/*.map'
-    - '!node_modules/**/*.d.ts'
-    - '!node_modules/**/*.d.mts'
-    - '!node_modules/**/example/**'
-    - '!node_modules/**/examples/**'
-    - '!node_modules/**/docs/**'
-    - '!node_modules/**/.github/**'
-    - '!node_modules/**/.npmignore'
-    - '!node_modules/**/.travis.yml'
-    - '!node_modules/**/.eslintrc*'
-    - '!node_modules/**/tsconfig.json'
-    
-    # Exclude dev files
+    # Exclude dev files (esbuild will handle bundling)
     - '!.git/**'
     - '!.serverless/**'
-    - '!.DS_Store'
     - '!public/**'
+    - '!Python Models/**'
     - '!*.md'
-    - '!*.txt'
     - '!*.sh'
     - '!.env*'
-    - '!.gitignore'
-    - '!deploy-*.sh'
-    - '!migrate-*.js'
-    - '!simple-migrate.js'
-    - '!cleanup-*.sh'
-    - '!ensure-*.sh'
-    - '!dev-server.js'
-    - '!generate-tree.sh'
-    - '!update-package-json.sh'
-    - '!serverless.yml'
-    - '!project-structure.txt'
-    
-    # Exclude dev dependencies packages
-    - '!node_modules/express/**'
-    - '!node_modules/http-proxy-middleware/**'
-    - '!node_modules/serverless/**'
-    - '!node_modules/serverless-offline/**'
-    - '!node_modules/dotenv-cli/**'
-    - '!node_modules/@types/**'
-
-    # Exclude large unused packages (not needed at runtime)
-    - '!node_modules/java-invoke-local/**'
-    - '!node_modules/@esbuild/**'
-    - '!node_modules/web-streams-polyfill/**'
-    - '!node_modules/luxon/**'
-    - '!node_modules/xml2js/**'
-    - '!node_modules/axios/**'
-    - '!node_modules/@hapi/**'
-    - '!node_modules/jose/**'
-    - '!node_modules/jszip/**'
-    - '!node_modules/pako/**'
-    - '!node_modules/lru-cache/**'
-    - '!node_modules/fast-xml-parser/**'

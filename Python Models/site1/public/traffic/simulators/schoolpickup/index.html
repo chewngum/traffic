@@ -6,6 +6,8 @@
     <title>Traffic Labb - School Pickup Queue Simulation</title>
     <link rel="stylesheet" href="/style.css">
     <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
+    <script src="/utils/tooltip-definitions.js"></script>
+    <script src="/utils/tooltip-init.js"></script>
 
     <style>
         .construction-container {
@@ -144,6 +146,9 @@
             }
         }
     </style>
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/site.webmanifest">
 </head>
 <body>
     <div id="loading" class="loading">
@@ -251,7 +256,7 @@
 
             // Check authentication
             const token = localStorage.getItem('authToken');
-            if (!token || !isValidToken(token)) {
+            if (!token) {
                 window.location.href = '/login/';
                 return;
             }

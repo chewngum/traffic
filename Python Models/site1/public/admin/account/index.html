@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - Traffic Labb</title>
+    <link rel="stylesheet" href="/style.css">
+    <script type="module" src="/common.js"></script>
+    <script src="/utils/api-config.js"></script>
+    <style>
+        .account-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        .account-header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e3f1f7 100%);
+            border-radius: 8px;
+            border: 1px solid #d1e7f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .account-header h1 {
+            color: #354e8d;
+            margin: 0 0 4px 0;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .account-header p {
+            color: #6c757d;
+            margin: 0;
+            font-size: 0.85rem;
+        }
+
+        .sections-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .section-full-width {
+            grid-column: 1 / -1;
+        }
+
+        .account-section {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e9ecef;
+        }
+
+        .section-title {
+            color: #354e8d;
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e3f1f7;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .info-item {
+            padding: 6px 8px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.7rem;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            color: #2c3e50;
+            font-size: 0.85rem;
+            word-break: break-word;
+        }
+
+        .form-group {
+            margin-bottom: 8px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 3px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.8rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 7px 9px;
+            border: 1px solid #a3c9e0;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #6b99c2;
+            box-shadow: 0 0 0 3px rgba(107, 153, 194, 0.1);
+        }
+
+        .form-group input:disabled {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .btn {
+            padding: 7px 14px;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6b99c2 0%, #354e8d 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #5a88b0 0%, #2d4175 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .alert {
+            padding: 8px 10px;
+            border-radius: 5px;
+            margin-bottom: 12px;
+            border: 1px solid transparent;
+            font-size: 0.85rem;
+        }
+
+        .alert-info {
+            background-color: #e3f2fd;
+            border-color: #90caf9;
+            color: #1565c0;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .usage-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin: 12px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h4 {
+            margin: 0 0 3px 0;
+            font-size: 1.3rem;
+            color: #354e8d;
+            font-weight: 700;
+        }
+
+        .stat-card p {
+            margin: 0;
+            font-size: 0.7rem;
+            color: #6c757d;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .usage-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            background: white;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .usage-table th,
+        .usage-table td {
+            padding: 6px 8px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 0.8rem;
+        }
+
+        .usage-table th {
+            background: linear-gradient(135deg, #354e8d 0%, #496f9c 100%);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.75rem;
+        }
+
+        .usage-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .usage-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .no-usage {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            margin: 15px 0;
+            padding: 20px 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 2px dashed #dee2e6;
+        }
+
+        .no-usage a {
+            color: #6b99c2;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .no-usage a:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #6b99c2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .access-level {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 5px;
+            margin-bottom: 3px;
+        }
+
+        .access-level.guest {
+            background: #6c757d;
+            color: white;
+        }
+
+        .access-level.basic {
+            background: #28a745;
+            color: white;
+        }
+
+        .access-level.standard {
+            background: #6b99c2;
+            color: white;
+        }
+
+        .access-level.premium {
+            background: #354e8d;
+            color: white;
+        }
+
+        .success-rate {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .success-rate.high {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .success-rate.medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .success-rate.low {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .account-container {
+                padding: 15px;
+            }
+
+            .account-header {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+
+            .account-header h1 {
+                font-size: 1.6rem;
+            }
+
+            .sections-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .usage-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .usage-table {
+                font-size: 0.85rem;
+            }
+
+            .usage-table th,
+            .usage-table td {
+                padding: 8px 10px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .usage-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .usage-table th,
+            .usage-table td {
+                padding: 6px 8px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/site.webmanifest">
+</head>
+<body>
+    <div class="account-container">
+        <div class="account-header">
+            <h1>Account Settings</h1>
+            <p>Manage your profile information and view usage statistics</p>
+        </div>
+
+        <div id="loadingIndicator" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Loading account information...</p>
+        </div>
+
+        <div id="accountContent" style="display: none;">
+            <div id="alertContainer"></div>
+
+            <div class="sections-grid">
+                <div class="account-section">
+                    <h2 class="section-title">Account Information</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Username</div>
+                            <div class="info-value" id="usernameDisplay">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Email</div>
+                            <div class="info-value" id="emailDisplay">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Roles</div>
+                            <div class="info-value" id="rolesDisplay">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Member Since</div>
+                            <div class="info-value" id="memberSinceDisplay">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="account-section">
+                    <h2 class="section-title">Edit Profile</h2>
+                    <form id="profileForm">
+                        <div class="info-grid">
+                            <div class="form-group">
+                                <label for="firstName">First Name *</label>
+                                <input type="text" id="firstName" name="firstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName">Last Name *</label>
+                                <input type="text" id="lastName" name="lastName" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="organisation">Organisation</label>
+                            <input type="text" id="organisation" name="organisation" placeholder="Company or organisation name">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" placeholder="0412 345 678">
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="updateProfileBtn">
+                            Update Profile
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="account-section section-full-width">
+                <h2 class="section-title">Account Actions</h2>
+                <div class="action-buttons">
+                    <a href="/traffic/" class="btn btn-secondary">Back to Dashboard</a>
+                    <button onclick="resetPassword()" class="btn btn-secondary">Reset Password</button>
+                    <button onclick="logout()" class="btn btn-secondary">Logout</button>
+                </div>
+            </div>
+
+            <div class="account-section section-full-width">
+                <h2 class="section-title">Usage Statistics</h2>
+                <div id="usageStatistics">
+                    <p class="loading">Loading usage statistics...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let accountData = null;
+
+        // Get API endpoint from config
+        function getApiEndpoint(endpoint) {
+            if (window.API_CONFIG && window.API_CONFIG.endpoints) {
+                return window.API_CONFIG.endpoints[endpoint];
+            }
+            // Fallback to relative path if config not loaded
+            console.warn('API_CONFIG not loaded, using relative path');
+            return `/api/${endpoint}`;
+        }
+
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alertDiv);
+            
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.parentNode.removeChild(alertDiv);
+                    }
+                }, 5000);
+            }
+        }
+
+        async function loadAccountData() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = '/login/';
+                return;
+            }
+
+            try {
+                const apiUrl = getApiEndpoint('account');
+                console.log('Fetching account data from:', apiUrl);
+                console.log('Auth token present:', token ? 'Yes' : 'No');
+
+                const response = await fetch(apiUrl, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('API error response:', errorData);
+
+                    if (response.status === 401) {
+                        console.log('Authentication failed - clearing token and redirecting to login');
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('userAccessLevel');
+                        localStorage.removeItem('userDisplayName');
+                        window.location.href = '/login/';
+                        return;
+                    } else if (response.status === 403) {
+                        console.log('Access denied - insufficient permissions');
+                        showAlert(errorData.error || 'You do not have permission to access this page.', 'error');
+                        setTimeout(() => {
+                            window.location.href = '/traffic/';
+                        }, 2000);
+                        return;
+                    }
+                    throw new Error(errorData.error || `Failed to load account data: ${response.status}`);
+                }
+
+                accountData = await response.json();
+                console.log('Account data loaded successfully');
+                displayAccount(accountData);
+
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('accountContent').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading account:', error);
+                const errorMessage = error.message || 'Failed to load account information. Please try again.';
+                showAlert(errorMessage, 'error');
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('accountContent').style.display = 'block';
+            }
+        }
+
+        function displayAccount(data) {
+            document.getElementById('usernameDisplay').textContent = data.username;
+            document.getElementById('emailDisplay').textContent = data.email || 'Not provided';
+
+            // Display roles from database
+            const roles = data.roles || [];
+            const rolesDisplay = formatRoles(roles);
+            document.getElementById('rolesDisplay').innerHTML = rolesDisplay;
+
+            const memberSince = data.created_at ?
+                new Date(data.created_at).toLocaleDateString() : 'Unknown';
+            document.getElementById('memberSinceDisplay').textContent = memberSince;
+            
+            if (data.display_name) {
+                const nameParts = data.display_name.split(' ');
+                document.getElementById('firstName').value = nameParts[0] || '';
+                document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
+            }
+
+            document.getElementById('organisation').value = data.organisation || '';
+            document.getElementById('phone').value = data.phone || '';
+            displayUsageStatistics(data.usage_statistics);
+        }
+
+        function displayUsageStatistics(stats) {
+            const statsContainer = document.getElementById('usageStatistics');
+            if (!statsContainer) return;
+            
+            const total = stats.total;
+            const byType = stats.by_type;
+            
+            let html = `
+                <div class="usage-summary">
+                    <div class="stat-card">
+                        <h4>${total.total_simulations || 0}</h4>
+                        <p>Total Simulations</p>
+                    </div>
+                </div>
+            `;
+            
+            if (byType && byType.length > 0) {
+                html += `
+                    <h3 style="margin: 15px 0 8px 0; color: #354e8d; font-size: 1rem;">Usage by Tool</h3>
+                    <table class="usage-table">
+                        <thead>
+                            <tr>
+                                <th>Simulation/Tool</th>
+                                <th>Runs</th>
+                                <th>Last Used</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                byType.forEach(type => {
+                    const lastRun = type.last_run ?
+                        new Date(type.last_run).toLocaleDateString() : 'Never';
+
+                    html += `
+                        <tr>
+                            <td><strong>${getSimulationDisplayName(type.simulation_type)}</strong></td>
+                            <td>${type.total_runs}</td>
+                            <td>${lastRun}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `</tbody></table>`;
+            } else {
+                html += `
+                    <div class="no-usage">
+                        <p>No simulations run yet.</p>
+                        <p>Visit the <a href="/traffic/">dashboard</a> to get started with traffic simulations and design tools!</p>
+                    </div>
+                `;
+            }
+            
+            statsContainer.innerHTML = html;
+        }
+
+        function getSimulationDisplayName(type) {
+            const names = {
+                'boomgate': 'Boom Gate Simulation',
+                'carlift': 'Car Lift Simulation',
+                'carparkutilisation': 'Car Park Utilisation',
+                'mechanical': 'Mechanical Parking',
+                'schoolpickup': 'School Pickup',
+                'two-way-passing': 'Two-Way Passing',
+                'rampdrawer': 'Ramp Design Tool',
+                'streetsection': 'Street Section Designer',
+                'network': 'Traffic Network Database'
+            };
+            return names[type] || type.charAt(0).toUpperCase() + type.slice(1);
+        }
+
+        function formatRuntime(ms) {
+            if (ms < 1000) return `${Math.round(ms)}ms`;
+            if (ms < 60000) return `${(ms/1000).toFixed(1)}s`;
+            return `${(ms/60000).toFixed(1)}m`;
+        }
+
+        function formatRoles(roles) {
+            // Parse roles if it's a string (from database)
+            let rolesArray = roles;
+            if (typeof roles === 'string') {
+                try {
+                    // Try parsing as JSON array
+                    rolesArray = JSON.parse(roles);
+                } catch (e) {
+                    // If not JSON, try comma-separated
+                    rolesArray = roles.split(',').map(r => r.trim()).filter(r => r);
+                }
+            }
+
+            if (!rolesArray || rolesArray.length === 0) {
+                return '<span class="access-level guest">Guest</span>';
+            }
+
+            // Map roles to styled badges
+            const roleStyles = {
+                'guest': 'guest',
+                'authenticated': 'basic',
+                'paying': 'standard',
+                'beta': 'premium',
+                'admin': 'premium'
+            };
+
+            return rolesArray.map(role => {
+                const roleClass = roleStyles[role] || 'basic';
+                const roleName = role.charAt(0).toUpperCase() + role.slice(1);
+                return `<span class="access-level ${roleClass}">${roleName}</span>`;
+            }).join(' ');
+        }
+
+        async function updateProfile(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const token = localStorage.getItem('authToken');
+            const updateBtn = document.getElementById('updateProfileBtn');
+            
+            updateBtn.disabled = true;
+            updateBtn.textContent = 'Updating...';
+            
+            try {
+                const apiUrl = getApiEndpoint('account');
+                console.log('Updating profile at:', apiUrl);
+                
+                const response = await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        firstName: formData.get('firstName'),
+                        lastName: formData.get('lastName'),
+                        organisation: formData.get('organisation'),
+                        phone: formData.get('phone')
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Profile updated successfully!', 'success');
+                    await loadAccountData();
+                } else {
+                    showAlert(result.error || 'Failed to update profile', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Update error:', error);
+                showAlert('Failed to update profile. Please try again.', 'error');
+            } finally {
+                updateBtn.disabled = false;
+                updateBtn.textContent = 'Update Profile';
+            }
+        }
+
+        function getUserAccessLevel() {
+            const level = localStorage.getItem('userAccessLevel');
+            return level ? parseInt(level) : 0;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if API config is loaded
+            if (!window.API_CONFIG) {
+                console.error('API_CONFIG not loaded! Make sure utils/api-config.js is loaded.');
+                showAlert('Configuration error. Please refresh the page.', 'error');
+            }
+            
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = '/login/';
+                return;
+            }
+            
+            const userAccessLevel = getUserAccessLevel();
+            if (userAccessLevel < 2) {
+                localStorage.setItem('accessDeniedMessage', 'Account settings require access level 2 or higher');
+                window.location.href = '/traffic/';
+                return;
+            }
+            
+            loadAccountData();
+            
+            const profileForm = document.getElementById('profileForm');
+            if (profileForm) {
+                profileForm.addEventListener('submit', updateProfile);
+            }
+        });
+
+        window.logout = function() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userDisplayName');
+            localStorage.removeItem('userAccessLevel');
+            window.location.href = '/login/';
+        };
+
+        window.resetPassword = async function() {
+            if (!confirm('Are you sure you want to reset your password? You will be logged out and receive a password reset email.')) {
+                return;
+            }
+
+            const token = localStorage.getItem('authToken');
+
+            try {
+                const apiUrl = getApiEndpoint('reset-password');
+                console.log('Requesting password reset at:', apiUrl);
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Password reset email has been sent. You will now be logged out.');
+                    logout();
+                } else {
+                    showAlert(result.error || 'Failed to reset password', 'error');
+                }
+            } catch (error) {
+                console.error('Password reset error:', error);
+                showAlert('Failed to reset password. Please try again.', 'error');
+            }
+        };
+    </script>
+</body>
+</html>

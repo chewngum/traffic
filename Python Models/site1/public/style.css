@@ -586,7 +586,7 @@ body {
     background: white;
     border: 1px solid #a3c9e0;
     border-radius: 6px;
-    overflow: hidden;
+    overflow: visible;
     font-size: 1rem;
 }
 
@@ -665,6 +665,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow: visible;
 }
 
 .utilisation-checkpoint {
@@ -902,6 +903,7 @@ body {
 .tables-container {
     grid-template-columns: 1fr 1fr;
     align-items: start;
+    overflow: visible;
 }
 
 /* Help Text */
@@ -1006,6 +1008,7 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
+    overflow: visible;
 }
 
 .distribution-table-container {
@@ -1013,6 +1016,7 @@ body {
     min-height: 200px;
     display: flex;
     flex-direction: column;
+    overflow: visible;
 }
 
 .wait-stats {
@@ -2754,6 +2758,224 @@ body {
     
     .buttons-row {
         flex-direction: column;
+    }
+}
+
+/* ========== TOOLTIP SYSTEM ========== */
+/* Pure CSS tooltips with hover/focus interaction */
+
+/* Base tooltip styles - elements with data-tooltip attribute */
+[data-tooltip] {
+    position: relative;
+    cursor: help;
+    border-bottom: 1px dotted var(--color-secondary);
+}
+
+/* Remove dotted underline on inputs/selects with tooltips */
+input[data-tooltip],
+select[data-tooltip],
+button[data-tooltip] {
+    border-bottom: none;
+    cursor: pointer;
+}
+
+/* Tooltip bubble - hidden by default */
+[data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+
+    /* Styling */
+    background: linear-gradient(135deg, #354e8d 0%, #496f9c 100%);
+    color: white;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 400;
+    line-height: 1.5;
+    text-align: left;
+    white-space: normal;
+
+    /* Size constraints */
+    width: max-content;
+    max-width: 320px;
+    min-width: 200px;
+
+    /* Shadow and border */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+
+    /* Hidden by default */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+
+    /* Ensure tooltip appears above other content */
+    z-index: 10000;
+    pointer-events: none;
+}
+
+/* Tooltip arrow - disabled */
+[data-tooltip]::after {
+    display: none;
+}
+
+/* Show tooltip on hover or focus */
+[data-tooltip]:hover::before,
+[data-tooltip]:hover::after,
+[data-tooltip]:focus::before,
+[data-tooltip]:focus::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-5px);
+}
+
+/* Restore arrow transform */
+[data-tooltip]:hover::after,
+[data-tooltip]:focus::after {
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Tooltip variants for different positions */
+
+/* Bottom tooltip */
+[data-tooltip][data-tooltip-pos="bottom"]::before {
+    bottom: auto;
+    top: 125%;
+}
+
+[data-tooltip][data-tooltip-pos="bottom"]::after {
+    bottom: auto;
+    top: 115%;
+    border-top-color: transparent;
+    border-bottom-color: #354e8d;
+}
+
+[data-tooltip][data-tooltip-pos="bottom"]:hover::before,
+[data-tooltip][data-tooltip-pos="bottom"]:focus::before {
+    transform: translateX(-50%) translateY(5px);
+}
+
+/* Right tooltip */
+[data-tooltip][data-tooltip-pos="right"]::before {
+    bottom: 50%;
+    left: 125%;
+    transform: translateY(50%);
+}
+
+[data-tooltip][data-tooltip-pos="right"]::after {
+    bottom: 50%;
+    left: 115%;
+    transform: translateY(50%);
+    border-top-color: transparent;
+    border-right-color: #354e8d;
+}
+
+[data-tooltip][data-tooltip-pos="right"]:hover::before,
+[data-tooltip][data-tooltip-pos="right"]:focus::before {
+    transform: translateY(50%) translateX(5px);
+}
+
+/* Left tooltip */
+[data-tooltip][data-tooltip-pos="left"]::before {
+    bottom: 50%;
+    left: auto;
+    right: 125%;
+    transform: translateY(50%);
+}
+
+[data-tooltip][data-tooltip-pos="left"]::after {
+    bottom: 50%;
+    left: auto;
+    right: 115%;
+    transform: translateY(50%);
+    border-top-color: transparent;
+    border-left-color: #354e8d;
+}
+
+[data-tooltip][data-tooltip-pos="left"]:hover::before,
+[data-tooltip][data-tooltip-pos="left"]:focus::before {
+    transform: translateY(50%) translateX(-5px);
+}
+
+/* Tooltip size variants */
+[data-tooltip][data-tooltip-size="small"]::before {
+    max-width: 200px;
+    min-width: 150px;
+    font-size: 0.75rem;
+    padding: 8px 12px;
+}
+
+[data-tooltip][data-tooltip-size="large"]::before {
+    max-width: 400px;
+    min-width: 250px;
+    font-size: 0.9rem;
+    padding: 12px 16px;
+}
+
+/* Special styling for tooltips on form labels */
+.form-group label[data-tooltip] {
+    display: inline-block;
+}
+
+/* Adjust tooltip position for table headers */
+th[data-tooltip]::before {
+    bottom: 125%;
+    white-space: normal;
+}
+
+/* Table headers use standard tooltip arrow */
+
+/* Responsive tooltip adjustments */
+@media (max-width: 768px) {
+    [data-tooltip]::before {
+        max-width: 250px;
+        min-width: 150px;
+        font-size: 0.8rem;
+        padding: 8px 12px;
+    }
+
+    /* Ensure tooltips don't overflow on mobile */
+    [data-tooltip][data-tooltip-pos="right"]::before,
+    [data-tooltip][data-tooltip-pos="left"]::before {
+        left: 50%;
+        right: auto;
+        bottom: 125%;
+        transform: translateX(-50%);
+    }
+
+    [data-tooltip][data-tooltip-pos="right"]::after,
+    [data-tooltip][data-tooltip-pos="left"]::after {
+        left: 50%;
+        right: auto;
+        bottom: 115%;
+        transform: translateX(-50%);
+        border-right-color: transparent;
+        border-left-color: transparent;
+        border-top-color: #354e8d;
+    }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    [data-tooltip]::before,
+    [data-tooltip]::after {
+        transition: none;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    [data-tooltip]::before {
+        border: 2px solid white;
+        background: #000;
+        color: #fff;
+    }
+
+    [data-tooltip]::after {
+        border-top-color: #000;
     }
 }
 

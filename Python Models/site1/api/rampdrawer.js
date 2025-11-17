@@ -9,17 +9,8 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Authentication check
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ success: false, error: 'Authentication required' });
-        }
-
-        const token = authHeader.substring(7);
-
-        if (!isValidToken(token)) {
-            return res.status(401).json({ success: false, error: 'Invalid or expired token' });
-        }
+        // Authentication is handled by the Lambda wrapper (simulation-wrapper.js)
+        // No need to check auth here
 
         if (req.method !== 'POST') {
             return res.status(405).json({ success: false, error: 'Method not allowed' });
@@ -76,17 +67,6 @@ export default async function handler(req, res) {
     }
 }
 
-function isValidToken(token) {
-    try {
-        const decoded = Buffer.from(token, 'base64').toString('utf-8');
-        const [timestamp, username] = decoded.split(':');
-        const tokenAge = Date.now() - parseInt(timestamp);
-        return tokenAge < 24 * 60 * 60 * 1000; // 24 hours
-    } catch {
-        return false;
-    }
-}
-
 /**
  * Format distance value according to units setting and decimal places
  */
@@ -131,13 +111,13 @@ function formatChainageLabel(value, units, precision, prefix, position) {
 }
 
 function generateDrawings(params) {
-    const { 
-        segmentData, 
-        width, 
+    const {
+        segmentData,
+        width,
         startingRL,
         startingChainage = 0,
-        startLabel, 
-        endLabel, 
+        startLabel,
+        endLabel,
         gradeType,
         chainagePrefix = 'CH',
         chainagePosition = 'prefix',
@@ -145,12 +125,43 @@ function generateDrawings(params) {
         rlDecimalPlaces = 3,
         gradeDecimalPlaces = 1,
         distanceUnits = 'm',
-        gradeDisplay = 'percent'
+        gradeDisplay = 'percent',
+        sectionSubtitle = '',
+        planSubtitle = '',
+        // Old combined parameters (for backward compatibility)
+        showRL = true,
+        showCH = true,
+        showGrade = true,
+        showLength = true,
+        showWidth = true,
+        // New separate section/plan parameters
+        showRLSection,
+        showRLPlan,
+        showCHSection,
+        showCHPlan,
+        showGradeSection,
+        showGradePlan,
+        showLengthSection,
+        showLengthPlan,
+        showWidthSection,
+        showWidthPlan
     } = params;
-    
-    const sectionSvg = generateSectionView(segmentData, width, startingRL, startingChainage, startLabel, endLabel, gradeType, chainagePrefix, chainagePosition, chainageDecimalPlaces, rlDecimalPlaces, gradeDecimalPlaces, distanceUnits, gradeDisplay);
-    const planSvg = generatePlanView(segmentData, width, gradeType, chainageDecimalPlaces, gradeDecimalPlaces, distanceUnits, gradeDisplay);
-    
+
+    // Use new parameters if provided, otherwise fall back to old combined parameters
+    const sectionShowRL = showRLSection !== undefined ? showRLSection : showRL;
+    const sectionShowCH = showCHSection !== undefined ? showCHSection : showCH;
+    const sectionShowGrade = showGradeSection !== undefined ? showGradeSection : showGrade;
+    const sectionShowLength = showLengthSection !== undefined ? showLengthSection : showLength;
+
+    const planShowRL = showRLPlan !== undefined ? showRLPlan : showRL;
+    const planShowCH = showCHPlan !== undefined ? showCHPlan : showCH;
+    const planShowGrade = showGradePlan !== undefined ? showGradePlan : showGrade;
+    const planShowLength = showLengthPlan !== undefined ? showLengthPlan : showLength;
+    const planShowWidth = showWidthPlan !== undefined ? showWidthPlan : showWidth;
+
+    const sectionSvg = generateSectionView(segmentData, width, startingRL, startingChainage, startLabel, endLabel, gradeType, chainagePrefix, chainagePosition, chainageDecimalPlaces, rlDecimalPlaces, gradeDecimalPlaces, distanceUnits, gradeDisplay, sectionSubtitle, sectionShowRL, sectionShowCH, sectionShowGrade, sectionShowLength);
+    const planSvg = generatePlanView(segmentData, width, gradeType, chainageDecimalPlaces, gradeDecimalPlaces, distanceUnits, gradeDisplay, startingRL, startingChainage, chainagePrefix, chainagePosition, rlDecimalPlaces, planSubtitle, planShowRL, planShowCH, planShowGrade, planShowLength, planShowWidth);
+
     return {
         sectionSvg,
         planSvg
@@ -176,59 +187,17 @@ async function generateFileExport(params) {
 
 function generateSVGExport(params) {
     const { type } = params;
-    
+
     // Get the raw SVG content
     let svgContent;
     if (type === 'section') {
         svgContent = generateSectionView(
-            params.segmentData, 
-            params.width, 
+            params.segmentData,
+            params.width,
             params.startingRL,
             params.startingChainage || 0,
-            params.startLabel, 
-            params.endLabel, 
-            params.gradeType,
-            params.chainagePrefix,
-            params.chainagePosition,
-            params.chainageDecimalPlaces,
-            params.rlDecimalPlaces,
-            params.gradeDecimalPlaces,
-            params.distanceUnits,
-            params.gradeDisplay
-        );
-    } else {
-        svgContent = generatePlanView(
-            params.segmentData, 
-            params.width, 
-            params.gradeType,
-            params.chainageDecimalPlaces,
-            params.gradeDecimalPlaces,
-            params.distanceUnits,
-            params.gradeDisplay
-        );
-    }
-    
-    // Add XML declaration and make it a complete SVG file
-    const completeSvg = `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-${svgContent}`;
-    
-    return completeSvg;
-}
-
-async function generatePNGExport(params) {
-    const { type } = params;
-    
-    // Get the SVG content
-    let svgContent;
-    if (type === 'section') {
-        svgContent = generateSectionView(
-            params.segmentData, 
-            params.width, 
-            params.startingRL,
-            params.startingChainage || 0,
-            params.startLabel, 
-            params.endLabel, 
+            params.startLabel,
+            params.endLabel,
             params.gradeType,
             params.chainagePrefix || 'CH',
             params.chainagePosition || 'prefix',
@@ -236,17 +205,123 @@ async function generatePNGExport(params) {
             params.rlDecimalPlaces || 3,
             params.gradeDecimalPlaces || 1,
             params.distanceUnits || 'm',
-            params.gradeDisplay || 'percent'
+            params.gradeDisplay || 'percent',
+            params.sectionSubtitle || '',
+            params.showRL !== undefined ? params.showRL : true,
+            params.showCH !== undefined ? params.showCH : true,
+            params.showGrade !== undefined ? params.showGrade : true,
+            params.showLength !== undefined ? params.showLength : true
         );
     } else {
         svgContent = generatePlanView(
-            params.segmentData, 
-            params.width, 
+            params.segmentData,
+            params.width,
             params.gradeType,
             params.chainageDecimalPlaces || 1,
             params.gradeDecimalPlaces || 1,
             params.distanceUnits || 'm',
-            params.gradeDisplay || 'percent'
+            params.gradeDisplay || 'percent',
+            params.startingRL || 0,
+            params.startingChainage || 0,
+            params.chainagePrefix || 'CH',
+            params.chainagePosition || 'prefix',
+            params.rlDecimalPlaces || 3,
+            params.planSubtitle || '',
+            params.showRL !== undefined ? params.showRL : true,
+            params.showCH !== undefined ? params.showCH : true,
+            params.showGrade !== undefined ? params.showGrade : true,
+            params.showLength !== undefined ? params.showLength : true,
+            params.showWidth !== undefined ? params.showWidth : true
+        );
+    }
+
+    // Create metadata object for roundtrip import
+    const metadata = {
+        width: params.width,
+        startingRL: params.startingRL || 0,
+        startingChainage: params.startingChainage || 0,
+        startLabel: params.startLabel || '',
+        endLabel: params.endLabel || '',
+        chainagePrefix: params.chainagePrefix || 'CH',
+        chainagePosition: params.chainagePosition || 'prefix',
+        chainageDecimalPlaces: params.chainageDecimalPlaces || 1,
+        rlDecimalPlaces: params.rlDecimalPlaces || 3,
+        gradeDecimalPlaces: params.gradeDecimalPlaces || 1,
+        distanceUnits: params.distanceUnits || 'm',
+        gradeDisplay: params.gradeDisplay || 'percent',
+        sectionSubtitle: params.sectionSubtitle || '',
+        planSubtitle: params.planSubtitle || '',
+        segments: params.segmentData.map(seg => ({
+            length: seg.length,
+            grade: seg.gradePercent
+        })),
+        exportType: type,
+        exportDate: new Date().toISOString(),
+        tool: 'TrafficLabb Ramp Design Tool'
+    };
+
+    // Embed metadata as JSON comment at the start of the SVG
+    const metadataComment = `<!--RAMP_DESIGN_METADATA:${JSON.stringify(metadata)}-->`;
+
+    // Insert metadata comment after the opening svg tag
+    svgContent = svgContent.replace(/<svg/, `<svg>\n${metadataComment}\n<svg`);
+    svgContent = svgContent.replace(/<svg>\s*<!--RAMP_DESIGN_METADATA.*?-->\s*<svg/, `<svg>\n${metadataComment}`);
+
+    // Add XML declaration and make it a complete SVG file
+    const completeSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+${svgContent}`;
+
+    return completeSvg;
+}
+
+async function generatePNGExport(params) {
+    const { type } = params;
+
+    // Get the SVG content
+    let svgContent;
+    if (type === 'section') {
+        svgContent = generateSectionView(
+            params.segmentData,
+            params.width,
+            params.startingRL,
+            params.startingChainage || 0,
+            params.startLabel,
+            params.endLabel,
+            params.gradeType,
+            params.chainagePrefix || 'CH',
+            params.chainagePosition || 'prefix',
+            params.chainageDecimalPlaces || 1,
+            params.rlDecimalPlaces || 3,
+            params.gradeDecimalPlaces || 1,
+            params.distanceUnits || 'm',
+            params.gradeDisplay || 'percent',
+            params.sectionSubtitle || '',
+            params.showRL !== undefined ? params.showRL : true,
+            params.showCH !== undefined ? params.showCH : true,
+            params.showGrade !== undefined ? params.showGrade : true,
+            params.showLength !== undefined ? params.showLength : true
+        );
+    } else {
+        svgContent = generatePlanView(
+            params.segmentData,
+            params.width,
+            params.gradeType,
+            params.chainageDecimalPlaces || 1,
+            params.gradeDecimalPlaces || 1,
+            params.distanceUnits || 'm',
+            params.gradeDisplay || 'percent',
+            params.startingRL || 0,
+            params.startingChainage || 0,
+            params.chainagePrefix || 'CH',
+            params.chainagePosition || 'prefix',
+            params.rlDecimalPlaces || 3,
+            params.planSubtitle || '',
+            params.showRL !== undefined ? params.showRL : true,
+            params.showCH !== undefined ? params.showCH : true,
+            params.showGrade !== undefined ? params.showGrade : true,
+            params.showLength !== undefined ? params.showLength : true,
+            params.showWidth !== undefined ? params.showWidth : true
         );
     }
     
@@ -369,7 +444,7 @@ async function generatePNGExport(params) {
     }
 }
 
-function generateSectionView(segmentData, width, startingRL, startingChainage = 0, startLabel, endLabel, gradeType, chainagePrefix = 'CH', chainagePosition = 'prefix', chainageDecimalPlaces = 1, rlDecimalPlaces = 3, gradeDecimalPlaces = 1, distanceUnits = 'm', gradeDisplay = 'percent') {
+function generateSectionView(segmentData, width, startingRL, startingChainage = 0, startLabel, endLabel, gradeType, chainagePrefix = 'CH', chainagePosition = 'prefix', chainageDecimalPlaces = 1, rlDecimalPlaces = 3, gradeDecimalPlaces = 1, distanceUnits = 'm', gradeDisplay = 'percent', sectionSubtitle = '', showRL = true, showCH = true, showGrade = true, showLength = true) {
     const svgWidth = 1000;
     const svgHeight = 400;
     const margin = 80; // Increased margin to accommodate datum text
@@ -426,6 +501,9 @@ function generateSectionView(segmentData, width, startingRL, startingChainage = 
 
     // Add title and metadata
     svgContent += `<text x="${svgWidth/2}" y="25" class="title-text">Ramp Section View</text>`;
+    if (sectionSubtitle) {
+        svgContent += `<text x="${svgWidth/2}" y="40" class="subtitle-text">${sectionSubtitle}</text>`;
+    }
 
     // Draw road line connecting all points
     let pathData = '';
@@ -445,58 +523,109 @@ function generateSectionView(segmentData, width, startingRL, startingChainage = 
     // Calculate datum line position for reference
     const datumY = baseY - (startingRL - minRL) * verticalScale;
     
+    // Calculate vertical offsets for RL labels (stack them when segments are < 1m)
+    const labelOffsets = [];
+    const baseOffset = 20; // Base distance above node
+    const stackSpacing = 18; // Vertical spacing between stacked labels
+    let currentStackLevel = 0;
+
+    points.forEach((point, index) => {
+        if (index === 0) {
+            // First point always at base level
+            labelOffsets.push(baseOffset);
+            currentStackLevel = 0;
+        } else {
+            // Check if previous segment is less than 1m
+            const previousSegmentLength = segmentData[index - 1]?.length || 0;
+            if (previousSegmentLength < 1) {
+                // Stack above previous label
+                currentStackLevel++;
+            } else {
+                // Reset to base level
+                currentStackLevel = 0;
+            }
+            labelOffsets.push(baseOffset + (currentStackLevel * stackSpacing));
+        }
+    });
+
     // Draw RL markers and labels at each point
     points.forEach((point, index) => {
         const x = margin + point.x * horizontalScale;
         const y = baseY - (point.rl - minRL) * verticalScale;
-        
+        const labelOffset = labelOffsets[index];
+
         // RL marker
         svgContent += `<circle cx="${x}" cy="${y}" r="4" class="rl-marker"/>`;
-        
-        // RL label (positioned above the ramp node) - format according to RL decimal places
-        const rlText = `RL ${point.rl >= 0 ? '+' : ''}${formatDistance(point.rl, distanceUnits, rlDecimalPlaces)}${distanceUnit}`;
-        svgContent += `<text x="${x}" y="${y - 15}" class="dimension-text" font-weight="bold">${rlText}</text>`;
-        
+
+        if (showRL) {
+            // Jogger line from node to label (not touching either)
+            const joggerStartY = y - 6; // Start 6px above node
+            const joggerEndY = y - labelOffset + 4; // End 4px below label baseline
+            svgContent += `<line x1="${x}" y1="${joggerStartY}" x2="${x}" y2="${joggerEndY}" class="dimension-line"/>`;
+
+            // RL label (horizontal, right-justified, positioned above the node)
+            const rlText = `RL ${point.rl >= 0 ? '+' : ''}${formatDistance(point.rl, distanceUnits, rlDecimalPlaces)}`;
+            svgContent += `<text x="${x - 5}" y="${y - labelOffset}" class="dimension-text" font-weight="bold" text-anchor="end">${rlText}</text>`;
+        }
+
         // Vertical dashed green line from datum to ramp node
         svgContent += `<line x1="${x}" y1="${datumY}" x2="${x}" y2="${y}" class="vertical-datum-line"/>`;
-        
-        // Chainage label positioned below datum line - use actual chainage including starting chainage
-        const chainageLabel = formatChainageLabel(point.chainage, distanceUnits, chainageDecimalPlaces, chainagePrefix, chainagePosition);
-        svgContent += `<text x="${x}" y="${datumY + 20}" class="chainage-text">${chainageLabel}</text>`;
+
+        if (showCH) {
+            // Chainage label positioned below datum line - use actual chainage including starting chainage (no units)
+            const formattedChainage = formatDistance(point.chainage, distanceUnits, chainageDecimalPlaces);
+            const chainageLabel = chainagePosition === 'suffix' ? `${formattedChainage} ${chainagePrefix}` : `${chainagePrefix}${formattedChainage}`;
+            svgContent += `<text x="${x}" y="${datumY + 20}" class="chainage-text" dominant-baseline="middle" transform="rotate(90 ${x} ${datumY + 20})">${chainageLabel}</text>`;
+        }
     });
 
-    // Add start and end labels
-    const startX = margin + points[0].x * horizontalScale;
-    const startY = baseY - (points[0].rl - minRL) * verticalScale;
-    const endX = margin + points[points.length - 1].x * horizontalScale;
-    const endY = baseY - (points[points.length - 1].rl - minRL) * verticalScale;
-    
-    svgContent += `<text x="${startX}" y="${startY - 30}" class="dimension-text" font-weight="bold">${startLabel}</text>`;
-    svgContent += `<text x="${endX}" y="${endY - 30}" class="dimension-text" font-weight="bold">${endLabel}</text>`;
+    // Add start and end labels (positioned above any stacked RL labels) - only if provided
+    if (startLabel || endLabel) {
+        const startX = margin + points[0].x * horizontalScale;
+        const startY = baseY - (points[0].rl - minRL) * verticalScale;
+        const endX = margin + points[points.length - 1].x * horizontalScale;
+        const endY = baseY - (points[points.length - 1].rl - minRL) * verticalScale;
+
+        const maxStackHeight = Math.max(...labelOffsets);
+        const startEndLabelOffset = maxStackHeight + 15; // Position above any stacked labels
+
+        if (startLabel) {
+            svgContent += `<text x="${startX}" y="${startY - startEndLabelOffset}" class="dimension-text" font-weight="bold">${startLabel}</text>`;
+        }
+        if (endLabel) {
+            svgContent += `<text x="${endX}" y="${endY - startEndLabelOffset}" class="dimension-text" font-weight="bold">${endLabel}</text>`;
+        }
+    }
 
     // Add horizontal dimensions for each segment
-    let currentX = margin;
-    segmentData.forEach((segment, index) => {
-        const segmentWidth = segment.length * horizontalScale;
-        const nextX = currentX + segmentWidth;
-        
-        // Dimension line
-        svgContent += `<line x1="${currentX}" y1="${svgHeight - 30}" x2="${nextX}" y2="${svgHeight - 30}" class="dimension-line"/>`;
-        svgContent += `<line x1="${currentX}" y1="${svgHeight - 35}" x2="${currentX}" y2="${svgHeight - 25}" class="dimension-line"/>`;
-        svgContent += `<line x1="${nextX}" y1="${svgHeight - 35}" x2="${nextX}" y2="${svgHeight - 25}" class="dimension-line"/>`;
-        svgContent += `<text x="${(currentX + nextX) / 2}" y="${svgHeight - 38}" class="dimension-text">${formatDistance(segment.length, distanceUnits, chainageDecimalPlaces)}${distanceUnit}</text>`;
-        
-        // Add grade label below the ramp line - format according to gradeDisplay setting and decimal places
-        const midX = (currentX + nextX) / 2;
-        const startY = baseY - (points[index].rl - minRL) * verticalScale;
-        const endY = baseY - (points[index + 1].rl - minRL) * verticalScale;
-        const midY = (startY + endY) / 2;
-        
-        const gradeText = formatGrade(segment.gradePercent, gradeDisplay, gradeDecimalPlaces);
-        svgContent += `<text x="${midX}" y="${midY + 20}" class="dimension-text" fill="#667eea" font-weight="bold">${gradeText}</text>`;
-        
-        currentX = nextX;
-    });
+    if (showLength || showGrade) {
+        let currentX = margin;
+        segmentData.forEach((segment, index) => {
+            const segmentWidth = segment.length * horizontalScale;
+            const nextX = currentX + segmentWidth;
+
+            if (showLength) {
+                // Dimension line
+                svgContent += `<line x1="${currentX}" y1="${svgHeight - 30}" x2="${nextX}" y2="${svgHeight - 30}" class="dimension-line"/>`;
+                svgContent += `<line x1="${currentX}" y1="${svgHeight - 35}" x2="${currentX}" y2="${svgHeight - 25}" class="dimension-line"/>`;
+                svgContent += `<line x1="${nextX}" y1="${svgHeight - 35}" x2="${nextX}" y2="${svgHeight - 25}" class="dimension-line"/>`;
+                svgContent += `<text x="${(currentX + nextX) / 2}" y="${svgHeight - 38}" class="dimension-text">${formatDistance(segment.length, distanceUnits, chainageDecimalPlaces)}${distanceUnit}</text>`;
+            }
+
+            if (showGrade) {
+                // Add grade label below the ramp line - format according to gradeDisplay setting and decimal places
+                const midX = (currentX + nextX) / 2;
+                const startY = baseY - (points[index].rl - minRL) * verticalScale;
+                const endY = baseY - (points[index + 1].rl - minRL) * verticalScale;
+                const midY = (startY + endY) / 2;
+
+                const gradeText = formatGrade(segment.gradePercent, gradeDisplay, gradeDecimalPlaces);
+                svgContent += `<text x="${midX}" y="${midY + 20}" class="dimension-text" fill="#667eea" font-weight="bold">${gradeText}</text>`;
+            }
+
+            currentX = nextX;
+        });
+    }
 
     // Add datum line reference - FIXED VERSION
     svgContent += `<line x1="${margin - 20}" y1="${datumY}" x2="${svgWidth - margin + 20}" y2="${datumY}" class="datum-line"/>`;
@@ -505,7 +634,7 @@ function generateSectionView(segmentData, width, startingRL, startingChainage = 
     return svgContent;
 }
 
-function generatePlanView(segmentData, width, gradeType, chainageDecimalPlaces = 1, gradeDecimalPlaces = 1, distanceUnits = 'm', gradeDisplay = 'percent') {
+function generatePlanView(segmentData, width, gradeType, chainageDecimalPlaces = 1, gradeDecimalPlaces = 1, distanceUnits = 'm', gradeDisplay = 'percent', startingRL = 0, startingChainage = 0, chainagePrefix = 'CH', chainagePosition = 'prefix', rlDecimalPlaces = 3, planSubtitle = '', showRL = true, showCH = true, showGrade = true, showLength = true, showWidth = true) {
     const svgWidth = 1000;
     const svgHeight = 400;
     const margin = 50;
@@ -528,6 +657,8 @@ function generatePlanView(segmentData, width, gradeType, chainageDecimalPlaces =
                 .grade-arrow { stroke: #667eea; stroke-width: 2; fill: none; }
                 .title-text { font-family: Arial, sans-serif; font-size: 16px; fill: #2c3e50; text-anchor: middle; font-weight: bold; }
                 .subtitle-text { font-family: Arial, sans-serif; font-size: 10px; fill: #666; text-anchor: middle; }
+                .rl-marker { fill: #dc3545; stroke: #2c3e50; stroke-width: 1; }
+                .chainage-text { font-family: Arial, sans-serif; font-size: 10px; fill: #689f38; text-anchor: middle; }
             </style>
         </defs>
     `;
@@ -537,10 +668,46 @@ function generatePlanView(segmentData, width, gradeType, chainageDecimalPlaces =
 
     // Add title and metadata
     svgContent += `<text x="${svgWidth/2}" y="25" class="title-text">Ramp Plan View</text>`;
+    if (planSubtitle) {
+        svgContent += `<text x="${svgWidth/2}" y="40" class="subtitle-text">${planSubtitle}</text>`;
+    }
+
+    // Calculate all RLs and chainages for nodes
+    let currentElevation = startingRL;
+    const points = [{x: 0, rl: startingRL, chainage: startingChainage}];
+    let cumulativeLength = 0;
+
+    segmentData.forEach(segment => {
+        cumulativeLength += segment.length;
+        currentElevation += segment.rise;
+        points.push({x: cumulativeLength, rl: currentElevation, chainage: startingChainage + cumulativeLength});
+    });
+
+    // Calculate vertical offsets for RL labels (stack them when segments are < 1m)
+    const labelOffsets = [];
+    const baseOffset = 30; // Base distance above ramp
+    const stackSpacing = 18; // Vertical spacing between stacked labels
+    let currentStackLevel = 0;
+
+    points.forEach((point, index) => {
+        if (index === 0) {
+            labelOffsets.push(baseOffset);
+            currentStackLevel = 0;
+        } else {
+            const previousSegmentLength = segmentData[index - 1]?.length || 0;
+            if (previousSegmentLength < 1) {
+                currentStackLevel++;
+            } else {
+                currentStackLevel = 0;
+            }
+            labelOffsets.push(baseOffset + (currentStackLevel * stackSpacing));
+        }
+    });
 
     const centerY = svgHeight / 2;
     let currentX = margin;
 
+    // Draw ramp segments
     segmentData.forEach((segment, index) => {
         const segmentWidth = segment.length * scale;
         const nextX = currentX + segmentWidth;
@@ -550,49 +717,107 @@ function generatePlanView(segmentData, width, gradeType, chainageDecimalPlaces =
             svgContent += `<rect x="${currentX}" y="${centerY - widthScale/2}" width="${segmentWidth}" height="${widthScale}" class="landing-surface"/>`;
         } else {
             svgContent += `<rect x="${currentX}" y="${centerY - widthScale/2}" width="${segmentWidth}" height="${widthScale}" class="ramp-surface"/>`;
-            
+
             // Add horizontal arrow pointing to higher end for sloped segments
             const arrowY = centerY;
             const arrowLength = Math.min(25, segmentWidth * 0.3);
-            
+
             if (segment.gradePercent > 0) {
                 const arrowEndX = nextX - 5;
                 const arrowStartX = arrowEndX - arrowLength;
-                
+
                 svgContent += `<line x1="${arrowStartX}" y1="${arrowY}" x2="${arrowEndX}" y2="${arrowY}" class="grade-arrow"/>`;
                 svgContent += `<polygon points="${arrowEndX},${arrowY} ${arrowEndX - 8},${arrowY - 4} ${arrowEndX - 8},${arrowY + 4}" fill="#667eea"/>`;
-                
+
             } else if (segment.gradePercent < 0) {
                 const arrowEndX = currentX + 5;
                 const arrowStartX = arrowEndX + arrowLength;
-                
+
                 svgContent += `<line x1="${arrowStartX}" y1="${arrowY}" x2="${arrowEndX}" y2="${arrowY}" class="grade-arrow"/>`;
                 svgContent += `<polygon points="${arrowEndX},${arrowY} ${arrowEndX + 8},${arrowY - 4} ${arrowEndX + 8},${arrowY + 4}" fill="#667eea"/>`;
             }
         }
 
-        // Add dimensions with grade information - format according to units and grade display with decimal places
-        let dimensionText;
-        const formattedLength = formatDistance(segment.length, distanceUnits, chainageDecimalPlaces);
-        const gradeText = formatGrade(segment.gradePercent, gradeDisplay, gradeDecimalPlaces);
-        dimensionText = `${formattedLength}${distanceUnit} @ ${gradeText}`;
-        
-        // Dimension line
-        const dimY = centerY + widthScale/2 + 30;
-        svgContent += `<line x1="${currentX}" y1="${dimY}" x2="${nextX}" y2="${dimY}" class="dimension-line"/>`;
-        svgContent += `<line x1="${currentX}" y1="${dimY - 5}" x2="${currentX}" y2="${dimY + 5}" class="dimension-line"/>`;
-        svgContent += `<line x1="${nextX}" y1="${dimY - 5}" x2="${nextX}" y2="${dimY + 5}" class="dimension-line"/>`;
-        svgContent += `<text x="${(currentX + nextX) / 2}" y="${dimY - 8}" class="dimension-text">${dimensionText}</text>`;
-
         currentX = nextX;
     });
 
+    // Add RL markers and labels at each node (top of ramp)
+    if (showRL) {
+        points.forEach((point, index) => {
+            const x = margin + point.x * scale;
+            const y = centerY - widthScale/2; // Top edge of ramp
+            const labelOffset = labelOffsets[index];
+
+            // RL marker (small circle)
+            svgContent += `<circle cx="${x}" cy="${y}" r="3" class="rl-marker"/>`;
+
+            // Jogger line from node to label
+            const joggerStartY = y - 5;
+            const joggerEndY = y - labelOffset + 4;
+            svgContent += `<line x1="${x}" y1="${joggerStartY}" x2="${x}" y2="${joggerEndY}" class="dimension-line"/>`;
+
+            // RL label (horizontal, right-justified)
+            const rlText = `RL ${point.rl >= 0 ? '+' : ''}${formatDistance(point.rl, distanceUnits, rlDecimalPlaces)}`;
+            svgContent += `<text x="${x - 5}" y="${y - labelOffset}" class="dimension-text" font-weight="bold" text-anchor="end" font-size="10px">${rlText}</text>`;
+        });
+    }
+
+    // Add horizontal dimensions for each segment
+    const dimY = centerY + widthScale/2 + 40;
+
+    if (showLength || showGrade) {
+        let currentX = margin;
+        segmentData.forEach((segment, index) => {
+            const segmentWidth = segment.length * scale;
+            const nextX = currentX + segmentWidth;
+
+            if (showLength || showGrade) {
+                // Dimension line
+                svgContent += `<line x1="${currentX}" y1="${dimY}" x2="${nextX}" y2="${dimY}" class="dimension-line"/>`;
+                svgContent += `<line x1="${currentX}" y1="${dimY - 5}" x2="${currentX}" y2="${dimY + 5}" class="dimension-line"/>`;
+                svgContent += `<line x1="${nextX}" y1="${dimY - 5}" x2="${nextX}" y2="${dimY + 5}" class="dimension-line"/>`;
+
+                const midX = (currentX + nextX) / 2;
+
+                // Split length and grade into separate lines
+                if (showLength && showGrade) {
+                    const formattedLength = formatDistance(segment.length, distanceUnits, chainageDecimalPlaces);
+                    const gradeText = formatGrade(segment.gradePercent, gradeDisplay, gradeDecimalPlaces);
+                    svgContent += `<text x="${midX}" y="${dimY - 10}" class="dimension-text">${formattedLength}${distanceUnit}</text>`;
+                    svgContent += `<text x="${midX}" y="${dimY - 22}" class="dimension-text" fill="#667eea">${gradeText}</text>`;
+                } else if (showLength) {
+                    const formattedLength = formatDistance(segment.length, distanceUnits, chainageDecimalPlaces);
+                    svgContent += `<text x="${midX}" y="${dimY - 10}" class="dimension-text">${formattedLength}${distanceUnit}</text>`;
+                } else if (showGrade) {
+                    const gradeText = formatGrade(segment.gradePercent, gradeDisplay, gradeDecimalPlaces);
+                    svgContent += `<text x="${midX}" y="${dimY - 10}" class="dimension-text" fill="#667eea">${gradeText}</text>`;
+                }
+            }
+
+            currentX = nextX;
+        });
+    }
+
+    // Add chainage labels at each node (below dimension line)
+    if (showCH) {
+        points.forEach((point, index) => {
+            const x = margin + point.x * scale;
+            const chainageY = dimY + 55; // Position below the dimension line
+
+            const formattedChainage = formatDistance(point.chainage, distanceUnits, chainageDecimalPlaces);
+            const chainageLabel = chainagePosition === 'suffix' ? `${formattedChainage} ${chainagePrefix}` : `${chainagePrefix}${formattedChainage}`;
+            svgContent += `<text x="${x}" y="${chainageY}" class="chainage-text" font-size="10px" transform="rotate(90 ${x} ${chainageY})">${chainageLabel}</text>`;
+        });
+    }
+
     // Add width dimension - format according to distance units and decimal places
-    const widthDimX = margin - 40;
-    svgContent += `<line x1="${widthDimX}" y1="${centerY - widthScale/2}" x2="${widthDimX}" y2="${centerY + widthScale/2}" class="dimension-line"/>`;
-    svgContent += `<line x1="${widthDimX - 5}" y1="${centerY - widthScale/2}" x2="${widthDimX + 5}" y2="${centerY - widthScale/2}" class="dimension-line"/>`;
-    svgContent += `<line x1="${widthDimX - 5}" y1="${centerY + widthScale/2}" x2="${widthDimX + 5}" y2="${centerY + widthScale/2}" class="dimension-line"/>`;
-    svgContent += `<text x="${widthDimX + 15}" y="${centerY + 3}" class="dimension-text" text-anchor="start">${formatDistance(width, distanceUnits, chainageDecimalPlaces)}${distanceUnit}</text>`;
+    if (showWidth) {
+        const widthDimX = margin - 40;
+        svgContent += `<line x1="${widthDimX}" y1="${centerY - widthScale/2}" x2="${widthDimX}" y2="${centerY + widthScale/2}" class="dimension-line"/>`;
+        svgContent += `<line x1="${widthDimX - 5}" y1="${centerY - widthScale/2}" x2="${widthDimX + 5}" y2="${centerY - widthScale/2}" class="dimension-line"/>`;
+        svgContent += `<line x1="${widthDimX - 5}" y1="${centerY + widthScale/2}" x2="${widthDimX + 5}" y2="${centerY + widthScale/2}" class="dimension-line"/>`;
+        svgContent += `<text x="${widthDimX + 15}" y="${centerY + 3}" class="dimension-text" text-anchor="start">${formatDistance(width, distanceUnits, chainageDecimalPlaces)}${distanceUnit}</text>`;
+    }
 
     svgContent += '</svg>';
     return svgContent;
@@ -600,15 +825,48 @@ function generatePlanView(segmentData, width, gradeType, chainageDecimalPlaces =
 
 function generateAutoCADScript(params) {
     const { type } = params;
-    
+
+    // Create metadata object for roundtrip import
+    const metadata = {
+        width: params.width,
+        startingRL: params.startingRL || 0,
+        startingChainage: params.startingChainage || 0,
+        startLabel: params.startLabel || '',
+        endLabel: params.endLabel || '',
+        chainagePrefix: params.chainagePrefix || 'CH',
+        chainagePosition: params.chainagePosition || 'prefix',
+        chainageDecimalPlaces: params.chainageDecimalPlaces || 1,
+        rlDecimalPlaces: params.rlDecimalPlaces || 3,
+        gradeDecimalPlaces: params.gradeDecimalPlaces || 1,
+        distanceUnits: params.distanceUnits || 'm',
+        gradeDisplay: params.gradeDisplay || 'percent',
+        sectionSubtitle: params.sectionSubtitle || '',
+        planSubtitle: params.planSubtitle || '',
+        segments: params.segmentData.map(seg => ({
+            length: seg.length,
+            grade: seg.gradePercent
+        })),
+        exportType: type,
+        exportDate: new Date().toISOString(),
+        tool: 'TrafficLabb Ramp Design Tool'
+    };
+
+    let script = '';
+
+    // Add metadata as comments at the beginning of the script
+    script += '; RAMP_DESIGN_METADATA_START\n';
+    script += `; ${JSON.stringify(metadata)}\n`;
+    script += '; RAMP_DESIGN_METADATA_END\n';
+    script += ';\n';
+
     if (type === 'section') {
-        return generateSectionAutoCADScript(
-            params.segmentData, 
-            params.width, 
+        script += generateSectionAutoCADScript(
+            params.segmentData,
+            params.width,
             params.startingRL,
             params.startingChainage || 0,
-            params.startLabel, 
-            params.endLabel, 
+            params.startLabel,
+            params.endLabel,
             params.gradeType,
             params.chainagePrefix || 'CH',
             params.chainagePosition || 'prefix',
@@ -619,9 +877,9 @@ function generateAutoCADScript(params) {
             params.gradeDisplay || 'percent'
         );
     } else if (type === 'plan') {
-        return generatePlanAutoCADScript(
-            params.segmentData, 
-            params.width, 
+        script += generatePlanAutoCADScript(
+            params.segmentData,
+            params.width,
             params.gradeType,
             params.chainageDecimalPlaces || 1,
             params.gradeDecimalPlaces || 1,
@@ -631,6 +889,8 @@ function generateAutoCADScript(params) {
     } else {
         throw new Error('Invalid export type');
     }
+
+    return script;
 }
 
 function generateDWFScript(params) {
@@ -661,17 +921,17 @@ function generateDWFScript(params) {
 
 async function generatePDFExport(params) {
     const { type } = params;
-    
+
     // Get the SVG content
     let svgContent;
     if (type === 'section') {
         svgContent = generateSectionView(
-            params.segmentData, 
-            params.width, 
+            params.segmentData,
+            params.width,
             params.startingRL,
             params.startingChainage || 0,
-            params.startLabel, 
-            params.endLabel, 
+            params.startLabel,
+            params.endLabel,
             params.gradeType,
             params.chainagePrefix || 'CH',
             params.chainagePosition || 'prefix',
@@ -679,17 +939,33 @@ async function generatePDFExport(params) {
             params.rlDecimalPlaces || 3,
             params.gradeDecimalPlaces || 1,
             params.distanceUnits || 'm',
-            params.gradeDisplay || 'percent'
+            params.gradeDisplay || 'percent',
+            params.sectionSubtitle || '',
+            params.showRL !== undefined ? params.showRL : true,
+            params.showCH !== undefined ? params.showCH : true,
+            params.showGrade !== undefined ? params.showGrade : true,
+            params.showLength !== undefined ? params.showLength : true
         );
     } else {
         svgContent = generatePlanView(
-            params.segmentData, 
-            params.width, 
+            params.segmentData,
+            params.width,
             params.gradeType,
             params.chainageDecimalPlaces || 1,
             params.gradeDecimalPlaces || 1,
             params.distanceUnits || 'm',
-            params.gradeDisplay || 'percent'
+            params.gradeDisplay || 'percent',
+            params.startingRL || 0,
+            params.startingChainage || 0,
+            params.chainagePrefix || 'CH',
+            params.chainagePosition || 'prefix',
+            params.rlDecimalPlaces || 3,
+            params.planSubtitle || '',
+            params.showRL !== undefined ? params.showRL : true,
+            params.showCH !== undefined ? params.showCH : true,
+            params.showGrade !== undefined ? params.showGrade : true,
+            params.showLength !== undefined ? params.showLength : true,
+            params.showWidth !== undefined ? params.showWidth : true
         );
     }
     
@@ -986,25 +1262,78 @@ function generateSectionAutoCADScript(segmentData, width, startingRL, startingCh
     });
     script += '\n';
 
-    // Add RL text labels
+    // Calculate vertical offsets for RL labels (stack them when segments are < 1m)
+    const labelOffsetsCAD = [];
+    const baseOffsetCAD = 500; // Base distance above node in CAD units
+    const stackSpacingCAD = 450; // Vertical spacing between stacked labels in CAD units
+    let currentStackLevelCAD = 0;
+
+    pointsCAD.forEach((point, index) => {
+        if (index === 0) {
+            // First point always at base level
+            labelOffsetsCAD.push(baseOffsetCAD);
+            currentStackLevelCAD = 0;
+        } else {
+            // Check if previous segment is less than 1m
+            const previousSegmentLength = segmentData[index - 1]?.length || 0;
+            if (previousSegmentLength < 1) {
+                // Stack above previous label
+                currentStackLevelCAD++;
+            } else {
+                // Reset to base level
+                currentStackLevelCAD = 0;
+            }
+            labelOffsetsCAD.push(baseOffsetCAD + (currentStackLevelCAD * stackSpacingCAD));
+        }
+    });
+
+    // Add RL text labels with jogger lines
     script += 'LAYER S RAMP-TEXT\n';
     pointsCAD.forEach((point, index) => {
-        // Convert back to original units for display with specified decimal places
+        const labelOffset = labelOffsetsCAD[index];
+
+        // Jogger line from node to label (not touching either)
+        const joggerStartY = point.rl + 150; // Start 150mm above node
+        const joggerEndY = point.rl + labelOffset - 100; // End 100mm below label baseline
+        script += `LINE ${point.x.toFixed(1)},${joggerStartY.toFixed(1)} ${point.x.toFixed(1)},${joggerEndY.toFixed(1)}\n`;
+
+        // Convert back to original units for display with specified decimal places (no units)
         const originalRL = point.rl / unitMultiplier;
-        const rlText = `RL ${originalRL >= 0 ? '+' : ''}${formatDistance(originalRL, distanceUnits, rlDecimalPlaces)}${getDistanceUnit(distanceUnits)}`;
-        script += `TEXT ${point.x.toFixed(1)},${(point.rl + 300).toFixed(1)} 150 0 ${rlText}\n`;
-        
-        // Use actual chainage with starting chainage offset
-        const chainageLabel = formatChainageLabel(point.chainage, distanceUnits, chainageDecimalPlaces, chainagePrefix, chainagePosition);
-        script += `TEXT ${point.x.toFixed(1)},${(point.rl - 400).toFixed(1)} 120 0 ${chainageLabel}\n`;
+        const rlText = `RL ${originalRL >= 0 ? '+' : ''}${formatDistance(originalRL, distanceUnits, rlDecimalPlaces)}`;
+
+        // Horizontal RL label, right-justified, positioned above the node
+        script += `TEXT\n`;
+        script += `J\n`;
+        script += `MR\n`; // Middle Right justification
+        script += `${(point.x - 125).toFixed(1)},${(point.rl + labelOffset).toFixed(1)}\n`;
+        script += `150\n`;
+        script += `0\n`; // No rotation - horizontal text
+        script += `${rlText}\n`;
+        script += `\n`;
+
+        // Use actual chainage with starting chainage offset (rotated 270 degrees for top-to-bottom reading, no units)
+        // Use center-aligned text (J MC = Justify Middle Center)
+        const formattedChainage = formatDistance(point.chainage, distanceUnits, chainageDecimalPlaces);
+        const chainageLabel = chainagePosition === 'suffix' ? `${formattedChainage} ${chainagePrefix}` : `${chainagePrefix}${formattedChainage}`;
+        script += `TEXT\n`;
+        script += `J\n`;
+        script += `MC\n`;
+        script += `${point.x.toFixed(1)},${(point.rl - 400).toFixed(1)}\n`;
+        script += `120\n`;
+        script += `270\n`;
+        script += `${chainageLabel}\n`;
+        script += `\n`;
     });
     script += '\n';
 
-    // Add start and end labels
+    // Add start and end labels (positioned above any stacked RL labels)
     const startPoint = pointsCAD[0];
     const endPoint = pointsCAD[pointsCAD.length - 1];
-    script += `TEXT ${startPoint.x.toFixed(1)},${(startPoint.rl + 600).toFixed(1)} 180 0 ${startLabel}\n`;
-    script += `TEXT ${endPoint.x.toFixed(1)},${(endPoint.rl + 600).toFixed(1)} 180 0 ${endLabel}\n`;
+    const maxStackHeightCAD = Math.max(...labelOffsetsCAD);
+    const startEndLabelOffsetCAD = maxStackHeightCAD + 400; // Position above any stacked labels
+
+    script += `TEXT ${startPoint.x.toFixed(1)},${(startPoint.rl + startEndLabelOffsetCAD).toFixed(1)} 180 0 ${startLabel}\n`;
+    script += `TEXT ${endPoint.x.toFixed(1)},${(endPoint.rl + startEndLabelOffsetCAD).toFixed(1)} 180 0 ${endLabel}\n`;
     script += '\n';
 
     // Add grade labels with specified decimal places
@@ -1048,7 +1377,7 @@ function generateSectionAutoCADScript(segmentData, width, startingRL, startingCh
     script += 'LINETYPE S DASHED\n';
     script += `LINE ${lineStart.toFixed(1)},${datumY.toFixed(1)} ${lineEnd.toFixed(1)},${datumY.toFixed(1)}\n`;
     script += 'LINETYPE S CONTINUOUS\n';
-    script += `TEXT ${lineStart.toFixed(1)},${(datumY + 150).toFixed(1)} 120 0 RL ${formatDistance(startingRL, distanceUnits, rlDecimalPlaces)}${getDistanceUnit(distanceUnits)}\n`;
+    script += `TEXT ${lineStart.toFixed(1)},${(datumY + 150).toFixed(1)} 120 0 RL ${formatDistance(startingRL, distanceUnits, rlDecimalPlaces)}\n`;
     script += '\n';
 
     script += 'ZOOM E\n';

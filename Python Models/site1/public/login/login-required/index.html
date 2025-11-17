@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Labb - Login Required</title>
+    <link rel="stylesheet" href="/style.css">
+    <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
+
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/site.webmanifest">
+    <style>
+        /* Login page specific styles only - common auth styles now in style.css */
+        body {
+            margin-top: 0;
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 0.8rem;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .remember-me input[type="checkbox"] {
+            width: auto;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .btn-guest {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-guest:hover {
+            background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-guest:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .error {
+            color: #dc3545;
+            text-align: center;
+            margin-top: 15px;
+            padding: 12px;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .signup-link {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.8rem;
+        }
+
+        .signup-link a {
+            color: #6b99c2;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .signup-link a:hover {
+            color: #354e8d;
+            text-decoration: underline;
+        }
+
+        .signup-section {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .signup-text {
+            color: #6c757d;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        .signup-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-signup {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-signup:hover {
+            background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+        }
+
+        .security-note {
+            background: #d1ecf1;
+            border: 1px solid #b6d4da;
+            border-radius: 6px;
+            padding: 8px;
+            margin-top: 12px;
+            font-size: 0.75rem;
+            color: #0c5460;
+        }
+
+        /* Login required notice */
+        .login-required-notice {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.15);
+        }
+
+        .login-required-notice .icon {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .login-required-notice h3 {
+            color: #856404;
+            margin: 0 0 5px 0;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .login-required-notice p {
+            color: #856404;
+            margin: 0;
+            font-size: 0.85rem;
+            line-height: 1.3;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        /* Fix button height when loading */
+        .auth-submit-btn span,
+        .btn-guest.loading {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation will be injected by common.js -->
+
+    <div class="container">
+        <main class="auth-main">
+            <div class="auth-container">
+                <!-- Left side - Welcome/Marketing -->
+                <div class="auth-sidebar">
+                    <div class="welcome-section">
+                        <h2>Welcome to Traffic Labb</h2>
+                        <p>Advanced traffic simulation and analysis platform for engineering professionals.</p>
+
+                        <ul class="feature-list">
+                            <li>Realistic traffic flow simulations</li>
+                            <li>Detailed Statistics</li>
+                            <li>Network Traffic Visualisation</li>
+                            <li>Design and Drawing tools</li>
+                            <li>Pre-formatted Reporting</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Right side - Login Form -->
+                <div class="auth-form-area">
+                    <!-- Login Required Notice -->
+                    <div class="login-required-notice">
+                        <p>You need to be logged in to access that page. Login, Sign Up or Sign In as a Guest for access.</p>
+                    </div>
+
+                    <h1 class="auth-title">Sign In</h1>
+                    <p class="auth-subtitle">Access your traffic engineering dashboard</p>
+
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="username">Email or Username</label>
+                            <input type="text" id="username" name="username" placeholder="Enter your email or username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                        </div>
+
+                        <div class="form-options">
+                            <label class="remember-me">
+                                <input type="checkbox" id="rememberMe">
+                                <span>Remember me</span>
+                            </label>
+                            <a href="/login/forgot-password/" class="auth-link">Forgot password?</a>
+                        </div>
+
+                        <div class="button-group">
+                            <button type="submit" class="auth-submit-btn" id="loginBtn">
+                                <span id="loginBtnText">Sign In</span>
+                            </button>
+                        </div>
+
+                        <div class="error" id="error"></div>
+                    </form>
+
+                    <div class="signup-section">
+                        <p class="signup-text">Don't have an account?</p>
+                        <div class="signup-buttons">
+                            <button type="button" class="btn-guest" id="guestBtnBottom">Sign in as guest</button>
+                            <a href="/signup/" class="btn-signup">Sign up</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
+            const guestBtnBottom = document.getElementById('guestBtnBottom');
+            const errorDiv = document.getElementById('error');
+
+            // Get the return URL from query params
+            const urlParams = new URLSearchParams(window.location.search);
+            const returnUrl = urlParams.get('from') || '/traffic/';
+
+            // Prevent any default form submission
+            loginForm.addEventListener('submit', handleLogin);
+            loginBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                handleLogin(e);
+            });
+
+            // Guest login button (bottom)
+            guestBtnBottom.addEventListener('click', function(e) {
+                e.preventDefault();
+                handleGuestLogin(guestBtnBottom);
+            });
+
+            async function handleLogin(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+                const rememberMe = document.getElementById('rememberMe').checked;
+
+                if (!username || !password) {
+                    showError('Please enter both username and password');
+                    return false;
+                }
+
+                await performLogin(username, password, loginBtn, 'Signing in...', rememberMe);
+                return false;
+            }
+
+            async function handleGuestLogin(button) {
+                await performLogin('guest', 'guest123', button, 'Accessing as guest...', false);
+            }
+
+            async function performLogin(username, password, button, loadingText, rememberMe = false) {
+                // Show loading state
+                const originalText = button.querySelector('span') ? button.querySelector('span').textContent : button.textContent;
+                button.disabled = true;
+
+                if (button.querySelector('span')) {
+                    button.querySelector('span').innerHTML = `<div class="spinner"></div>${loadingText}`;
+                } else {
+                    button.classList.add('loading');
+                    button.innerHTML = `<div class="spinner"></div>${loadingText}`;
+                }
+
+                errorDiv.style.display = 'none';
+
+                try {
+                    // Use API_CONFIG if available, fallback to relative URL
+                    const loginUrl = window.API_CONFIG?.endpoints?.login || '/api/login';
+                    const response = await fetch(loginUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            username,
+                            password,
+                            rememberMe
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    if (data.success && data.token) {
+                        localStorage.setItem('authToken', data.token);
+                        localStorage.setItem('userAccessLevel', data.accessLevel);
+                        localStorage.setItem('userDisplayName', data.displayName);
+                        if (data.email) {
+                            localStorage.setItem('userEmail', data.email);
+                        }
+                        if (data.company) {
+                            localStorage.setItem('userCompany', data.company);
+                        }
+
+                        // Store remember me preference
+                        if (rememberMe) {
+                            localStorage.setItem('rememberMe', 'true');
+                        }
+
+                        // Success feedback
+                        if (button.querySelector('span')) {
+                            button.querySelector('span').innerHTML = `✓ Success! Redirecting...`;
+                        } else {
+                            button.textContent = 'Success! Redirecting...';
+                        }
+
+                        // Redirect to the page they were trying to access, or dashboard
+                        setTimeout(() => {
+                            window.location.href = returnUrl;
+                        }, 1000);
+                    } else {
+                        showError(data.error || 'Invalid credentials. Please try again.');
+                    }
+
+                } catch (error) {
+                    console.error('Login error:', error);
+                    showError('Network error. Please check your connection and try again.');
+                }
+
+                // Reset button if there was an error
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.classList.remove('loading');
+                    if (button.querySelector('span')) {
+                        button.querySelector('span').textContent = originalText;
+                    } else {
+                        button.textContent = originalText;
+                    }
+                }, 2000);
+            }
+
+            function showError(message) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+
+                // Shake animation for error
+                errorDiv.style.animation = 'shake 0.5s ease-in-out';
+                setTimeout(() => {
+                    errorDiv.style.animation = '';
+                }, 500);
+            }
+
+            // Auto-focus first input
+            document.getElementById('username').focus();
+
+            // Remember me functionality
+            const rememberMeCheckbox = document.getElementById('rememberMe');
+            const usernameField = document.getElementById('username');
+
+            // Load remembered username if available
+            if (localStorage.getItem('rememberMe') === 'true') {
+                const rememberedUsername = localStorage.getItem('rememberedUsername');
+                if (rememberedUsername) {
+                    usernameField.value = rememberedUsername;
+                    rememberMeCheckbox.checked = true;
+                }
+            }
+
+            // Save username when remember me is checked
+            usernameField.addEventListener('blur', function() {
+                if (rememberMeCheckbox.checked) {
+                    localStorage.setItem('rememberedUsername', usernameField.value);
+                }
+            });
+        });
+
+        // Add shake animation CSS
+        const shakeStyle = document.createElement('style');
+        shakeStyle.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-5px); }
+                75% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(shakeStyle);
+    </script>
+</body>
+</html>

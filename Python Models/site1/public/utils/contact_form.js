@@ -128,7 +128,7 @@ async function sendCompactFeedback(data) {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
-        const response = await API_CONFIG.fetch('/api/sendform', {
+        const response = await API_CONFIG.fetch('sendform', {
             method: 'POST',
             headers: headers,
             body: JSON.stringify(data)

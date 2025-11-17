@@ -6,7 +6,8 @@ import {
   parseBody,
   getMethod,
   validateAuth,
-  errorResponse
+  errorResponse,
+  getCORSHeaders
 } from './lambda-utils.js';
 
 /**
@@ -68,16 +69,14 @@ export function wrapSimulationHandler(expressHandler) {
         statusCode,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+          ...getCORSHeaders(event)
         },
         body: JSON.stringify(responseData)
       };
 
     } catch (error) {
       console.error('Simulation handler error:', error);
-      return errorResponse(500, 'Internal server error', error.message);
+      return errorResponse(500, 'Internal server error', error.message, event);
     }
   };
 }
@@ -139,16 +138,84 @@ export function wrapAccountHandler(expressHandler) {
         statusCode,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+          ...getCORSHeaders(event)
         },
         body: JSON.stringify(responseData)
       };
 
     } catch (error) {
       console.error('Account handler error:', error);
-      return errorResponse(500, 'Internal server error', error.message);
+      return errorResponse(500, 'Internal server error', error.message, event);
+    }
+  };
+}
+
+/**
+ * Wraps an Express-style handler for public endpoints (no authentication required)
+ * @param {Function} expressHandler - The original Express handler function
+ * @returns {Function} Lambda handler function
+ */
+export function wrapPublicHandler(expressHandler) {
+  return async (event) => {
+    try {
+      // Handle CORS
+      const corsResponse = handleCORS(event);
+      if (corsResponse) return corsResponse;
+
+      // Get the HTTP method
+      const method = getMethod(event);
+
+      // Only accept POST (or customize as needed)
+      if (method !== 'POST') {
+        return errorResponse(405, 'Method not allowed', null, event);
+      }
+
+      // Parse body
+      const body = parseBody(event);
+
+      // Create minimal Express-like req/res objects
+      const req = {
+        method,
+        headers: event.headers || {},
+        body
+      };
+
+      let responseData = null;
+      let statusCode = 200;
+
+      const res = {
+        status(code) {
+          statusCode = code;
+          return this;
+        },
+        json(data) {
+          responseData = data;
+          return this;
+        },
+        setHeader() {
+          return this;
+        },
+        end() {
+          return this;
+        }
+      };
+
+      // Call the Express handler
+      await expressHandler(req, res);
+
+      // Return Lambda response
+      return {
+        statusCode,
+        headers: {
+          'Content-Type': 'application/json',
+          ...getCORSHeaders(event)
+        },
+        body: JSON.stringify(responseData)
+      };
+
+    } catch (error) {
+      console.error('Public handler error:', error);
+      return errorResponse(500, 'Internal server error', error.message, event);
     }
   };
 }

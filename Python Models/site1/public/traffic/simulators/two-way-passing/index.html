@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
+    <script src="/utils/tooltip-definitions.js"></script>
+    <script src="/utils/tooltip-init.js"></script>
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/site.webmanifest">
 </head>
 <body>
     <div id="loading" class="loading">
@@ -60,19 +65,23 @@
                         <div class="form-group">
                             <label for="serviceMode">Service Time Mode:</label>
                             <select id="serviceMode" onchange="toggleServiceMode(); updateUtilizationEstimate()">
-                                <option value="fixed" selected>Fixed Service Time</option>
-                                <option value="speed">Distance + Speed</option>
+                                <option value="simple" selected>Simple</option>
+                                <option value="advanced">Advanced</option>
                             </select>
                         </div>
 
-                        <div id="fixedServiceGroup">
+                        <div id="simpleServiceGroup">
                             <div class="form-group">
                                 <label for="serviceTime">Service Time (seconds):</label>
                                 <input type="number" id="serviceTime" value="5.4" min="0.1" step="0.1" onchange="validateAndUpdate('serviceTime', 0.1); updateUtilizationEstimate()">
                             </div>
+                            <div class="form-group">
+                                <label for="queuedServiceTime">Queued Service Time (s):</label>
+                                <input type="number" id="queuedServiceTime" value="6.5" min="0.1" step="0.1" onchange="validateAndUpdate('queuedServiceTime', 0.1); updateUtilizationEstimate()">
+                            </div>
                         </div>
 
-                        <div id="speedServiceGroup" style="display: none;">
+                        <div id="advancedServiceGroup" style="display: none;">
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="segmentDistance">Distance (meters):</label>
@@ -83,19 +92,56 @@
                                     <input type="number" id="vehicleSpeed" value="20" min="0.1" step="0.1" onchange="validateAndUpdate('vehicleSpeed', 0.1); calculateServiceTime(); updateUtilizationEstimate()">
                                 </div>
                             </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="reactionDelay">First Car Reaction Delay (s):</label>
+                                    <input type="number" id="reactionDelay" value="1.1" min="0" step="0.1" onchange="validateAndUpdate('reactionDelay', 0); calculateServiceTime(); updateUtilizationEstimate(); calculateFollowUpTime()">
+                                </div>
+                                <div class="form-group">
+                                    <label for="accelerationRate">Acceleration Rate (m/s\u00b2):</label>
+                                    <input type="number" id="accelerationRate" value="1.5" min="0.1" step="0.1" onchange="validateAndUpdate('accelerationRate', 0.1); calculateServiceTime(); updateUtilizationEstimate()">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="queueSpaceLength">Queue Space Length (m):</label>
+                                    <input type="number" id="queueSpaceLength" value="6.5" min="0.1" step="0.1" onchange="validateAndUpdate('queueSpaceLength', 0.1); calculateFollowUpTime()">
+                                </div>
+                            </div>
+                            <div style="background: #e3f1f7; padding: 12px; border-radius: 6px; margin-top: 12px; border: 1px solid #a3c9e0;">
+                                <div style="font-size: 0.9rem; margin-bottom: 6px; font-weight: 600; color: #354e8d;">Calculated Service Times (Travel Only)</div>
+                                <div style="font-size: 0.85rem; margin: 4px 0;">
+                                    <strong>Cruising Service Time:</strong> <span id="cruisingServiceTimeDisplay">5.40</span> seconds
+                                </div>
+                                <div style="font-size: 0.85rem; margin: 4px 0;">
+                                    <strong>Queued Service Time:</strong> <span id="queuedServiceTimeDisplay">6.50</span> seconds
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="reactionDelay">First Car Reaction Delay (s):</label>
+                                <input type="number" id="reactionDelay" value="1.1" min="0" step="0.1" onchange="validateAndUpdate('reactionDelay', 0); updateUtilizationEstimate(); calculateFollowUpTime()">
+                            </div>
+                            <div class="form-group">
+                                <label for="queueSpaceLength">Queue Space Length (m):</label>
+                                <input type="number" id="queueSpaceLength" value="6.5" min="0.1" step="0.1" onchange="validateAndUpdate('queueSpaceLength', 0.1); calculateFollowUpTime()">
+                            </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="minGap">Min Gap Between Arrivals (s):</label>
-                                <input type="number" id="minGap" value="0" min="0" step="0.1" onchange="validateAndUpdate('minGap', 0); updateUtilizationEstimate()">
+                                <input type="number" id="minGap" value="0" min="0" step="0.1" onchange="validateAndUpdate('minGap', 0); calculateFollowUpTime()">
                             </div>
                             <div class="form-group">
                                 <label for="minFollowUp">Min Follow-up Time:</label>
-                                <select id="minFollowUp" onchange="toggleCustomFollowUp(); updateUtilizationEstimate()">
+                                <select id="minFollowUp" onchange="toggleCustomFollowUp(); updateUtilizationEstimate(); calculateFollowUpTime()">
                                     <option value="0">0 seconds</option>
                                     <option value="minGap">Same as min gap</option>
                                     <option value="serviceTime" selected>Same as service time</option>
+                                    <option value="reactionQueueProgress">Reaction + Queue Progress</option>
                                     <option value="custom">Custom</option>
                                 </select>
                             </div>
@@ -103,7 +149,7 @@
 
                         <div class="form-group" id="customFollowUpGroup" style="display: none;">
                             <label for="customFollowUp">Custom Follow-up (seconds):</label>
-                            <input type="number" id="customFollowUp" value="2" min="0" max="60" step="0.1" onchange="validateAndUpdate('customFollowUp', 0, 60); updateUtilizationEstimate()">
+                            <input type="number" id="customFollowUp" value="2" min="0" max="60" step="0.1" onchange="validateAndUpdate('customFollowUp', 0, 60); calculateFollowUpTime()">
                             <div class="help-text">Custom follow-up time</div>
                         </div>
                     </div>
@@ -261,7 +307,7 @@
 
         .results-cards-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 20px;
             margin-bottom: 20px;
         }
@@ -280,7 +326,7 @@
             font-weight: 600;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
             .results-cards-container {
                 grid-template-columns: 1fr;
                 gap: 16px;
@@ -378,8 +424,12 @@
                 { id: 'arrivalRateA', min: 0, name: 'Queue A Rate' },
                 { id: 'arrivalRateB', min: 0, name: 'Queue B Rate' },
                 { id: 'serviceTime', min: 0.1, name: 'Service Time' },
+                { id: 'queuedServiceTime', min: 0.1, name: 'Queued Service Time' },
                 { id: 'segmentDistance', min: 0.1, name: 'Distance' },
                 { id: 'vehicleSpeed', min: 0.1, name: 'Speed' },
+                { id: 'reactionDelay', min: 0, name: 'First Car Reaction Delay' },
+                { id: 'accelerationRate', min: 0.1, name: 'Acceleration Rate' },
+                { id: 'queueSpaceLength', min: 0.1, name: 'Queue Space Length' },
                 { id: 'minGap', min: 0, name: 'Min Gap' },
                 { id: 'customFollowUp', min: 0, max: 60, name: 'Custom Follow-up' },
                 { id: 'simulationHours', min: 1, max: 50000, name: 'Simulation Hours' },
@@ -406,7 +456,7 @@
             await new Promise(resolve => setTimeout(resolve, 100));
             
             const token = localStorage.getItem('authToken');
-            if (!token || !isValidToken(token)) {
+            if (!token) {
                 window.location.href = '/login/';
                 return;
             }
@@ -459,10 +509,16 @@
                 arrivalRateB: safeNumber(document.getElementById('arrivalRateB').value, 0),
                 arrivalRate: safeNumber(document.getElementById('arrivalRateA').value, 0) + safeNumber(document.getElementById('arrivalRateB').value, 0),
                 serviceTime: safeNumber(document.getElementById('serviceTime').value, 0.1),
+                queuedServiceTime: safeNumber(document.getElementById('queuedServiceTime').value, 0.1),
                 simulationTime: safeNumber(document.getElementById('simulationHours').value, 1) * 3600,
                 simHours: safeNumber(document.getElementById('simulationHours').value, 1),
                 minGap: safeNumber(document.getElementById('minGap').value, 0),
                 minFollowUp: getMinFollowUpValue(),
+                reactionDelay: safeNumber(document.getElementById('reactionDelay').value, 1.1),
+                accelerationRate: safeNumber(document.getElementById('accelerationRate').value, 1.5),
+                segmentDistance: safeNumber(document.getElementById('segmentDistance').value, 30),
+                vehicleSpeed: safeNumber(document.getElementById('vehicleSpeed').value, 20),
+                queueSpaceLength: safeNumber(document.getElementById('queueSpaceLength').value, 6.5),
                 priorityScheme: document.getElementById('priorityScheme').value,
                 numSeeds: parseInt(document.getElementById('numSeeds').value) || 15,
                 seedMode: document.getElementById('seedMode').value
@@ -589,26 +645,51 @@
 
         function toggleServiceMode() {
             const mode = document.getElementById('serviceMode').value;
-            const fixedGroup = document.getElementById('fixedServiceGroup');
-            const speedGroup = document.getElementById('speedServiceGroup');
-            
-            if (mode === 'fixed') {
-                fixedGroup.style.display = 'block';
-                speedGroup.style.display = 'none';
+            const simpleGroup = document.getElementById('simpleServiceGroup');
+            const advancedGroup = document.getElementById('advancedServiceGroup');
+
+            if (mode === 'simple') {
+                simpleGroup.style.display = 'block';
+                advancedGroup.style.display = 'none';
             } else {
-                fixedGroup.style.display = 'none';
-                speedGroup.style.display = 'block';
+                simpleGroup.style.display = 'none';
+                advancedGroup.style.display = 'block';
                 calculateServiceTime();
             }
         }
 
         function calculateServiceTime() {
             const distance = safeNumber(document.getElementById('segmentDistance').value, 30);
-            const speed = safeNumber(document.getElementById('vehicleSpeed').value, 20);
-            
-            if (distance && speed) {
-                const serviceTime = distance / (speed * 1000 / 3600);
-                document.getElementById('serviceTime').value = safeFixed(serviceTime, 2);
+            const speedKmh = safeNumber(document.getElementById('vehicleSpeed').value, 20);
+            const accelerationRate = safeNumber(document.getElementById('accelerationRate').value, 1.5);
+
+            if (distance && speedKmh && accelerationRate) {
+                // Calculate cruising service time (distance / speed) - pure travel time
+                const speedMs = speedKmh * 1000 / 3600; // Convert km/h to m/s
+                const cruisingServiceTime = distance / speedMs;
+
+                // Calculate queued service time (with acceleration from stop) - pure travel time only
+                // Physics: v² = 2*a*d, so d_accel = v²/(2a), t_accel = v/a
+                const accelDistance = (speedMs * speedMs) / (2 * accelerationRate);
+
+                let queuedServiceTime;
+                if (distance > accelDistance) {
+                    // Vehicle reaches cruise speed
+                    const accelTime = speedMs / accelerationRate;
+                    const cruiseDistance = distance - accelDistance;
+                    const cruiseTime = cruiseDistance / speedMs;
+                    queuedServiceTime = accelTime + cruiseTime;
+                } else {
+                    // Vehicle never reaches cruise speed
+                    queuedServiceTime = Math.sqrt(2 * distance / accelerationRate);
+                }
+
+                // Update displays - these are PURE travel times (no reaction delay or follow-up)
+                document.getElementById('serviceTime').value = safeFixed(cruisingServiceTime, 2);
+                document.getElementById('queuedServiceTime').value = safeFixed(queuedServiceTime, 2);
+                document.getElementById('cruisingServiceTimeDisplay').textContent = safeFixed(cruisingServiceTime, 2);
+                document.getElementById('queuedServiceTimeDisplay').textContent = safeFixed(queuedServiceTime, 2);
+
                 updateUtilizationEstimate();
             }
         }
@@ -644,10 +725,14 @@
             
             document.getElementById('arrivalRateA').value = '15';
             document.getElementById('arrivalRateB').value = '15';
-            document.getElementById('serviceMode').value = 'fixed';
+            document.getElementById('serviceMode').value = 'simple';
             document.getElementById('serviceTime').value = '5.4';
+            document.getElementById('queuedServiceTime').value = '6.5';
             document.getElementById('segmentDistance').value = '30';
             document.getElementById('vehicleSpeed').value = '20';
+            document.getElementById('reactionDelay').value = '1.1';
+            document.getElementById('accelerationRate').value = '1.5';
+            document.getElementById('queueSpaceLength').value = '6.5';
             document.getElementById('simulationHours').value = '1000';
             document.getElementById('minGap').value = '0';
             document.getElementById('minFollowUp').value = 'serviceTime';
@@ -726,40 +811,40 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="results-card">
                         ${generateValidationCheck(results, params)}
                     </div>
-                </div>
-                
-                <div class="metrics-section">
-                    <h4 style="color: #354e8d; margin-bottom: 8px; font-size: 1rem; font-weight: 600; text-align: center;">Utilisation Analysis</h4>
-                    <table class="metrics-table">
-                        <thead>
-                            <tr>
-                                <th>Metric</th>
-                                <th>Utilisation %</th>
-                                <th>Delay Probability</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td style="text-align: left; font-weight: 600;">Road Segment (Total)</td>
-                                <td style="color: #354e8d; font-weight: 600;">${safeFixed(serverUtil, 2)}%</td>
-                                <td>—</td>
-                            </tr>
-                            <tr>
-                                <td style="text-align: left; font-weight: 600;">Queue A Direction</td>
-                                <td>${safeFixed(dirUtil0, 2)}%</td>
-                                <td>${safeFixed(delayProb0, 1)}%</td>
-                            </tr>
-                            <tr>
-                                <td style="text-align: left; font-weight: 600;">Queue B Direction</td>
-                                <td>${safeFixed(dirUtil1, 2)}%</td>
-                                <td>${safeFixed(delayProb1, 1)}%</td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+                    <div class="results-card">
+                        <h4>Utilisation Analysis</h4>
+                        <table class="metrics-table">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Utilisation %</th>
+                                    <th>Delay Probability</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="text-align: left; font-weight: 600;">Road Segment (Total)</td>
+                                    <td style="color: #354e8d; font-weight: 600;">${safeFixed(serverUtil, 2)}%</td>
+                                    <td>—</td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align: left; font-weight: 600;">Queue A Direction</td>
+                                    <td>${safeFixed(dirUtil0, 2)}%</td>
+                                    <td>${safeFixed(delayProb0, 1)}%</td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align: left; font-weight: 600;">Queue B Direction</td>
+                                    <td>${safeFixed(dirUtil1, 2)}%</td>
+                                    <td>${safeFixed(delayProb1, 1)}%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 
                 <div class="tables-container">
@@ -828,6 +913,10 @@
                                     <li>
                                         <span>Avg. delay per queued:</span>
                                         <span>${safeFixed(delay0.avgDelayQueued, 2)} s</span>
+                                    </li>
+                                    <li>
+                                        <span>% Hours with passing conflict:</span>
+                                        <span>${safeFixed(delay0.conflictPercentage, 1)}%</span>
                                     </li>
                                 </ul>
                             </div>
@@ -900,6 +989,10 @@
                                         <span>Avg. delay per queued:</span>
                                         <span>${safeFixed(delay1.avgDelayQueued, 2)} s</span>
                                     </li>
+                                    <li>
+                                        <span>% Hours with passing conflict:</span>
+                                        <span>${safeFixed(delay1.conflictPercentage, 1)}%</span>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -958,20 +1051,41 @@
             `;
 
             container.innerHTML = html;
+
+            // Refresh tooltips for dynamically generated content
+            if (typeof window.refreshTooltips === 'function') {
+                window.refreshTooltips();
+            }
         }
 
         function getMinFollowUpValue() {
             const selection = document.getElementById('minFollowUp').value;
             const serviceTime = safeNumber(document.getElementById('serviceTime').value, 0);
             const minGap = safeNumber(document.getElementById('minGap').value, 0);
-            
+            const reactionDelay = safeNumber(document.getElementById('reactionDelay').value, 1.1);
+            const queueSpaceLength = safeNumber(document.getElementById('queueSpaceLength').value, 6.5);
+            const vehicleSpeed = safeNumber(document.getElementById('vehicleSpeed').value, 20);
+
             switch(selection) {
                 case '0': return 0;
                 case 'minGap': return minGap;
                 case 'serviceTime': return serviceTime;
+                case 'reactionQueueProgress':
+                    // Reaction + Queue Progress = reactionDelay + (queueSpaceLength / cruise speed)
+                    const speedMs = vehicleSpeed * 1000 / 3600;
+                    return reactionDelay + (queueSpaceLength / speedMs);
                 case 'custom': return safeNumber(document.getElementById('customFollowUp').value, 0);
                 default: return serviceTime;
             }
+        }
+
+        function calculateFollowUpTime() {
+            // Update queued service time when follow-up changes
+            const serviceMode = document.getElementById('serviceMode').value;
+            if (serviceMode === 'advanced') {
+                calculateServiceTime();
+            }
+            updateUtilizationEstimate();
         }
 
         function toggleCustomFollowUp() {
@@ -984,7 +1098,7 @@
 
         document.getElementById('runSimulation').addEventListener('click', async () => {
             const token = localStorage.getItem('authToken');
-            if (!token || !isValidToken(token)) {
+            if (!token) {
                 window.location.href = '/login/';
                 return;
             }

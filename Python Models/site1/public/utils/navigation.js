@@ -11,7 +11,7 @@ function getCurrentPageType() {
         return 'home';
     } else if (path === '/login/' || path.includes('login')) {
         return 'login';
-    } else if (path === '/signup/' || path.includes('signup')) {
+    } else if (path === '/login/signup/' || path.includes('signup')) {
         return 'signup';
     } else {
         return 'dashboard';
@@ -68,7 +68,7 @@ function getCurrentPageInfo() {
         }
     }
     
-    if (nav.accounts && path === nav.accounts.path) {
+    if (nav.account && path === nav.account.path) {
         return { category: 'account', page: 'account' };
     }
     
@@ -101,6 +101,7 @@ function generateBreadcrumbs() {
         'glossary': 'Glossary',
         'scenarios': 'Scenarios',
         'account': 'Account',
+        'admin': 'Admin',
     };
     
     for (let i = 0; i < pathParts.length; i++) {
@@ -192,12 +193,12 @@ function buildBottomMenu() {
     }
 
     // Account
-    const accountsNav = manifest.navigation?.accounts;
-    if (accountsNav && isAccessible(accountsNav.path)) {
+    const accountNav = manifest.navigation?.account;
+    if (accountNav && isAccessible(accountNav.path)) {
         const isActive = currentPage.category === 'account';
         menuHTML += `
-            <a href="${accountsNav.path}" class="bottom-menu-item ${isActive ? 'active' : ''}">
-                <span class="menu-label">${accountsNav.label}</span>
+            <a href="${accountNav.path}" class="bottom-menu-item ${isActive ? 'active' : ''}">
+                <span class="menu-label">${accountNav.label}</span>
             </a>
         `;
     }
@@ -307,8 +308,147 @@ function injectBottomMenuCSS() {
         @media (min-width: 769px) {
             .mobile-nav-toggle { display: none; }
         }
+
+        /* Dropdown Menu Styles */
+        .nav-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .dropdown-arrow {
+            transition: transform 0.2s ease;
+        }
+        .dropdown-toggle[aria-expanded="true"] .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            min-width: 200px;
+            padding: 8px 0;
+            z-index: 1000;
+            display: none;
+            opacity: 0;
+            transform: translateY(0);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            margin-top: 0;
+        }
+        .dropdown-menu.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 10px 20px;
+            text-align: left;
+            text-decoration: none;
+            color: #354e8d;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: background-color 0.2s ease;
+        }
+        .dropdown-item:hover {
+            background-color: #f5f5f5;
+            color: #2c3e50;
+        }
+        .dropdown-divider {
+            height: 1px;
+            background-color: #e0e0e0;
+            margin: 8px 0;
+        }
+        .logout-item {
+            color: #d32f2f;
+            font-weight: 500;
+        }
+        .logout-item:hover {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .signup-item {
+            color: #6b99c2;
+            font-weight: 500;
+        }
+        .signup-item:hover {
+            background-color: #e3f2fd;
+            color: #5a88b0;
+        }
     `;
     document.head.appendChild(style);
+}
+
+function setupDropdownMenu() {
+    const dropdownToggle = document.getElementById('navDropdownToggle');
+    const dropdownMenu = document.getElementById('navDropdownMenu');
+    const navDropdown = dropdownToggle?.closest('.nav-dropdown');
+
+    if (!dropdownToggle || !dropdownMenu || !navDropdown) return;
+
+    let isMouseOverDropdown = false;
+
+    // Toggle dropdown on button click
+    dropdownToggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isExpanded = dropdownToggle.getAttribute('aria-expanded') === 'true';
+
+        if (isExpanded) {
+            closeDropdown();
+        } else {
+            openDropdown();
+        }
+    });
+
+    // Track mouse over dropdown container
+    navDropdown.addEventListener('mouseenter', function() {
+        isMouseOverDropdown = true;
+    });
+
+    navDropdown.addEventListener('mouseleave', function() {
+        isMouseOverDropdown = false;
+        // Small delay to allow clicking on menu items
+        setTimeout(() => {
+            if (!isMouseOverDropdown) {
+                closeDropdown();
+            }
+        }, 100);
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!navDropdown.contains(e.target)) {
+            closeDropdown();
+        }
+    });
+
+    // Close dropdown on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeDropdown();
+        }
+    });
+
+    function openDropdown() {
+        dropdownToggle.setAttribute('aria-expanded', 'true');
+        dropdownMenu.classList.add('show');
+    }
+
+    function closeDropdown() {
+        dropdownToggle.setAttribute('aria-expanded', 'false');
+        dropdownMenu.classList.remove('show');
+    }
 }
 
 function injectTopNavigation() {
@@ -353,15 +493,33 @@ function injectTopNavigation() {
             <div class="nav-right">
                 ${isAuthenticated ? `
                     <span class="user-info">Welcome, ${username}</span>
-                    <button class="nav-button secondary" onclick="logout()">Logout</button>
-                ` : `
-                    ${pageType === 'home' || pageType === 'login' ? `
-                        <a href="/signup/" class="nav-button secondary">Sign Up</a>
-                        <a href="/login/" class="nav-button primary">Login</a>
-                    ` : `
-                        <a href="/login/" class="nav-button primary">Login</a>
-                    `}
-                `}
+                ` : ''}
+                <div class="nav-dropdown">
+                    <button class="nav-button ${isAuthenticated ? 'secondary' : 'primary'} dropdown-toggle" id="navDropdownToggle" aria-label="User menu" aria-expanded="false">
+                        Menu
+                        <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                            <path d="M6 8L2 4h8L6 8z"/>
+                        </svg>
+                    </button>
+                    <div class="dropdown-menu" id="navDropdownMenu">
+                        <a href="/" class="dropdown-item">Home</a>
+                        <a href="/traffic/" class="dropdown-item">Dashboard</a>
+                        ${isAuthenticated ? `
+                            <a href="/admin/account/" class="dropdown-item">Account Settings</a>
+                        ` : `
+                            <a href="/login/" class="dropdown-item">Login</a>
+                        `}
+                        <a href="/support/contact/" class="dropdown-item">Contact Us</a>
+                        <a href="/support/about/" class="dropdown-item">About</a>
+                        ${isAuthenticated ? `
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-item logout-item" onclick="logout()">Logout</button>
+                        ` : `
+                            <div class="dropdown-divider"></div>
+                            <a href="/login/signup/" class="dropdown-item signup-item">Sign Up</a>
+                        `}
+                    </div>
+                </div>
             </div>
         </div>
         ${isAuthenticated ? `
@@ -377,6 +535,9 @@ function injectTopNavigation() {
 
     injectBottomMenuCSS();
     setupMobileNavigation();
+
+    // Setup dropdown menu for all users
+    setupDropdownMenu();
 }
 
 export {

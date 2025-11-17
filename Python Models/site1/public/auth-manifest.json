@@ -1,0 +1,429 @@
+{
+  "metadata": {
+    "generatedAt": "2025-01-20T10:00:00.000Z",
+    "version": "2.0.0",
+    "description": "Role-based authorization manifest for Engineering Simulations platform"
+  },
+  "roles": {
+    "guest": {
+      "id": "guest",
+      "name": "Guest",
+      "description": "Unauthenticated visitors",
+      "color": "#95a5a6",
+      "badge": "Guest",
+      "priority": 0
+    },
+    "authenticated": {
+      "id": "authenticated",
+      "name": "Authenticated",
+      "description": "Logged-in users",
+      "color": "#6c757d",
+      "badge": "Auth",
+      "priority": 1
+    },
+    "paying": {
+      "id": "paying",
+      "name": "Paying User",
+      "description": "Users with active subscription",
+      "color": "#6b99c2",
+      "badge": "Paying",
+      "priority": 2
+    },
+    "beta": {
+      "id": "beta",
+      "name": "Beta Access",
+      "description": "Users with beta feature access",
+      "color": "#f39c12",
+      "badge": "Beta",
+      "priority": 3
+    },
+    "admin": {
+      "id": "admin",
+      "name": "Admin",
+      "description": "Administrative users",
+      "color": "#354e8d",
+      "badge": "Admin",
+      "priority": 4
+    }
+  },
+  "pages": {
+    "/": {
+      "path": "/",
+      "name": "Landing Page",
+      "category": "landing",
+      "pageId": "landing",
+      "type": "landing",
+      "allowedRoles": ["guest", "authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/login/": {
+      "path": "/login/",
+      "name": "Login",
+      "category": "auth",
+      "pageId": "login",
+      "type": "auth",
+      "allowedRoles": ["guest", "authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/login/signup/": {
+      "path": "/login/signup/",
+      "name": "Sign Up",
+      "category": "auth",
+      "pageId": "signup",
+      "type": "auth",
+      "allowedRoles": ["guest", "authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/login/forgot-password/": {
+      "path": "/login/forgot-password/",
+      "name": "Forgot Password",
+      "category": "auth",
+      "pageId": "forgot-password",
+      "type": "auth",
+      "allowedRoles": ["guest", "authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/login/reset-password/": {
+      "path": "/login/reset-password/",
+      "name": "Reset Password",
+      "category": "auth",
+      "pageId": "reset-password",
+      "type": "auth",
+      "allowedRoles": ["guest", "authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/login/login-required/": {
+      "path": "/login/login-required/",
+      "name": "Login Required",
+      "category": "auth",
+      "pageId": "login-required",
+      "type": "auth",
+      "allowedRoles": ["guest", "authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/login/upgrade-required/": {
+      "path": "/login/upgrade-required/",
+      "name": "Upgrade Required",
+      "category": "auth",
+      "pageId": "upgrade-required",
+      "type": "auth",
+      "allowedRoles": ["guest", "authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/support/about/": {
+      "path": "/support/about/",
+      "name": "About",
+      "category": "info",
+      "pageId": "about",
+      "type": "page",
+      "allowedRoles": ["guest", "authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/support/terms/": {
+      "path": "/support/terms/",
+      "name": "Terms of Service",
+      "category": "legal",
+      "pageId": "terms",
+      "type": "page",
+      "allowedRoles": ["guest", "authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/support/privacy/": {
+      "path": "/support/privacy/",
+      "name": "Privacy Policy",
+      "category": "legal",
+      "pageId": "privacy",
+      "type": "page",
+      "allowedRoles": ["guest", "authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/support/contact/": {
+      "path": "/support/contact/",
+      "name": "Contact Us",
+      "category": "contact",
+      "pageId": "contact",
+      "type": "page",
+      "allowedRoles": ["guest", "authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/traffic/": {
+      "path": "/traffic/",
+      "name": "Dashboard",
+      "category": "dashboard",
+      "pageId": "dashboard",
+      "type": "dashboard",
+      "allowedRoles": ["authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/traffic/simulators/": {
+      "path": "/traffic/simulators/",
+      "name": "All Simulations",
+      "category": "simulators",
+      "pageId": "simulators-dashboard",
+      "type": "dashboard",
+      "allowedRoles": ["authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/traffic/simulators/boomgate/": {
+      "path": "/traffic/simulators/boomgate/",
+      "name": "Boom Gate Simulation",
+      "category": "simulators",
+      "pageId": "boomgate",
+      "type": "simulator",
+      "allowedRoles": ["guest","authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/traffic/simulators/carlift/": {
+      "path": "/traffic/simulators/carlift/",
+      "name": "Car Lift Simulation",
+      "category": "simulators",
+      "pageId": "carlift",
+      "type": "simulator",
+      "allowedRoles": ["guest","authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/traffic/simulators/carparkutilisation/": {
+      "path": "/traffic/simulators/carparkutilisation/",
+      "name": "Car Park Utilisation",
+      "category": "simulators",
+      "pageId": "carparkutilisation",
+      "type": "simulator",
+      "allowedRoles": ["guest","authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/traffic/simulators/mechanical/": {
+      "path": "/traffic/simulators/mechanical/",
+      "name": "Mechanical Parking Structure",
+      "category": "simulators",
+      "pageId": "mechanical",
+      "type": "simulator",
+      "allowedRoles": ["guest","authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/traffic/simulators/schoolpickup/": {
+      "path": "/traffic/simulators/schoolpickup/",
+      "name": "School Pickup Simulation",
+      "category": "simulators",
+      "pageId": "schoolpickup",
+      "type": "simulator",
+      "allowedRoles": ["paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/traffic/simulators/two-way-passing/": {
+      "path": "/traffic/simulators/two-way-passing/",
+      "name": "Two-Way Passing Simulation",
+      "category": "simulators",
+      "pageId": "two-way-passing",
+      "type": "simulator",
+      "allowedRoles": ["guest","authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/traffic/tools/": {
+      "path": "/traffic/tools/",
+      "name": "All Tools",
+      "category": "tools",
+      "pageId": "tools-dashboard",
+      "type": "dashboard",
+      "allowedRoles": ["authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/traffic/tools/rampdrawer/": {
+      "path": "/traffic/tools/rampdrawer/",
+      "name": "Ramp Design Tool",
+      "category": "tools",
+      "pageId": "rampdrawer",
+      "type": "tool",
+      "allowedRoles": ["guest","authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/traffic/tools/network/": {
+      "path": "/traffic/tools/network/",
+      "name": "Traffic Network Database",
+      "category": "tools",
+      "pageId": "network",
+      "type": "tool",
+      "allowedRoles": ["beta", "admin"],
+      "hasIndex": true
+    },
+    "/traffic/tools/streetsection/": {
+      "path": "/traffic/tools/streetsection/",
+      "name": "Street Section Designer",
+      "category": "tools",
+      "pageId": "streetsection",
+      "type": "tool",
+      "allowedRoles": ["guest","authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/support/": {
+      "path": "/support/",
+      "name": "Support Center",
+      "category": "support",
+      "pageId": "support-dashboard",
+      "type": "dashboard",
+      "allowedRoles": ["authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/support/FAQ/": {
+      "path": "/support/FAQ/",
+      "name": "Frequently Asked Questions",
+      "category": "support",
+      "pageId": "faq",
+      "type": "support",
+      "allowedRoles": ["paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/support/glossary/": {
+      "path": "/support/glossary/",
+      "name": "Glossary",
+      "category": "support",
+      "pageId": "glossary",
+      "type": "support",
+      "allowedRoles": ["guest", "authenticated", "paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/admin/account/": {
+      "path": "/admin/account/",
+      "name": "Account Settings",
+      "category": "account",
+      "pageId": "account",
+      "type": "account",
+      "allowedRoles": ["paying", "beta", "admin"],
+      "hasIndex": true
+    },
+    "/admin/": {
+      "path": "/admin/",
+      "name": "Admin Dashboard",
+      "category": "admin",
+      "pageId": "admin",
+      "type": "admin",
+      "allowedRoles": ["admin"],
+      "hasIndex": true
+    },
+    "/admin/users/": {
+      "path": "/admin/users/",
+      "name": "User Management",
+      "category": "admin",
+      "pageId": "admin-users",
+      "type": "admin",
+      "allowedRoles": ["admin"],
+      "hasIndex": true
+    }
+  },
+  "navigation": {
+    "dashboard": {
+      "label": "Dashboard",
+      "path": "/traffic/",
+      "allowedRoles": ["authenticated", "paying", "beta", "admin"]
+    },
+    "simulators": {
+      "label": "Simulations",
+      "path": "/traffic/simulators/",
+      "allowedRoles": ["authenticated", "paying", "beta", "admin"],
+      "children": [
+        {
+          "label": "Boom Gate",
+          "path": "/traffic/simulators/boomgate/",
+          "pageId": "boomgate",
+          "allowedRoles": ["guest","authenticated", "paying", "beta", "admin"]
+        },
+        {
+          "label": "Two-Way Passing",
+          "path": "/traffic/simulators/two-way-passing/",
+          "pageId": "two-way-passing",
+          "allowedRoles": ["guest","authenticated", "paying", "beta", "admin"]
+        },
+        {
+          "label": "Car Park Utilisation",
+          "path": "/traffic/simulators/carparkutilisation/",
+          "pageId": "carparkutilisation",
+          "allowedRoles": ["guest","authenticated", "paying", "beta", "admin"]
+        },
+        {
+          "label": "Car Lift",
+          "path": "/traffic/simulators/carlift/",
+          "pageId": "carlift",
+          "allowedRoles": ["guest","authenticated", "paying", "beta", "admin"]
+        },
+        {
+          "label": "Mechanical Parking",
+          "path": "/traffic/simulators/mechanical/",
+          "pageId": "mechanical",
+          "allowedRoles": ["guest","authenticated", "paying", "beta", "admin"]
+        },
+        {
+          "label": "School Pickup",
+          "path": "/traffic/simulators/schoolpickup/",
+          "pageId": "schoolpickup",
+          "allowedRoles": ["beta", "admin"]
+        }
+      ]
+    },
+    "tools": {
+      "label": "Tools",
+      "path": "/traffic/tools/",
+      "allowedRoles": ["authenticated", "paying", "beta", "admin"],
+      "children": [
+        {
+          "label": "Ramp Design",
+          "path": "/traffic/tools/rampdrawer/",
+          "pageId": "rampdrawer",
+          "allowedRoles": ["guest","authenticated", "paying", "beta", "admin"]
+        },
+        {
+          "label": "Street Section",
+          "path": "/traffic/tools/streetsection/",
+          "pageId": "streetsection",
+          "allowedRoles": ["guest","authenticated", "paying", "beta", "admin"]
+        },
+        {
+          "label": "Traffic Network",
+          "path": "/traffic/tools/network/",
+          "pageId": "network",
+          "allowedRoles": ["beta", "admin"]
+        }
+      ]
+    },
+    "support": {
+      "label": "Support",
+      "path": "/support/",
+      "allowedRoles": ["authenticated", "paying", "beta", "admin"],
+      "children": [
+        {
+          "label": "FAQ",
+          "path": "/support/FAQ/",
+          "pageId": "faq",
+          "allowedRoles": ["paying", "beta", "admin"]
+        },
+        {
+          "label": "Glossary",
+          "path": "/support/glossary/",
+          "pageId": "glossary",
+          "allowedRoles": ["guest", "authenticated", "paying", "beta", "admin"]
+        }
+      ]
+    },
+    "account": {
+      "label": "Account",
+      "path": "/admin/account/",
+      "allowedRoles": ["paying", "beta", "admin"]
+    },
+    "admin": {
+      "label": "Admin",
+      "path": "/admin/",
+      "allowedRoles": ["admin"],
+      "children": [
+        {
+          "label": "User Management",
+          "path": "/admin/users/",
+          "pageId": "admin-users",
+          "allowedRoles": ["admin"]
+        }
+      ]
+    }
+  },
+  "settings": {
+    "tokenExpiry": 24,
+    "siteName": "Traffic Labb",
+    "adminEmail": "traffic@thelabb.com.au"
+  }
+}

@@ -32,10 +32,10 @@ function createFooterElement() {
         <div class="footer-container">
             <div class="footer-grid">
                 <!-- Company Section -->
-                <div class="footer-column">
+                <div class="footer-column footer-column-company">
                     <h3 class="footer-heading">Traffic Labb</h3>
                     <p class="footer-description">
-                        Professional-grade traffic engineering simulations and design tools for infrastructure excellence.
+                        Traffic engineering simulations and design tools for simplicity and reliability.
                     </p>
                     <p class="footer-abn">
                         ABN: 17 608 847 347
@@ -67,11 +67,11 @@ function createFooterElement() {
                         &copy; ${new Date().getFullYear()} Traffic Labb. All rights reserved.
                     </p>
                     <div class="footer-bottom-links">
-                        <a href="/privacy/" class="footer-bottom-link">Privacy Policy</a>
+                        <a href="/support/privacy/" class="footer-bottom-link">Privacy Policy</a>
                         <span class="footer-separator">|</span>
-                        <a href="/terms/" class="footer-bottom-link">Terms of Service</a>
+                        <a href="/support/terms/" class="footer-bottom-link">Terms of Service</a>
                         <span class="footer-separator">|</span>
-                        <a href="/contact/" class="footer-bottom-link">Contact</a>
+                        <a href="/support/contact/" class="footer-bottom-link">Contact</a>
                     </div>
                 </div>
             </div>
@@ -88,9 +88,9 @@ function createSimulatorsColumn(manifest, isAuthenticated, userAccessLevel) {
     const simulatorsNav = manifest?.navigation?.simulators;
     if (!simulatorsNav) return '';
 
+    // Show all links regardless of user role (like the dashboard does)
     const linksHTML = simulatorsNav.children
-        ?.filter(child => !isAuthenticated || userAccessLevel >= child.accessLevel)
-        .map(child => `
+        ?.map(child => `
             <li>
                 <a href="${child.path}" class="footer-link">
                     ${child.label}
@@ -99,7 +99,7 @@ function createSimulatorsColumn(manifest, isAuthenticated, userAccessLevel) {
         `).join('') || '';
 
     return `
-        <div class="footer-column">
+        <div class="footer-column footer-column-simulators">
             <h3 class="footer-heading">Simulations</h3>
             <ul class="footer-links">
                 ${linksHTML}
@@ -120,9 +120,9 @@ function createToolsColumn(manifest, isAuthenticated, userAccessLevel) {
     const toolsNav = manifest?.navigation?.tools;
     if (!toolsNav) return '';
 
+    // Show all links regardless of user role (like the dashboard does)
     const linksHTML = toolsNav.children
-        ?.filter(child => !isAuthenticated || userAccessLevel >= child.accessLevel)
-        .map(child => `
+        ?.map(child => `
             <li>
                 <a href="${child.path}" class="footer-link">
                     ${child.label}
@@ -131,7 +131,7 @@ function createToolsColumn(manifest, isAuthenticated, userAccessLevel) {
         `).join('') || '';
 
     return `
-        <div class="footer-column">
+        <div class="footer-column footer-column-tools">
             <h3 class="footer-heading">Tools</h3>
             <ul class="footer-links">
                 ${linksHTML}
@@ -152,9 +152,9 @@ function createSupportColumn(manifest, isAuthenticated, userAccessLevel) {
     const supportNav = manifest?.navigation?.support;
     if (!supportNav) return '';
 
+    // Show all links regardless of user role (like the dashboard does)
     const linksHTML = supportNav.children
-        ?.filter(child => !isAuthenticated || userAccessLevel >= child.accessLevel)
-        .map(child => `
+        ?.map(child => `
             <li>
                 <a href="${child.path}" class="footer-link">
                     ${child.label}
@@ -163,7 +163,7 @@ function createSupportColumn(manifest, isAuthenticated, userAccessLevel) {
         `).join('') || '';
 
     return `
-        <div class="footer-column">
+        <div class="footer-column footer-column-support">
             <h3 class="footer-heading">Support</h3>
             <ul class="footer-links">
                 ${linksHTML}
@@ -182,7 +182,7 @@ function createSupportColumn(manifest, isAuthenticated, userAccessLevel) {
  */
 function createQuickLinksColumn(isAuthenticated) {
     return `
-        <div class="footer-column">
+        <div class="footer-column footer-column-quicklinks">
             <h3 class="footer-heading">Quick Links</h3>
             <ul class="footer-links">
                 <li>
@@ -193,7 +193,7 @@ function createQuickLinksColumn(isAuthenticated) {
                 </li>
                 ${isAuthenticated ? `
                     <li>
-                        <a href="/account/" class="footer-link">Account Settings</a>
+                        <a href="/admin/account/" class="footer-link">Account Settings</a>
                     </li>
                 ` : `
                     <li>
@@ -201,10 +201,10 @@ function createQuickLinksColumn(isAuthenticated) {
                     </li>
                 `}
                 <li>
-                    <a href="/contact/" class="footer-link">Contact Us</a>
+                    <a href="/support/contact/" class="footer-link">Contact Us</a>
                 </li>
                 <li>
-                    <a href="/about/" class="footer-link">About</a>
+                    <a href="/support/about/" class="footer-link">About</a>
                 </li>
             </ul>
         </div>
@@ -421,6 +421,13 @@ function injectFooterStyles() {
             .footer-link,
             .footer-description {
                 font-size: 0.85rem;
+            }
+
+            /* Hide all columns except company and quicklinks on mobile */
+            .footer-column-simulators,
+            .footer-column-tools,
+            .footer-column-support {
+                display: none;
             }
         }
     `;

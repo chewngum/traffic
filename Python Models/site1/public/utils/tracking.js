@@ -7,7 +7,6 @@ async function recordSimulationUsage(simulationType, parameters, startTime, succ
     try {
         const token = localStorage.getItem('authToken');
         if (!token) {
-            console.log('No auth token - skipping usage tracking');
             return;
         }
 
@@ -34,7 +33,6 @@ async function recordSimulationUsage(simulationType, parameters, startTime, succ
         });
 
         if (!response.ok) {
-            console.warn(`Tracking API returned ${response.status}`);
             return;
         }
 
@@ -42,10 +40,8 @@ async function recordSimulationUsage(simulationType, parameters, startTime, succ
         if (data.success) {
             console.log(`✓ Tracked ${simulationType} simulation: ${success ? 'success' : 'failure'}, ${runtimeMs}ms`);
         } else {
-            console.warn('Tracking failed:', data.error);
         }
     } catch (error) {
-        console.warn('Failed to track simulation usage:', error.message);
     }
 }
 
@@ -74,7 +70,6 @@ function getCurrentSimulationType() {
 function setupFetchTracking() {
     // Check if already setup to prevent double-wrapping
     if (window._trackingSetup) {
-        console.log('Tracking already initialized, skipping...');
         return;
     }
 
@@ -155,11 +150,9 @@ function setupFetchTracking() {
                     if (isSimulationAction) {
                         parameters = bodyData.parameters;
                         startTime = Date.now();
-                        console.log(`→ Starting ${simulationType} simulation tracking...`);
                     }
                 }
             } catch (e) {
-                console.warn('Could not parse simulation request for tracking:', e);
             }
         }
         
@@ -174,7 +167,6 @@ function setupFetchTracking() {
                 recordSimulationUsage(simulationType, parameters, startTime, success);
             }).catch(err => {
                 // If response parsing fails, record as failure
-                console.warn('Failed to parse simulation response:', err);
                 recordSimulationUsage(simulationType, parameters, startTime, false);
             });
         }
@@ -182,7 +174,6 @@ function setupFetchTracking() {
         return response;
     };
     
-    console.log('✓ Simulation tracking initialized');
 }
 
 // Export functions for use by other modules

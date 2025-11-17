@@ -6,6 +6,11 @@
     <title>Traffic Labb - Boom Gate Simulation</title>
     <link rel="stylesheet" href="/style.css">
     <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
+    <script src="/utils/tooltip-definitions.js"></script>
+    <script src="/utils/tooltip-init.js"></script>
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/site.webmanifest">
 </head>
 <body>
     <div id="loading" class="loading">
@@ -22,6 +27,12 @@
         </div>
 
         <div class="main-content">
+            <div class="glass-card" style="padding: 12px 16px; margin-bottom: 16px;">
+                <p style="margin: 0; font-size: 0.95rem;">
+                    <strong>📖 Learn about this model:</strong>
+                    <a href="/support/models/boomgate.html" style="color: #6b99c2; text-decoration: none; font-weight: 600;">View Model Explanation</a>
+                </p>
+            </div>
             <div class="glass-card">
                 <h3 class="section-title">Configuration</h3>
                 
@@ -36,7 +47,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="arrivalRate">Arrival Rate (cars/hr):</label>
-                                <input type="number" id="arrivalRate" value="30" min="0" max="1000" step="0.1" onchange="calculateSampleSize(); updateRuntimeDisplay(); updateTotalService()">
+                                <input type="number" id="arrivalRate" value="30" min="0" max="1000" step="0.1" oninput="calculateSampleSize(); updateRuntimeDisplay(); updateTotalService()">
                             </div>
                             <div class="form-group">
                                 <label for="minHeadway">Min Headway (seconds):</label>
@@ -51,7 +62,6 @@
                             <div class="form-group">
                                 <label for="servicePart1">Movement Time (s):</label>
                                 <input type="number" id="servicePart1" value="10" min="0" max="3600" step="0.1" onchange="updateTotalService()">
-                                <div class="help-text">e.g. boom opening, car passing out of detection range, boom closing, next car to stop point</div>
                             </div>
                             <div class="form-group">
                                 <label for="part1Dist">Variability:</label>
@@ -65,7 +75,6 @@
                             <div class="form-group">
                                 <label for="servicePart2">Ticket Operations (s):</label>
                                 <input type="number" id="servicePart2" value="5" min="0" max="3600" step="0.1" onchange="updateTotalService()">
-                                <div class="help-text">e.g. Ticket insertion, payment, processing and error handling</div>
                             </div>
                             <div class="form-group">
                                 <label for="part2Dist">Variability:</label>
@@ -91,11 +100,11 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="simulationHours">Simulation Hours:</label>
-                                <input type="number" id="simulationHours" value="1000" min="1" max="10000" step="10" onchange="calculateSampleSize(); updateRuntimeDisplay()">
+                                <input type="number" id="simulationHours" value="1000" min="1" max="10000" step="10" oninput="calculateSampleSize(); updateRuntimeDisplay()">
                             </div>
                             <div class="form-group">
                                 <label for="numSeeds">Number of Seeds:</label>
-                                <input type="number" id="numSeeds" value="15" min="1" max="1000" step="1" onchange="updateRuntimeDisplay(); calculateSampleSize()">
+                                <input type="number" id="numSeeds" value="15" min="1" max="1000" step="1" oninput="updateRuntimeDisplay(); calculateSampleSize()">
                             </div>
                         </div>
                         <div class="form-row single">
@@ -130,7 +139,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="marginOfError">Margin of Error (% of trips):</label>
-                                <input type="number" id="marginOfError" value="0.5" min="0.0001" step="0.1" onchange="calculateSampleSize()">
+                                <input type="number" id="marginOfError" value="0.5" min="0.0001" step="0.1" oninput="calculateSampleSize()">
                             </div>
                         </div>
                         
@@ -347,43 +356,21 @@
     let recommendedSeeds = 0;
 
     document.addEventListener('DOMContentLoaded', async () => {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
+        await new Promise(resolve => setTimeout(resolve, 500));
+
         if (window.location.pathname !== '/traffic/simulators/boomgate/') {
             return;
         }
-        
-        const token = localStorage.getItem('authToken');
-        if (!token || !isValidToken(token)) {
-            window.location.href = '/login/';
-            return;
-        }
-        
+
+        // Auth check is handled by common.js
         document.getElementById('loading').style.display = 'none';
         document.getElementById('app').classList.remove('hidden');
-        
+
         resetInputs();
         updateTotalService();
-        
+
         document.getElementById('applySampleSize').addEventListener('click', applySampleSize);
     });
-
-    function isValidToken(token) {
-        try {
-            const decoded = atob(token);
-            const [timestamp, username, accessLevel] = decoded.split(':');
-            const tokenAge = Date.now() - parseInt(timestamp);
-            
-            let expiryHours = 24;
-            if (window.SITE_MANIFEST?.settings?.tokenExpiry) {
-                expiryHours = window.SITE_MANIFEST.settings.tokenExpiry;
-            }
-            
-            return tokenAge < expiryHours * 60 * 60 * 1000;
-        } catch {
-            return false;
-        }
-    }
 
     function validateAndParseFloat(elementId, min = 0, max = Infinity, defaultValue = null) {
         const element = document.getElementById(elementId);
@@ -463,14 +450,14 @@
                 warningDiv.style.display = 'block';
                 warningDiv.style.borderColor = '#d4691e';
                 warningDiv.style.background = 'rgba(212, 105, 30, 0.1)';
-                messageSpan.innerHTML = `Utilisation rate is ${utilizationPercent.toFixed(1)}%<br><strong>Very high utilisation - expect long queues and delays</strong>`;
+                messageSpan.innerHTML = `Utilisation rate is ${utilizationPercent.toFixed(1)}%`;
                 runButton.disabled = false;
                 runButton.classList.remove('btn-disabled');
             } else if (utilizationPercent >= 80) {
                 warningDiv.style.display = 'block';
                 warningDiv.style.borderColor = '#f39c12';
                 warningDiv.style.background = 'rgba(243, 156, 18, 0.1)';
-                messageSpan.innerHTML = `Utilisation rate is ${utilizationPercent.toFixed(1)}%<br><strong>High utilisation - moderate queuing expected</strong>`;
+                messageSpan.innerHTML = `Utilisation rate is ${utilizationPercent.toFixed(1)}%`;
                 runButton.disabled = false;
                 runButton.classList.remove('btn-disabled');
             } else {
@@ -607,10 +594,17 @@
             }
             
             const zScore = getZScoreForConfidence(confidenceLevel);
+
+            // For arrival rate validation: std error = sqrt(λ) / sqrt(H*N)
+            // We want: Z * sqrt(λ) / sqrt(H*N) <= E
+            // So: N >= (Z * sqrt(λ) / (E * sqrt(H)))^2
             const estimatedStdDev = Math.sqrt(arrivalRate);
-            const minSampleSize = Math.ceil(Math.pow((zScore * estimatedStdDev) / marginOfError, 2));
-            const adjustedSampleSize = Math.ceil(minSampleSize / simHours);
-            recommendedSeeds = Math.max(adjustedSampleSize, 15);
+            const minSeedsFromFormula = Math.pow((zScore * estimatedStdDev) / (marginOfError * Math.sqrt(simHours)), 2);
+
+            // Round up and ensure minimum of 5 for statistical validity
+            recommendedSeeds = Math.max(Math.ceil(minSeedsFromFormula), 5);
+
+            console.log(`Sample size calc: λ=${arrivalRate}, H=${simHours}, E=${marginOfError.toFixed(3)}, σ=${estimatedStdDev.toFixed(2)}, Z=${zScore}, → N=${recommendedSeeds}`);
             
             const resultDiv = document.getElementById('sampleSizeResult');
             const currentSeedsDisplay = document.getElementById('currentSeedsDisplay');
@@ -768,7 +762,7 @@
             html += `
                             <tr>
                                 <td style="text-align: left; font-weight: 600;">Utilisation Rate</td>
-                                <td style="color: ${utilizationPercent >= 95 ? '#d4691e' : utilizationPercent >= 80 ? '#f39c12' : '#354e8d'}">${utilizationPercent.toFixed(2)}%${utilizationPercent >= 100 ? ' (OVERLOADED)' : utilizationPercent >= 95 ? ' (Very High)' : utilizationPercent >= 80 ? ' (High)' : ''}</td>
+                                <td style="color: ${utilizationPercent >= 95 ? '#d4691e' : utilizationPercent >= 80 ? '#f39c12' : '#354e8d'}">${utilizationPercent.toFixed(2)}%${utilizationPercent >= 100 ? ' (OVERLOADED)' : ''}</td>
                             </tr>
                             <tr>
                                 <td style="text-align: left; font-weight: 600;">Wait per Arrival</td>
@@ -981,6 +975,11 @@
         `;
 
         container.innerHTML = html;
+
+        // Refresh tooltips for dynamically generated content
+        if (typeof window.refreshTooltips === 'function') {
+            window.refreshTooltips();
+        }
     }
 
     function resetInputs() {
@@ -1012,7 +1011,7 @@
 
     document.getElementById('runSimulation').addEventListener('click', async () => {
         const token = localStorage.getItem('authToken');
-        if (!token || !isValidToken(token)) {
+        if (!token) {
             window.location.href = '/login/';
             return;
         }

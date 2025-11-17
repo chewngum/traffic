@@ -3,12 +3,14 @@
 // Import all modules
 import { loadSiteManifest, getSiteManifest } from './utils/manifest.js';
 import { setupFetchTracking, recordSimulationUsage, getCurrentSimulationType } from './utils/tracking.js';
-import { 
-    isUserAuthenticated, 
-    getUserAccessLevel, 
-    getUserDisplayName, 
+import {
+    isUserAuthenticated,
+    isValidToken,
+    getUserAccessLevel,
+    getUserDisplayName,
+    getUserRoles,
     checkPageAccess,
-    logout 
+    logout
 } from './utils/auth.js';
 import { 
     getCurrentPageType,
@@ -47,14 +49,16 @@ Object.assign(window, {
     returnToDashboard: function() {
         window.location.href = '/traffic/';
     },
-    
+
     // Manifest
     getSiteManifest,
-    
+
     // Auth
     isUserAuthenticated,
+    isValidToken,
     getUserAccessLevel,
     getUserDisplayName,
+    getUserRoles,
     
     // Navigation
     getCurrentPageType,
@@ -89,15 +93,18 @@ Object.assign(window, {
 document.addEventListener('DOMContentLoaded', async function() {
     // Load manifest first
     await loadSiteManifest();
-    
-    // Setup fetch tracking for simulation API calls
-    setupFetchTracking();
-    
+
     // Inject favicons on all pages
     injectFavicons();
-    
+
     const pageType = getCurrentPageType();
+    const pageInfo = getCurrentPageInfo();
     const isAuthenticated = isUserAuthenticated();
+
+    // Setup fetch tracking only on simulator and tool pages
+    if (pageInfo.category === 'simulators' || pageInfo.category === 'tools') {
+        setupFetchTracking();
+    }
 
     // Check page access for all pages (auth.js will skip public pages)
     checkPageAccess();

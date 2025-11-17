@@ -1,21 +1,21 @@
 import bcrypt from 'bcryptjs';
 import pool from '../lib/database.js';
+import { verifyToken, parseRoles, hasAnyRole } from '../lib/jwt.js';
 
 function validateToken(token) {
   try {
-    const decoded = Buffer.from(token, 'base64').toString('utf-8');
-    const [timestamp, username, accessLevel] = decoded.split(':');
-    const tokenAge = Date.now() - parseInt(timestamp);
-    
-    if (tokenAge > 24 * 60 * 60 * 1000) { // 24 hours
-      return null;
-    }
-    
-    return { 
-      username, 
-      accessLevel: parseInt(accessLevel)
+    // Verify JWT token
+    const decoded = verifyToken(token);
+
+    return {
+      userId: decoded.userId,
+      username: decoded.username,
+      email: decoded.email,
+      roles: parseRoles(decoded.roles),
+      displayName: decoded.displayName
     };
-  } catch {
+  } catch (error) {
+    console.error('Token validation error:', error.message);
     return null;
   }
 }
@@ -45,12 +45,12 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 
-  // Check access level requirement for account page (level 2+)
-  // Only registered users (not guest accounts) can access account settings
-  if (tokenData.accessLevel < 2) {
+  // Check role requirement for account page
+  // Only authenticated users (not guests) can access account settings
+  if (!hasAnyRole(tokenData.roles, ['authenticated', 'paying', 'beta', 'admin'])) {
     return res.status(403).json({
       success: false,
-      error: 'Account holder access (level 2+) required for account settings. Guest accounts cannot access this page.'
+      error: 'Authentication required for account settings. Guest accounts cannot access this page.'
     });
   }
 
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       // Handle regular users - query database
       const userResult = await pool.query(`
-        SELECT id, username, email, display_name, phone, organisation, access_level, created_at, last_login
+        SELECT id, username, email, display_name, phone, organisation, roles, created_at, last_login
         FROM users
         WHERE username = $1
       `, [tokenData.username]);
@@ -68,7 +68,10 @@ export default async function handler(req, res) {
       }
 
       const user = userResult.rows[0];
-      
+
+      // Parse roles from database (handles both string and array formats)
+      user.roles = parseRoles(user.roles);
+
       // Get usage statistics by simulation type
       const usageStats = await pool.query(`
         SELECT 

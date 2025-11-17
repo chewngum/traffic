@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Traffic Labb Admin</title>
+    <style>
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .admin-header {
+            margin-bottom: 30px;
+        }
+
+        .admin-header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .users-table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .users-table td {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .users-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: white;
+            margin: 2px;
+        }
+
+        .role-guest { background-color: #95a5a6; }
+        .role-authenticated { background-color: #6c757d; }
+        .role-paying { background-color: #6b99c2; }
+        .role-beta { background-color: #f39c12; }
+        .role-admin { background-color: #354e8d; }
+
+        .role-checkbox {
+            margin: 5px 10px 5px 0;
+        }
+
+        .role-checkbox label {
+            margin-left: 5px;
+            cursor: pointer;
+        }
+
+        .status-active {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .status-inactive {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #354e8d;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2a3d6f;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-sm {
+            padding: 4px 12px;
+            font-size: 0.75rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .user-info p {
+            margin: 5px 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+            padding: 10px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+    </style>
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/site.webmanifest">
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>User Management</h1>
+            <p>Manage user roles and access permissions</p>
+        </div>
+
+        <div id="message-container"></div>
+
+        <input type="text" id="searchBox" class="search-box" placeholder="Search users by name or email...">
+
+        <div class="users-table-container">
+            <div id="loading" class="loading">
+                Loading users...
+            </div>
+            <table class="users-table" id="usersTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Roles</th>
+                        <th>Status</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Edit Roles Modal -->
+    <div id="editRolesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit User Roles</h2>
+            </div>
+            <div class="modal-body">
+                <div class="user-info" id="userInfo"></div>
+
+                <div class="form-group">
+                    <label>Roles</label>
+                    <div class="role-checkbox">
+                        <input type="checkbox" id="role-authenticated" value="authenticated">
+                        <label for="role-authenticated">Authenticated User</label>
+                    </div>
+                    <div class="role-checkbox">
+                        <input type="checkbox" id="role-paying" value="paying">
+                        <label for="role-paying">Paying User</label>
+                    </div>
+                    <div class="role-checkbox">
+                        <input type="checkbox" id="role-beta" value="beta">
+                        <label for="role-beta">Beta Access</label>
+                    </div>
+                    <div class="role-checkbox">
+                        <input type="checkbox" id="role-admin" value="admin">
+                        <label for="role-admin">Admin</label>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 0.875rem; color: #6c757d;">
+                        Note: All logged-in users automatically have "authenticated" role.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeEditModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveUserRoles()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple JWT helper functions (inline to avoid module issues)
+        const authService = {
+            init: async function() {
+                this.initialized = true;
+                return Promise.resolve();
+            },
+            initialized: false,
+            getUserRoles: function() {
+                const token = localStorage.getItem('authToken');
+                if (!token) return ['guest'];
+
+                try {
+                    const parts = token.split('.');
+                    if (parts.length !== 3) return ['guest'];
+
+                    const payload = JSON.parse(atob(parts[1]));
+
+                    if (payload.exp && Math.floor(Date.now() / 1000) >= payload.exp) {
+                        return ['guest'];
+                    }
+
+                    const roles = payload.roles;
+                    if (Array.isArray(roles)) return roles.length > 0 ? roles : ['guest'];
+                    if (typeof roles === 'string') {
+                        const rolesArray = roles.split(',').map(r => r.trim());
+                        return rolesArray.length > 0 ? rolesArray : ['guest'];
+                    }
+                    return ['authenticated'];
+                } catch (error) {
+                    console.error('Error parsing JWT:', error);
+                    return ['guest'];
+                }
+            }
+        };
+    </script>
+    <script>
+        let currentUsers = [];
+        let editingUserId = null;
+
+        // Check if user is admin
+        async function checkAdminAccess() {
+            await authService.init();
+            const userRoles = authService.getUserRoles();
+
+            if (!userRoles.includes('admin')) {
+                window.location.href = '/';
+                return false;
+            }
+            return true;
+        }
+
+        // Load users
+        async function loadUsers() {
+            try {
+                const authToken = localStorage.getItem('authToken');
+                const response = await fetch('/api/admin/users', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load users');
+                }
+
+                const data = await response.json();
+                currentUsers = data.users;
+                renderUsers(currentUsers);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('usersTable').style.display = 'table';
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showMessage('Failed to load users', 'error');
+                document.getElementById('loading').innerHTML = 'Error loading users';
+            }
+        }
+
+        // Render users table
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+
+                const roles = user.roles ? user.roles.split(',') : ['guest'];
+                const roleBadges = roles.map(role => {
+                    return `<span class="role-badge role-${role}">${role}</span>`;
+                }).join('');
+
+                const lastLogin = user.last_login
+                    ? new Date(user.last_login).toLocaleDateString()
+                    : 'Never';
+
+                const statusClass = user.is_active !== false ? 'status-active' : 'status-inactive';
+                const statusText = user.is_active !== false ? 'Active' : 'Inactive';
+
+                tr.innerHTML = `
+                    <td>
+                        <strong>${user.display_name || user.username}</strong>
+                        ${user.company ? `<br><small>${user.company}</small>` : ''}
+                    </td>
+                    <td>${user.email || user.username}</td>
+                    <td>${roleBadges}</td>
+                    <td class="${statusClass}">${statusText}</td>
+                    <td>${lastLogin}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="openEditModal(${user.id})">
+                            Edit Roles
+                        </button>
+                        ${user.is_active !== false
+                            ? `<button class="btn btn-danger btn-sm" onclick="deactivateUser(${user.id})">Deactivate</button>`
+                            : `<button class="btn btn-success btn-sm" onclick="activateUser(${user.id})">Activate</button>`
+                        }
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Search users
+        document.getElementById('searchBox')?.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filtered = currentUsers.filter(user => {
+                const name = (user.display_name || user.username || '').toLowerCase();
+                const email = (user.email || user.username || '').toLowerCase();
+                const company = (user.company || '').toLowerCase();
+                return name.includes(searchTerm) || email.includes(searchTerm) || company.includes(searchTerm);
+            });
+            renderUsers(filtered);
+        });
+
+        // Open edit modal
+        function openEditModal(userId) {
+            const user = currentUsers.find(u => u.id === userId);
+            if (!user) return;
+
+            editingUserId = userId;
+
+            const userInfo = document.getElementById('userInfo');
+            userInfo.innerHTML = `
+                <p><strong>User:</strong> ${user.display_name || user.username}</p>
+                <p><strong>Email:</strong> ${user.email || user.username}</p>
+                <p><strong>Member Since:</strong> ${new Date(user.created_at).toLocaleDateString()}</p>
+            `;
+
+            // Set current roles
+            const roles = user.roles ? user.roles.split(',') : [];
+            document.getElementById('role-authenticated').checked = roles.includes('authenticated');
+            document.getElementById('role-paying').checked = roles.includes('paying');
+            document.getElementById('role-beta').checked = roles.includes('beta');
+            document.getElementById('role-admin').checked = roles.includes('admin');
+
+            document.getElementById('editRolesModal').classList.add('active');
+        }
+
+        // Close edit modal
+        function closeEditModal() {
+            document.getElementById('editRolesModal').classList.remove('active');
+            editingUserId = null;
+        }
+
+        // Save user roles
+        async function saveUserRoles() {
+            if (!editingUserId) return;
+
+            const roles = [];
+            if (document.getElementById('role-authenticated').checked) roles.push('authenticated');
+            if (document.getElementById('role-paying').checked) roles.push('paying');
+            if (document.getElementById('role-beta').checked) roles.push('beta');
+            if (document.getElementById('role-admin').checked) roles.push('admin');
+
+            // Ensure at least authenticated or guest
+            if (roles.length === 0) {
+                roles.push('guest');
+            }
+
+            try {
+                const authToken = localStorage.getItem('authToken');
+                const response = await fetch(`/api/admin/users/${editingUserId}/roles`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ roles })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update roles');
+                }
+
+                showMessage('User roles updated successfully', 'success');
+                closeEditModal();
+                await loadUsers();
+            } catch (error) {
+                console.error('Error updating roles:', error);
+                showMessage('Failed to update user roles', 'error');
+            }
+        }
+
+        // Deactivate user
+        async function deactivateUser(userId) {
+            if (!confirm('Are you sure you want to deactivate this user?')) return;
+
+            try {
+                const authToken = localStorage.getItem('authToken');
+                const response = await fetch(`/api/admin/users/${userId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ is_active: false })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to deactivate user');
+                }
+
+                showMessage('User deactivated successfully', 'success');
+                await loadUsers();
+            } catch (error) {
+                console.error('Error deactivating user:', error);
+                showMessage('Failed to deactivate user', 'error');
+            }
+        }
+
+        // Activate user
+        async function activateUser(userId) {
+            try {
+                const authToken = localStorage.getItem('authToken');
+                const response = await fetch(`/api/admin/users/${userId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ is_active: true })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to activate user');
+                }
+
+                showMessage('User activated successfully', 'success');
+                await loadUsers();
+            } catch (error) {
+                console.error('Error activating user:', error);
+                showMessage('Failed to activate user', 'error');
+            }
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const container = document.getElementById('message-container');
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = message;
+            container.appendChild(div);
+
+            setTimeout(() => {
+                div.remove();
+            }, 5000);
+        }
+
+        // Initialize
+        (async () => {
+            if (await checkAdminAccess()) {
+                await loadUsers();
+            }
+        })();
+
+        // Close modal on outside click
+        document.getElementById('editRolesModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'editRolesModal') {
+                closeEditModal();
+            }
+        });
+    </script>
+</body>
+</html>

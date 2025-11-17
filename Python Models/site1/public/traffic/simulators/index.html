@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
+    <script src="/utils/authorization.js"></script>
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/site.webmanifest">
 </head>
 <body>
     <div id="loading" class="loading">
@@ -35,42 +39,42 @@
                     Available Simulations
                 </h2>
                 <div class="compact-simulation-grid">
-                    <div class="compact-simulation-card" onclick="openSimulation('boomgate')" data-access-level="1">
-                        <div class="access-badge level-1" id="badge-boomgate">L1</div>
+                    <div class="compact-simulation-card" onclick="openSimulation('boomgate')" data-page-id="boomgate">
+                        <div class="access-badge" id="badge-boomgate"></div>
                         <div class="compact-card-icon">🚙</div>
                         <h3>Boom Gate Queueing</h3>
                         <p>Queueing analysis of moving vehicles capacity restricted by device processing time</p>
                     </div>
-                    
-                    <div class="compact-simulation-card" onclick="openSimulation('two-way-passing')" data-access-level="1">
-                        <div class="access-badge level-1" id="badge-two-way-passing">L1</div>
+
+                    <div class="compact-simulation-card" onclick="openSimulation('two-way-passing')" data-page-id="two-way-passing">
+                        <div class="access-badge" id="badge-two-way-passing"></div>
                         <div class="compact-card-icon">↔️</div>
                         <h3>Two-Way Passing</h3>
                         <p>Bi-directional single lane scenario with advanced queuing theory analysis</p>
                     </div>
 
-                    <div class="compact-simulation-card" onclick="openSimulation('carparkutilisation')" data-access-level="1">
-                        <div class="access-badge level-1" id="badge-carparkutilisation">L1</div>
+                    <div class="compact-simulation-card" onclick="openSimulation('carparkutilisation')" data-page-id="carparkutilisation">
+                        <div class="access-badge" id="badge-carparkutilisation"></div>
                         <div class="compact-card-icon">🅿️</div>
                         <h3>Car Park Utilisation</h3>
                         <p>Carpark analysis to find demand rates based on random arrivals and service distributions</p>
                     </div>
-                    
-                    <div class="compact-simulation-card" onclick="openSimulation('carlift')" data-access-level="1">
-                        <div class="access-badge level-1" id="badge-carlift">L1</div>
+
+                    <div class="compact-simulation-card" onclick="openSimulation('carlift')" data-page-id="carlift">
+                        <div class="access-badge" id="badge-carlift"></div>
                         <div class="compact-card-icon">🛗</div>
                         <h3>Car Lift Simulation</h3>
                         <p>Multi-floor lift operations with bi-directional traffic patterns and complex dispatching</p>
                     </div>
-                    
-                    <div class="compact-simulation-card" onclick="openSimulation('mechanical')" data-access-level="1">
-                        <div class="access-badge level-1" id="badge-mechanical">L1</div>
+
+                    <div class="compact-simulation-card" onclick="openSimulation('mechanical')" data-page-id="mechanical">
+                        <div class="access-badge" id="badge-mechanical"></div>
                         <div class="compact-card-icon">🏢</div>
                         <h3>Mechanical Parking</h3>
                         <p>Mechanical parking structure analysis based on average service times and utilisation rates</p>
                     </div>
-                    <div class="compact-simulation-card" onclick="openSimulation('schoolpickup')" data-access-level="3">
-                        <div class="access-badge level-3" id="badge-schoolpickup">L3</div>
+                    <div class="compact-simulation-card" onclick="openSimulation('schoolpickup')" data-page-id="schoolpickup">
+                        <div class="access-badge" id="badge-schoolpickup"></div>
                         <div class="compact-card-icon">🎒</div>
                         <h3>School Pickup Queue</h3>
                         <p>Finite period bunching analysis for First-In-First-Out platooning</p>
@@ -81,23 +85,15 @@
     </div>
 
     <script>
-        // Page access configuration
-        const PAGE_ACCESS = {
-            'boomgate': 1,
-            'two-way-passing': 1,
-            'carparkutilisation': 1,
-            'carlift': 1,
-            'mechanical': 1,
-            'schoolpickup': 3
-        };
-
         // Page initialization
         document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize authorization service
+            await authService.init();
+
             // Give common.js time to load manifest and handle authentication
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            // Auth check is now handled by common.js checkPageAccess()
-            // Update card accessibility based on user level
+            // Update card accessibility based on user roles
             updateCardAccessibility();
 
             // Show the app
@@ -105,42 +101,62 @@
             document.getElementById('app').classList.remove('hidden');
         });
 
-        function getUserAccessLevel() {
-            try {
-                const token = localStorage.getItem('authToken');
-                if (!token) return 0;
-                
-                const decoded = atob(token);
-                const [timestamp, username, accessLevel] = decoded.split(':');
-                return parseInt(accessLevel) || 0;
-            } catch {
-                return 0;
-            }
-        }
-
         function updateCardAccessibility() {
-            const userLevel = getUserAccessLevel();
-            
-            // Update each card based on access level
-            Object.keys(PAGE_ACCESS).forEach(pageKey => {
-                const requiredLevel = PAGE_ACCESS[pageKey];
-                const card = document.querySelector(`[onclick="openSimulation('${pageKey}')"]`);
-                const badge = document.getElementById(`badge-${pageKey}`);
-                
-                if (card) {
-                    if (userLevel < requiredLevel) {
-                        card.classList.add('card-disabled');
-                        card.style.pointerEvents = 'none';
-                        if (badge) {
-                            badge.style.background = '#dc3545';
-                            badge.textContent = `L${requiredLevel}`;
-                            badge.title = `Requires Level ${requiredLevel} access`;
-                        }
-                    } else {
-                        card.classList.remove('card-disabled');
-                        card.style.pointerEvents = 'auto';
-                        if (badge) {
-                            badge.title = `Available with your Level ${userLevel} access`;
+            const cards = document.querySelectorAll('.compact-simulation-card[data-page-id]');
+
+            cards.forEach(card => {
+                const pageId = card.getAttribute('data-page-id');
+                const pagePath = `/traffic/simulators/${pageId}/`;
+                const badge = card.querySelector('.access-badge');
+
+                // Get page config from manifest
+                const pageConfig = authService.getPageConfig(pagePath);
+                if (!pageConfig) {
+                    console.warn(`No page config found for ${pagePath}`);
+                    return;
+                }
+
+                // Check if user can access this page
+                const canAccess = authService.canAccessPage(pagePath);
+                const requiredRoles = pageConfig.allowedRoles;
+
+                if (canAccess) {
+                    // User has access
+                    card.classList.remove('card-disabled');
+                    card.style.pointerEvents = 'auto';
+                    card.style.opacity = '1';
+
+                    // Hide badge for accessible pages or show minimal role indicator
+                    if (badge) {
+                        badge.style.display = 'none';
+                    }
+                } else {
+                    // User doesn't have access
+                    card.classList.add('card-disabled');
+                    card.style.pointerEvents = 'none';
+                    card.style.opacity = '0.6';
+
+                    // Show role requirement badge
+                    if (badge) {
+                        const badgeHTML = authService.getRoleBadges(requiredRoles);
+                        badge.innerHTML = badgeHTML || '';
+                        badge.style.display = badgeHTML ? 'block' : 'none';
+
+                        // Get minimum required role name
+                        const rolesConfig = authService.getRolesConfig();
+                        let minRole = null;
+                        let minPriority = Infinity;
+
+                        requiredRoles.forEach(roleId => {
+                            const roleConfig = rolesConfig[roleId];
+                            if (roleConfig && roleConfig.priority < minPriority && roleConfig.id !== 'guest') {
+                                minPriority = roleConfig.priority;
+                                minRole = roleConfig;
+                            }
+                        });
+
+                        if (minRole) {
+                            badge.title = `Requires ${minRole.name} access`;
                         }
                     }
                 }
@@ -149,49 +165,40 @@
 
         function openSimulation(type) {
             const token = localStorage.getItem('authToken');
-            const userLevel = getUserAccessLevel();
-            const requiredLevel = PAGE_ACCESS[type];
-            
-            if (!token || !isValidToken(token)) {
-                window.location.href = '/';
+            const pagePath = `/traffic/simulators/${type}/`;
+
+            if (!token) {
+                window.location.href = '/login/login-required/';
                 return;
             }
-            
-            // Check access level
-            if (userLevel < requiredLevel) {
-                alert(`This feature requires Level ${requiredLevel} access. You currently have Level ${userLevel} access.`);
+
+            // Check if user has access to this page
+            if (!authService.canAccessPage(pagePath)) {
+                const pageConfig = authService.getPageConfig(pagePath);
+                const rolesConfig = authService.getRolesConfig();
+
+                // Get minimum required role
+                let minRole = null;
+                let minPriority = Infinity;
+
+                if (pageConfig && pageConfig.allowedRoles) {
+                    pageConfig.allowedRoles.forEach(roleId => {
+                        const roleConfig = rolesConfig[roleId];
+                        if (roleConfig && roleConfig.priority < minPriority && roleConfig.id !== 'guest') {
+                            minPriority = roleConfig.priority;
+                            minRole = roleConfig;
+                        }
+                    });
+                }
+
+                const roleName = minRole ? minRole.name : 'higher access';
+                alert(`This simulation requires ${roleName} access. Please upgrade your account to access this feature.`);
+                window.location.href = '/login/upgrade-required/';
                 return;
             }
-            
-            // Navigate to the specific simulation page with new nested structure
-            switch(type) {
-                case 'boomgate':
-                    window.location.href = '/traffic/simulators/boomgate/';
-                    break;
-                case 'two-way-passing':
-                    window.location.href = '/traffic/simulators/two-way-passing/';
-                    break;
-                case 'carparkutilisation':
-                    window.location.href = '/traffic/simulators/carparkutilisation/';
-                    break;
-                case 'carlift':
-                    window.location.href = '/traffic/simulators/carlift/';
-                    break;
-                case 'mechanical':
-                    window.location.href = '/traffic/simulators/mechanical/';
-                    break;
-                case 'schoolpickup':
-                    window.location.href = '/traffic/simulators/schoolpickup/';
-                    break;
-                case 'rampdrawer':
-                    window.location.href = '/traffic/tools/rampdrawer/';
-                    break;
-                case 'network':
-                    window.location.href = '/traffic/tools/network/';
-                    break;
-                default:
-                    alert('Simulation not found');
-            }
+
+            // Navigate to the simulation page
+            window.location.href = pagePath;
         }
     </script>
 </body>

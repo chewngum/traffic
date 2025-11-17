@@ -24,13 +24,11 @@ function estimateSimulationRuntime(parameters) {
             estimatedSeconds = estimateMechanicalRuntime(parameters);
             break;
         default:
-            console.warn(`No runtime estimation for page: ${currentPath}`);
             estimatedSeconds = 5;
     }
     
     const estimatedMs = Math.max(500, Math.min(300000, estimatedSeconds * 1000));
-    
-    console.log(`Estimated runtime for ${currentPath}: ${estimatedSeconds.toFixed(2)}s (${estimatedMs}ms)`);
+
     return estimatedMs;
 }
 
@@ -51,7 +49,7 @@ function estimateBoomGateRuntime(parameters) {
     const simHours = parameters.simulationHours || parameters.simHours;
     const numSeeds = parameters.numSeeds;
     
-    const estimatedSeconds = (arrivalRate * simHours * numSeeds * 0.00000205)+0.65;
+    const estimatedSeconds = (arrivalRate * simHours * numSeeds * 0.000000205)+0.65;
     return Math.max(1.3, estimatedSeconds);
 }
 

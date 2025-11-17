@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
+    <script src="/utils/authorization.js"></script>
     <style>
         /* Additional styles specific to this page */
         .coming-soon-grid {
@@ -37,6 +38,9 @@
             margin: 0;
         }
     </style>
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/site.webmanifest">
 </head>
 <body>
     <div id="loading" class="loading">
@@ -65,22 +69,22 @@
                     Available Tools
                 </h2>
                 <div class="compact-simulation-grid">
-                    <div class="compact-simulation-card" onclick="openTool('rampdrawer')" data-access-level="1">
-                        <div class="access-badge level-1" id="badge-rampdrawer">L1</div>
+                    <div class="compact-simulation-card" onclick="openTool('rampdrawer')" data-page-id="rampdrawer">
+                        <div class="access-badge" id="badge-rampdrawer"></div>
                         <div class="compact-card-icon">📐</div>
                         <h3>Ramp Design</h3>
                         <p>Draw compliant car ramps in seconds with perfect annotation and automatic calculation of gradients</p>
                     </div>
 
-                    <div class="compact-simulation-card" onclick="openTool('streetsection')" data-access-level="1">
-                        <div class="access-badge level-1" id="badge-streetsection">L1</div>
+                    <div class="compact-simulation-card" onclick="openTool('streetsection')" data-page-id="streetsection">
+                        <div class="access-badge" id="badge-streetsection"></div>
                         <div class="compact-card-icon">🛣️</div>
                         <h3>Street Section Designer</h3>
                         <p>Design and visualize street cross-sections with lanes, medians, and dimensions for documentation</p>
                     </div>
 
-                    <div class="compact-simulation-card" onclick="openTool('network')" data-access-level="3">
-                        <div class="access-badge level-3" id="badge-network">L3</div>
+                    <div class="compact-simulation-card" onclick="openTool('network')" data-page-id="network">
+                        <div class="access-badge" id="badge-network"></div>
                         <div class="compact-card-icon">🗺️</div>
                         <h3>Traffic Network Database</h3>
                         <p>Trip distribution creation for multiple traffic periods and generations with advanced modeling</p>
@@ -120,20 +124,15 @@
     </div>
 
     <script>
-        // Page access configuration
-        const PAGE_ACCESS = {
-            'rampdrawer': 1,
-            'streetsection': 1,
-            'network': 3
-        };
-
         // Page initialization
         document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize authorization service
+            await authService.init();
+
             // Give common.js time to load manifest and handle authentication
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            // Auth check is now handled by common.js checkPageAccess()
-            // Update card accessibility based on user level
+            // Update card accessibility based on user roles
             updateCardAccessibility();
 
             // Show the app
@@ -141,42 +140,62 @@
             document.getElementById('app').classList.remove('hidden');
         });
 
-        function getUserAccessLevel() {
-            try {
-                const token = localStorage.getItem('authToken');
-                if (!token) return 0;
-                
-                const decoded = atob(token);
-                const [timestamp, username, accessLevel] = decoded.split(':');
-                return parseInt(accessLevel) || 0;
-            } catch {
-                return 0;
-            }
-        }
-
         function updateCardAccessibility() {
-            const userLevel = getUserAccessLevel();
-            
-            // Update each card based on access level
-            Object.keys(PAGE_ACCESS).forEach(pageKey => {
-                const requiredLevel = PAGE_ACCESS[pageKey];
-                const card = document.querySelector(`[onclick="openTool('${pageKey}')"]`);
-                const badge = document.getElementById(`badge-${pageKey}`);
-                
-                if (card) {
-                    if (userLevel < requiredLevel) {
-                        card.classList.add('card-disabled');
-                        card.style.pointerEvents = 'none';
-                        if (badge) {
-                            badge.style.background = '#dc3545';
-                            badge.textContent = `L${requiredLevel}`;
-                            badge.title = `Requires Level ${requiredLevel} access`;
-                        }
-                    } else {
-                        card.classList.remove('card-disabled');
-                        card.style.pointerEvents = 'auto';
-                        if (badge) {
-                            badge.title = `Available with your Level ${userLevel} access`;
+            const cards = document.querySelectorAll('.compact-simulation-card[data-page-id]');
+
+            cards.forEach(card => {
+                const pageId = card.getAttribute('data-page-id');
+                const pagePath = `/traffic/tools/${pageId}/`;
+                const badge = card.querySelector('.access-badge');
+
+                // Get page config from manifest
+                const pageConfig = authService.getPageConfig(pagePath);
+                if (!pageConfig) {
+                    console.warn(`No page config found for ${pagePath}`);
+                    return;
+                }
+
+                // Check if user can access this page
+                const canAccess = authService.canAccessPage(pagePath);
+                const requiredRoles = pageConfig.allowedRoles;
+
+                if (canAccess) {
+                    // User has access
+                    card.classList.remove('card-disabled');
+                    card.style.pointerEvents = 'auto';
+                    card.style.opacity = '1';
+
+                    // Hide badge for accessible pages
+                    if (badge) {
+                        badge.style.display = 'none';
+                    }
+                } else {
+                    // User doesn't have access
+                    card.classList.add('card-disabled');
+                    card.style.pointerEvents = 'none';
+                    card.style.opacity = '0.6';
+
+                    // Show role requirement badge
+                    if (badge) {
+                        const badgeHTML = authService.getRoleBadges(requiredRoles);
+                        badge.innerHTML = badgeHTML || '';
+                        badge.style.display = badgeHTML ? 'block' : 'none';
+
+                        // Get minimum required role name
+                        const rolesConfig = authService.getRolesConfig();
+                        let minRole = null;
+                        let minPriority = Infinity;
+
+                        requiredRoles.forEach(roleId => {
+                            const roleConfig = rolesConfig[roleId];
+                            if (roleConfig && roleConfig.priority < minPriority && roleConfig.id !== 'guest') {
+                                minPriority = roleConfig.priority;
+                                minRole = roleConfig;
+                            }
+                        });
+
+                        if (minRole) {
+                            badge.title = `Requires ${minRole.name} access`;
                         }
                     }
                 }
@@ -185,34 +204,40 @@
 
         function openTool(type) {
             const token = localStorage.getItem('authToken');
-            const userLevel = getUserAccessLevel();
-            const requiredLevel = PAGE_ACCESS[type];
-            
-            if (!token || !isValidToken(token)) {
-                window.location.href = '/';
+            const pagePath = `/traffic/tools/${type}/`;
+
+            if (!token) {
+                window.location.href = '/login/login-required/';
                 return;
             }
-            
-            // Check access level
-            if (userLevel < requiredLevel) {
-                alert(`This feature requires Level ${requiredLevel} access. You currently have Level ${userLevel} access.`);
+
+            // Check if user has access to this page
+            if (!authService.canAccessPage(pagePath)) {
+                const pageConfig = authService.getPageConfig(pagePath);
+                const rolesConfig = authService.getRolesConfig();
+
+                // Get minimum required role
+                let minRole = null;
+                let minPriority = Infinity;
+
+                if (pageConfig && pageConfig.allowedRoles) {
+                    pageConfig.allowedRoles.forEach(roleId => {
+                        const roleConfig = rolesConfig[roleId];
+                        if (roleConfig && roleConfig.priority < minPriority && roleConfig.id !== 'guest') {
+                            minPriority = roleConfig.priority;
+                            minRole = roleConfig;
+                        }
+                    });
+                }
+
+                const roleName = minRole ? minRole.name : 'higher access';
+                alert(`This tool requires ${roleName} access. Please upgrade your account to access this feature.`);
+                window.location.href = '/login/upgrade-required/';
                 return;
             }
-            
-            // Navigate to the specific tool page
-            switch(type) {
-                case 'rampdrawer':
-                    window.location.href = '/traffic/tools/rampdrawer/';
-                    break;
-                case 'streetsection':
-                    window.location.href = '/traffic/tools/streetsection/';
-                    break;
-                case 'network':
-                    window.location.href = '/traffic/tools/network/';
-                    break;
-                default:
-                    alert('Tool not found');
-            }
+
+            // Navigate to the tool page
+            window.location.href = pagePath;
         }
     </script>
 </body>

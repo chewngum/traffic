@@ -2,6 +2,7 @@
 import bcrypt from 'bcryptjs';
 import pool from '../../lib/database.js';
 import { sendWelcomeEmail } from '../../lib/email-service.js';
+import { generateAccessToken, createSecureCookie } from '../../lib/jwt.js';
 import {
   handleCORS,
   parseBody,
@@ -65,41 +66,76 @@ export const main = async (event) => {
     // Create display name
     const displayName = `${firstName} ${lastName}`;
 
-    // Insert new user
+    // Default roles for new users (authenticated,paying for new registrations)
+    const defaultRoles = 'authenticated,paying';
+
+    // Insert new user with roles
     const insertResult = await pool.query(`
-      INSERT INTO users (username, email, password_hash, access_level, display_name, description)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id, username, email, access_level, display_name
+      INSERT INTO users (username, email, password_hash, roles, is_active, display_name, description)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id, username, email, roles, is_active, display_name
     `, [
       email.toLowerCase(), // Use email as username
       email.toLowerCase(),
       passwordHash,
-      2, // Account Holder access level for new users
+      defaultRoles,
+      true, // Account is active by default
       displayName,
-      'Guest user account'
+      'User account'
     ]);
 
     const newUser = insertResult.rows[0];
 
     // Log successful registration
-    console.log(`New user registered: ${newUser.username} (${newUser.email})`);
+    console.log(`New user registered: ${newUser.username} (${newUser.email}) with roles: ${newUser.roles}`);
 
     // Send welcome email (async - don't block response)
     sendWelcomeEmail(newUser.email, newUser.display_name)
       .then(() => console.log(`Welcome email sent to ${newUser.email}`))
       .catch(err => console.error('Welcome email failed:', err));
 
-    return createResponse(201, {
-      success: true,
-      message: 'Account created successfully',
-      user: {
-        id: newUser.id,
-        username: newUser.username,
-        email: newUser.email,
-        displayName: newUser.display_name,
-        accessLevel: newUser.access_level
-      }
+    // Parse roles array
+    const rolesArray = newUser.roles.split(',').map(r => r.trim());
+
+    // Generate secure JWT token for immediate login
+    const token = generateAccessToken({
+      userId: newUser.id,
+      username: newUser.username,
+      email: newUser.email,
+      roles: rolesArray,
+      displayName: newUser.display_name
     });
+
+    // Create secure HttpOnly cookie
+    const cookieHeader = createSecureCookie('authToken', token, {
+      maxAge: 24 * 60 * 60, // 24 hours
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Lax'
+    });
+
+    return {
+      statusCode: 201,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Credentials': 'true',
+        'Set-Cookie': cookieHeader
+      },
+      body: JSON.stringify({
+        success: true,
+        message: 'Account created successfully',
+        token: token, // Return token for automatic login
+        roles: rolesArray,
+        user: {
+          id: newUser.id,
+          username: newUser.username,
+          email: newUser.email,
+          displayName: newUser.display_name,
+          roles: rolesArray
+        }
+      })
+    };
 
   } catch (error) {
     console.error('Signup error:', error);

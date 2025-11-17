@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="module" src="/common.js"></script><script src="/utils/api-config.js"></script>
+    <script src="/utils/tooltip-definitions.js"></script>
+    <script src="/utils/tooltip-init.js"></script>
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/site.webmanifest">
 </head>
 <body>
     <div id="loading" class="loading">
@@ -359,7 +364,7 @@
             await new Promise(resolve => setTimeout(resolve, 100));
             
             const token = localStorage.getItem('authToken');
-            if (!token || !isValidToken(token)) {
+            if (!token) {
                 window.location.href = '/login/';
                 return;
             }
@@ -932,33 +937,41 @@
                 </div>
                 
                 <div class="comparison-section">
-                    <h4>Occupancy Percentiles (Parked|Queued)</h4>
+                    <h4>Occupancy Percentiles</h4>
                     <table class="comparison-table">
                         <thead>
                             <tr>
-                                <th>Percentile</th>
-                                <th>Infinite Capacity</th>
-                                <th>Blocking Model</th>
-                                <th>Queuing Model</th>
+                                <th rowspan="2">Percentile</th>
+                                <th colspan="2">Infinite Capacity</th>
+                                <th colspan="2">Blocking Model</th>
+                                <th colspan="2">Queuing Model</th>
+                            </tr>
+                            <tr>
+                                <th>Parked</th>
+                                <th>Queued</th>
+                                <th>Parked</th>
+                                <th>Queued</th>
+                                <th>Parked</th>
+                                <th>Queued</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
-            
+
             const percentiles = [10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98, 99];
             const models = ['infinite', 'blocking', 'queuing'];
-            
+
             for (const p of percentiles) {
                 html += `<tr><td>${p}%</td>`;
-                
+
                 for (const modelKey of models) {
                     const result = results[modelKey];
                     if (result && result.percentiles.parked[p] !== undefined) {
                         const parked = result.percentiles.parked[p];
                         const queued = result.percentiles.queued[p];
-                        html += `<td>${parked.toFixed(0)}|${queued.toFixed(0)}</td>`;
+                        html += `<td>${parked.toFixed(0)}</td><td>${queued.toFixed(0)}</td>`;
                     } else {
-                        html += `<td>-</td>`;
+                        html += `<td>-</td><td>-</td>`;
                     }
                 }
                 html += `</tr>`;
@@ -1046,13 +1059,18 @@
             `;
 
             container.innerHTML = html;
+
+            // Refresh tooltips for dynamically generated content
+            if (typeof window.refreshTooltips === 'function') {
+                window.refreshTooltips();
+            }
         }
 
         document.getElementById('resetButton').addEventListener('click', resetInputs);
 
         document.getElementById('runSimulation').addEventListener('click', async () => {
             const token = localStorage.getItem('authToken');
-            if (!token || !isValidToken(token)) {
+            if (!token) {
                 window.location.href = '/login/';
                 return;
             }

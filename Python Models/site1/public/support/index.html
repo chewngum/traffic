@@ -43,6 +43,9 @@
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
     </style>
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/site.webmanifest">
 </head>
 <body>
     <div id="loading" class="loading">
@@ -84,13 +87,6 @@
                         <h3>Glossary</h3>
                         <p>Traffic engineering terms and concepts explained</p>
                     </div>
-
-                    <div class="compact-simulation-card" onclick="openSupportPage('scenarios')" data-access-level="3">
-                        <div class="access-badge level-3" id="badge-scenarios">L3</div>
-                        <div class="compact-card-icon">📋</div>
-                        <h3>Scenarios</h3>
-                        <p>Example scenarios and use cases for our simulations</p>
-                    </div>
                 </div>
             </div>
 
@@ -107,8 +103,7 @@
         // Page access configuration
         const PAGE_ACCESS = {
             'faq': 3,
-            'glossary': 1,
-            'scenarios': 3
+            'glossary': 1
         };
 
         // Page initialization
@@ -190,9 +185,6 @@
                     break;
                 case 'glossary':
                     window.location.href = '/support/glossary/';
-                    break;
-                case 'scenarios':
-                    window.location.href = '/support/scenarios/';
                     break;
                 default:
                     alert('Page not found');

@@ -49,5 +49,3 @@ window.API_CONFIG = {
         return nativeFetch(url, options);
     }
 };
-
-console.log('API Configuration loaded:', window.API_CONFIG.baseUrl);

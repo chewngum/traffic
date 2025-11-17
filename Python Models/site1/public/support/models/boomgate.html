@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Labb - Boom Gate Model Explanation</title>
+    <link rel="stylesheet" href="/style.css">
+    <script type="module" src="/common.js"></script>
+    <script src="/utils/api-config.js"></script>
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+    <link rel="manifest" href="/assets/images/site.webmanifest">
+</head>
+<body>
+    <div id="loading" class="loading">
+        <h2>Loading...</h2>
+    </div>
+
+    <div id="app" class="container hidden">
+        <div class="dashboard-header">
+            <div class="header-left">
+                <div class="header-title">
+                    <h1>Boom Gate Model Explanation</h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Introduction -->
+            <div class="glass-card">
+                <h2 class="section-title">Overview</h2>
+                <p style="font-size: 1.05rem; line-height: 1.6; margin-bottom: 16px;">
+                    The boom gate simulation models a single-server queueing system commonly found at car park entries,
+                    toll booths, security checkpoints, and gated communities. This page explains how individual vehicles
+                    flow through the system from arrival to departure.
+                </p>
+                <div style="background: #e8f5e8; padding: 16px; border-radius: 8px; border-left: 4px solid #6b99c2; margin-top: 20px;">
+                    <strong style="color: #354e8d;">System Type:</strong> Single Queue, Single Server (M/G/1 Queueing Model)<br>
+                    <strong style="color: #354e8d;">Use Cases:</strong> Car park boom gates, toll plazas, security checkpoints, parking validation stations
+                </div>
+            </div>
+
+            <!-- Flowchart -->
+            <div class="glass-card">
+                <h2 class="section-title">Vehicle Journey Flowchart</h2>
+                <p style="margin-bottom: 24px; color: #666;">
+                    Follow the path of a single vehicle from arrival to exit through the boom gate system:
+                </p>
+
+                <div class="flowchart-container">
+                    <!-- Start -->
+                    <div class="flow-node flow-start">
+                        <div class="flow-label">Vehicle Arrives</div>
+                        <div class="flow-description">Generated according to arrival rate (λ)</div>
+                    </div>
+
+                    <div class="flow-arrow">↓</div>
+
+                    <!-- Decision: Is server busy? -->
+                    <div class="flow-node flow-decision">
+                        <div class="flow-label">Is Boom Gate Busy?</div>
+                        <div class="flow-description">Check if another vehicle is being serviced</div>
+                    </div>
+
+                    <div class="flow-split">
+                        <div class="flow-branch">
+                            <div class="branch-label">YES</div>
+                            <div class="flow-arrow">↓</div>
+                            <div class="flow-node flow-process queue">
+                                <div class="flow-label">Join Queue</div>
+                                <div class="flow-description">Wait in line (FIFO order)</div>
+                            </div>
+                            <div class="flow-arrow">↓</div>
+                            <div class="flow-node flow-process">
+                                <div class="flow-label">Wait in Queue</div>
+                                <div class="flow-description">Accumulates waiting time</div>
+                            </div>
+                            <div class="flow-arrow">↓</div>
+                        </div>
+
+                        <div class="flow-branch">
+                            <div class="branch-label">NO</div>
+                            <div class="flow-arrow">↓</div>
+                            <div class="flow-node flow-process no-wait">
+                                <div class="flow-label">No Wait</div>
+                                <div class="flow-description">Proceed directly to service</div>
+                            </div>
+                            <div class="flow-arrow">↓</div>
+                        </div>
+                    </div>
+
+                    <!-- Service begins -->
+                    <div class="flow-merge">
+                        <div class="flow-arrow">↓</div>
+                        <div class="flow-node flow-process service-start">
+                            <div class="flow-label">Service Begins</div>
+                            <div class="flow-description">Boom gate becomes occupied</div>
+                        </div>
+                    </div>
+
+                    <div class="flow-arrow">↓</div>
+
+                    <!-- Service Part 1: Ticket Operations -->
+                    <div class="flow-node flow-process service">
+                        <div class="flow-label">Ticket Operations</div>
+                        <div class="flow-description">
+                            Ticket validation, payment processing<br>
+                            <em>Duration: Fixed or Exponentially distributed</em>
+                        </div>
+                    </div>
+
+                    <div class="flow-arrow">↓</div>
+
+                    <!-- Service Part 2: Movement -->
+                    <div class="flow-node flow-process service">
+                        <div class="flow-label">Movement Time</div>
+                        <div class="flow-description">
+                            Boom gate opens, vehicle moves through<br>
+                            <em>Duration: Fixed or Exponentially distributed</em>
+                        </div>
+                    </div>
+
+                    <div class="flow-arrow">↓</div>
+
+                    <!-- Service complete -->
+                    <div class="flow-node flow-process service-end">
+                        <div class="flow-label">Service Complete</div>
+                        <div class="flow-description">Boom gate becomes available for next vehicle</div>
+                    </div>
+
+                    <div class="flow-arrow">↓</div>
+
+                    <!-- Exit -->
+                    <div class="flow-node flow-end">
+                        <div class="flow-label">Vehicle Exits System</div>
+                        <div class="flow-description">Leaves boom gate area</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Components -->
+            <div class="glass-card">
+                <h2 class="section-title">Key System Components</h2>
+
+                <div class="components-grid">
+                    <div class="component-card">
+                        <h3>1. Vehicle Arrivals</h3>
+                        <p><strong>Arrival Rate (λ):</strong> The average number of vehicles arriving per hour (e.g., 30 cars/hr)</p>
+                        <p><strong>Arrival Pattern:</strong> Typically follows a Poisson process - random arrivals with exponentially distributed inter-arrival times</p>
+                        <p><strong>Minimum Headway:</strong> Optional minimum time between consecutive arrivals (prevents unrealistic bunching)</p>
+                    </div>
+
+                    <div class="component-card">
+                        <h3>2. The Queue</h3>
+                        <p><strong>Queue Discipline:</strong> First-In-First-Out (FIFO) - vehicles are served in arrival order</p>
+                        <p><strong>Queue Length:</strong> Unlimited capacity (vehicles can always join)</p>
+                        <p><strong>Waiting Time:</strong> Time spent in queue before service begins (zero if no wait)</p>
+                    </div>
+
+                    <div class="component-card">
+                        <h3>3. Service Process</h3>
+                        <p><strong>Single Server:</strong> One boom gate serves one vehicle at a time</p>
+                        <p><strong>Ticket Operations:</strong> Time for ticketing, payment, or validation</p>
+                        <p><strong>Movement Time:</strong> Time for boom gate to open and vehicle to move through</p>
+                        <p><strong>Total Service Time:</strong> Ticket Operations + Movement Time</p>
+                    </div>
+
+                    <div class="component-card">
+                        <h3>4. Service Time Variability</h3>
+                        <p><strong>Fixed:</strong> Same duration every time (deterministic)</p>
+                        <p><strong>Exponential:</strong> Variable duration following exponential distribution (more realistic - accounts for driver behavior variations)</p>
+                        <p>Each service component can be independently configured as fixed or variable</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="glass-card">
+                <h2 class="section-title">What the Simulation Measures</h2>
+
+                <div class="metrics-explanation">
+                    <div class="metric-item">
+                        <div class="metric-name">Utilization Rate (ρ)</div>
+                        <div class="metric-desc">Percentage of time the boom gate is busy serving vehicles.</div>
+                        <div class="metric-formula">ρ = λ / μ, where μ = service rate (vehicles/hour)</div>
+                    </div>
+
+                    <div class="metric-item">
+                        <div class="metric-name">Average Wait Time per Arrival</div>
+                        <div class="metric-desc">Average time each vehicle spends waiting in queue before service begins (includes vehicles with zero wait).</div>
+                    </div>
+
+                    <div class="metric-item">
+                        <div class="metric-name">Average Wait Time per Queued Vehicle</div>
+                        <div class="metric-desc">Average wait time for vehicles that actually had to wait (excludes vehicles that went straight to service).</div>
+                    </div>
+
+                    <div class="metric-item">
+                        <div class="metric-name">Probability of Waiting</div>
+                        <div class="metric-desc">Percentage of vehicles that find the boom gate busy and must join the queue.</div>
+                    </div>
+
+                    <div class="metric-item">
+                        <div class="metric-name">System State Distribution</div>
+                        <div class="metric-desc">Percentage of time the system has 0, 1, 2, ... vehicles (shows queue length patterns over time).</div>
+                    </div>
+
+                    <div class="metric-item">
+                        <div class="metric-name">Hourly Maximum Distribution</div>
+                        <div class="metric-desc">Distribution of the maximum number of vehicles in the system during each hour (useful for capacity planning).</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example Scenario -->
+            <div class="glass-card">
+                <h2 class="section-title">Example Scenario</h2>
+
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 2px solid #dee2e6;">
+                    <h3 style="color: #354e8d; margin-top: 0;">Car Park Boom Gate</h3>
+
+                    <div style="margin: 16px 0;">
+                        <strong>Settings:</strong>
+                        <ul style="margin: 8px 0; padding-left: 20px;">
+                            <li>Arrival Rate: 30 cars/hour</li>
+                            <li>Ticket Operations: 5 seconds (exponential)</li>
+                            <li>Movement Time: 10 seconds (exponential)</li>
+                            <li>Total Average Service Time: 15 seconds</li>
+                        </ul>
+                    </div>
+
+                    <div style="margin: 16px 0;">
+                        <strong>Typical Results:</strong>
+                        <ul style="margin: 8px 0; padding-left: 20px;">
+                            <li>Utilization: ~12.5%</li>
+                            <li>Average Wait per Arrival: ~0.2 seconds</li>
+                            <li>Probability of Waiting: ~12%</li>
+                        </ul>
+                    </div>
+
+                    <div style="background: #e8f5e8; padding: 12px; border-radius: 6px; margin-top: 16px;">
+                        <strong>📊 Interpretation:</strong> At 30 cars/hour with 12.5% utilization, most vehicles experience no wait.
+                    </div>
+
+                    <div style="background: #fff3cd; padding: 12px; border-radius: 6px; margin-top: 12px; border-left: 4px solid #f39c12;">
+                        <strong>⚠️ Higher Load Scenario:</strong> If arrival rate increases to 200 cars/hour
+                        (utilization ~83%), queuing and average wait times will increase.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Try the Simulator -->
+            <div class="glass-card">
+                <h2 class="section-title">Try the Simulator</h2>
+                <p style="margin-bottom: 16px;">
+                    Ready to run your own boom gate simulation? Configure parameters, run the model,
+                    and analyze detailed results.
+                </p>
+                <a href="/traffic/simulators/boomgate/" class="btn-large">
+                    Open Boom Gate Simulator →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Flowchart Styles */
+        .flowchart-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+
+        .flow-node {
+            background: white;
+            border: 2px solid #6b99c2;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin: 0 auto 10px;
+            max-width: 500px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .flow-node:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .flow-start {
+            background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+            border-color: #28a745;
+        }
+
+        .flow-end {
+            background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+            border-color: #28a745;
+        }
+
+        .flow-decision {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border-color: #f39c12;
+            padding: 10px 14px;
+        }
+
+        .flow-process.queue {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe8cc 100%);
+            border-color: #f39c12;
+        }
+
+        .flow-process.no-wait {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-color: #28a745;
+        }
+
+        .flow-process.service-start {
+            background: linear-gradient(135deg, #cfe2ff 0%, #b6d4fe 100%);
+            border-color: #0d6efd;
+        }
+
+        .flow-process.service {
+            background: linear-gradient(135deg, #e7e7ff 0%, #d4d4ff 100%);
+            border-color: #6b99c2;
+        }
+
+        .flow-process.service-end {
+            background: linear-gradient(135deg, #cfe2ff 0%, #b6d4fe 100%);
+            border-color: #0d6efd;
+        }
+
+        .flow-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #354e8d;
+            margin-bottom: 4px;
+        }
+
+        .flow-description {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.3;
+        }
+
+        .flow-description em {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .flow-arrow {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #6b99c2;
+            font-weight: bold;
+            margin: 4px 0;
+            line-height: 1;
+        }
+
+        .flow-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 12px 0;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .flow-branch {
+            padding: 10px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 6px;
+            border: 2px dashed #ccc;
+        }
+
+        .branch-label {
+            text-align: center;
+            font-weight: bold;
+            color: #354e8d;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            background: white;
+            padding: 3px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .flow-merge {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Components Grid */
+        .components-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .component-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+
+        .component-card h3 {
+            color: #354e8d;
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 1.15rem;
+        }
+
+        .component-card p {
+            margin: 8px 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Metrics Explanation */
+        .metrics-explanation {
+            margin-top: 20px;
+        }
+
+        .metric-item {
+            background: #f8f9fa;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #6b99c2;
+        }
+
+        .metric-name {
+            font-weight: 700;
+            color: #354e8d;
+            font-size: 1.05rem;
+            margin-bottom: 8px;
+        }
+
+        .metric-desc {
+            color: #495057;
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+
+        .metric-formula {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #354e8d;
+            border: 1px solid #dee2e6;
+            margin-top: 8px;
+        }
+
+        /* Button */
+        .btn-large {
+            display: inline-block;
+            background: #6b99c2;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-large:hover {
+            background: #354e8d;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .flow-split {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .flowchart-container {
+                padding: 16px;
+            }
+
+            .flow-node {
+                padding: 16px;
+            }
+
+            .components-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('app').classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>

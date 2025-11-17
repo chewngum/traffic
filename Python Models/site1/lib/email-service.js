@@ -174,7 +174,7 @@ This email was sent to ${userEmail}
  * Send password reset email
  */
 export async function sendPasswordResetEmail(userEmail, userName, resetToken) {
-  const resetUrl = `${process.env.APP_URL || 'https://trafficlabb.com'}/reset-password/?token=${resetToken}`;
+  const resetUrl = `${process.env.APP_URL || 'https://trafficlabb.com'}/login/reset-password/?token=${resetToken}`;
   const subject = "Reset Your Traffic Labb Password 🔒";
 
   const htmlBody = `
@@ -568,11 +568,108 @@ This email was sent to ${userEmail}
   });
 }
 
+/**
+ * Send login notification to admin
+ */
+export async function sendLoginNotification(loginData) {
+  const { username, email, displayName, accessLevel, loginTime, ipAddress, userAgent } = loginData;
+
+  // Determine user type based on access level
+  let userType = 'Unknown';
+  let userTypeColor = '#6c757d';
+  if (accessLevel === 0 || accessLevel === 1 || username === 'guest' || username?.startsWith('guest_')) {
+    userType = 'Guest';
+    userTypeColor = '#6c757d';
+  } else if (accessLevel === 2) {
+    userType = 'Standard User';
+    userTypeColor = '#6b99c2';
+  } else if (accessLevel === 3) {
+    userType = 'Premium User';
+    userTypeColor = '#354e8d';
+  }
+
+  const subject = `Login Alert: ${userType} - ${displayName || username}`;
+
+  const htmlBody = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #354e8d 0%, #496f9c 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
+        .info-box { background: white; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid ${userTypeColor}; }
+        .label { font-weight: 600; color: #354e8d; display: inline-block; width: 140px; }
+        .user-type-badge { display: inline-block; background: ${userTypeColor}; color: white; padding: 5px 12px; border-radius: 4px; font-size: 0.9rem; font-weight: 600; }
+        .footer { text-align: center; margin-top: 30px; color: #6c757d; font-size: 0.85rem; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h2>🔐 New Login Detected</h2>
+        </div>
+        <div class="content">
+          <p><span class="user-type-badge">${userType}</span></p>
+
+          <div class="info-box">
+            <p><span class="label">Display Name:</span> ${displayName || 'N/A'}</p>
+            <p><span class="label">Username:</span> ${username}</p>
+            <p><span class="label">Email:</span> ${email || 'N/A'}</p>
+            <p><span class="label">Access Level:</span> ${accessLevel} (${userType})</p>
+            <p><span class="label">Login Time:</span> ${loginTime}</p>
+            ${ipAddress ? `<p><span class="label">IP Address:</span> ${ipAddress}</p>` : ''}
+            ${userAgent ? `<p><span class="label">User Agent:</span> ${userAgent}</p>` : ''}
+          </div>
+
+          <p style="margin-top: 20px; font-size: 0.9rem; color: #6c757d;">
+            <em>This is an automated notification sent for all user and guest logins.</em>
+          </p>
+        </div>
+        <div class="footer">
+          <p>Traffic Labb Login Monitoring System</p>
+          <p>© ${new Date().getFullYear()} Traffic Labb. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const textBody = `
+New Login Detected
+
+User Type: ${userType}
+Display Name: ${displayName || 'N/A'}
+Username: ${username}
+Email: ${email || 'N/A'}
+Access Level: ${accessLevel} (${userType})
+Login Time: ${loginTime}
+${ipAddress ? `IP Address: ${ipAddress}` : ''}
+${userAgent ? `User Agent: ${userAgent}` : ''}
+
+This is an automated notification sent for all user and guest logins.
+
+Traffic Labb Login Monitoring System
+© ${new Date().getFullYear()} Traffic Labb. All rights reserved.
+  `;
+
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'traffic@thelabb.com.au';
+
+  return sendEmail({
+    to: ADMIN_EMAIL,
+    subject,
+    htmlBody,
+    textBody
+  });
+}
+
 export default {
   sendWelcomeEmail,
   sendPasswordResetEmail,
   sendContactFormEmail,
   sendContactFormConfirmation,
   sendFeedbackEmail,
-  sendFeedbackConfirmation
+  sendFeedbackConfirmation,
+  sendLoginNotification
 };
