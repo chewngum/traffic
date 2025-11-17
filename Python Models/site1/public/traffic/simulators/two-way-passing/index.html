@@ -110,9 +110,12 @@
                                     <strong>Cruising Service Time:</strong> <span id="cruisingServiceTimeDisplay">5.40</span> seconds
                                 </div>
                                 <div style="font-size: 0.85rem; margin: 4px 0;">
-                                    <strong>Queued Service Time:</strong> <span id="queuedServiceTimeDisplay">6.50</span> seconds
+                                    <strong>Queued Service Time:</strong> <span id="queuedServiceTimeDisplay">7.25</span> seconds
                                 </div>
                             </div>
+                            <!-- Hidden inputs to store calculated values for advanced mode -->
+                            <input type="hidden" id="advancedServiceTime" value="5.4">
+                            <input type="hidden" id="advancedQueuedServiceTime" value="7.25">
                         </div>
 
                         <div class="form-row">
@@ -498,18 +501,24 @@
 
         function collectParameters() {
             const serviceMode = document.getElementById('serviceMode').value;
-            const serviceTime = safeNumber(document.getElementById('serviceTime').value, 0.1);
-
-            // In simple mode: queuedServiceTime = serviceTime, reactionDelay = 0
-            // In advanced mode: use values from form
             const isSimple = serviceMode === 'simple';
+
+            // In simple mode: read from serviceTime input, queuedServiceTime = serviceTime, reactionDelay = 0
+            // In advanced mode: read from calculated hidden inputs
+            const serviceTime = isSimple
+                ? safeNumber(document.getElementById('serviceTime').value, 0.1)
+                : safeNumber(document.getElementById('advancedServiceTime').value, 5.4);
+
+            const queuedServiceTime = isSimple
+                ? serviceTime
+                : safeNumber(document.getElementById('advancedQueuedServiceTime').value, 6.5);
 
             return {
                 arrivalRateA: safeNumber(document.getElementById('arrivalRateA').value, 0),
                 arrivalRateB: safeNumber(document.getElementById('arrivalRateB').value, 0),
                 arrivalRate: safeNumber(document.getElementById('arrivalRateA').value, 0) + safeNumber(document.getElementById('arrivalRateB').value, 0),
                 serviceTime: serviceTime,
-                queuedServiceTime: isSimple ? serviceTime : safeNumber(document.getElementById('queuedServiceTime').value, serviceTime),
+                queuedServiceTime: queuedServiceTime,
                 simulationTime: safeNumber(document.getElementById('simulationHours').value, 1) * 3600,
                 simHours: safeNumber(document.getElementById('simulationHours').value, 1),
                 minGap: safeNumber(document.getElementById('minGap').value, 0),
@@ -703,9 +712,11 @@
                     queuedServiceTime = Math.sqrt(2 * distance / accelerationRate);
                 }
 
-                // Update displays - these are PURE travel times (no reaction delay or follow-up)
-                document.getElementById('serviceTime').value = safeFixed(cruisingServiceTime, 2);
-                document.getElementById('queuedServiceTime').value = safeFixed(queuedServiceTime, 2);
+                // Update hidden inputs for advanced mode
+                document.getElementById('advancedServiceTime').value = safeFixed(cruisingServiceTime, 2);
+                document.getElementById('advancedQueuedServiceTime').value = safeFixed(queuedServiceTime, 2);
+
+                // Update display spans
                 document.getElementById('cruisingServiceTimeDisplay').textContent = safeFixed(cruisingServiceTime, 2);
                 document.getElementById('queuedServiceTimeDisplay').textContent = safeFixed(queuedServiceTime, 2);
 
@@ -741,12 +752,11 @@
         function resetInputs() {
             document.querySelectorAll('.validation-warning').forEach(warning => warning.remove());
             document.querySelectorAll('.corrected-value').forEach(input => input.classList.remove('corrected-value'));
-            
+
             document.getElementById('arrivalRateA').value = '15';
             document.getElementById('arrivalRateB').value = '15';
             document.getElementById('serviceMode').value = 'simple';
             document.getElementById('serviceTime').value = '5.4';
-            document.getElementById('queuedServiceTime').value = '6.5';
             document.getElementById('segmentDistance').value = '30';
             document.getElementById('vehicleSpeed').value = '20';
             document.getElementById('reactionDelay').value = '1.1';
@@ -761,7 +771,13 @@
             document.getElementById('numSeeds').value = '15';
             document.getElementById('seedMode').value = 'fixed';
             document.getElementById('customFollowUp').value = '2';
-            
+
+            // Set default calculated values for advanced mode hidden inputs
+            document.getElementById('advancedServiceTime').value = '5.4';
+            document.getElementById('advancedQueuedServiceTime').value = '7.25';
+            document.getElementById('cruisingServiceTimeDisplay').textContent = '5.40';
+            document.getElementById('queuedServiceTimeDisplay').textContent = '7.25';
+
             toggleServiceMode();
             toggleCustomFollowUp();
             updateUtilizationEstimate();
